@@ -1,4 +1,4 @@
-name: Daily card & price update
+name: Daily card and price update
 
 on:
   schedule:
