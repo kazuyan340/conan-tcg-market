@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>名探偵コナンTCG カード図鑑</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <h1>名探偵コナンTCG カード図鑑</h1>
+    <p id="last-updated" class="last-updated"></p>
+    <div class="nav-links">
+      <a href="trends.html?view=up" class="reset-btn nav-btn">🔺 値上がりを見る</a>
+      <a href="trends.html?view=down" class="reset-btn nav-btn">🔻 値下がりを見る</a>
+      <a href="trends.html?view=trends" class="reset-btn nav-btn">📊 価格の動きを見る</a>
+      <a href="compare.html" class="reset-btn nav-btn">★ お気に入り</a>
+    </div>
+  </div>
+  <div class="filters">
+    <div class="filter-item">
+      <label for="keyword">キーワード</label>
+      <input type="text" id="keyword" placeholder="カード名・能力テキストで検索">
+    </div>
+    <details class="filter-group" id="filter-color-group">
+      <summary>色<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-color-list"></div>
+    </details>
+    <details class="filter-group" id="filter-type-group">
+      <summary>種類<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-type-list"></div>
+    </details>
+    <details class="filter-group" id="filter-rarity-group">
+      <summary>レアリティ<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-rarity-list"></div>
+    </details>
+    <details class="filter-group" id="filter-level-group">
+      <summary>レベル<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-level-list"></div>
+    </details>
+    <details class="filter-group" id="filter-pack-group">
+      <summary>収録パック<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-pack-list"></div>
+    </details>
+    <button type="button" id="reset-filters" class="reset-btn">条件をリセット</button>
+  </div>
+  <p id="result-count" class="result-count"></p>
+</header>
+
+<main id="card-grid" class="card-grid"></main>
+
+<footer class="pager">
+  <button id="prev-page">&lt; 前へ</button>
+  <span id="page-label"></span>
+  <button id="next-page">次へ &gt;</button>
+</footer>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+    <div class="modal-price-section">
+      <h3>相場推移</h3>
+      <div id="modal-price-stats" class="price-stats"></div>
+      <canvas id="price-chart" width="700" height="150"></canvas>
+      <p id="price-empty" class="price-empty hidden">価格データがありません。</p>
+    </div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

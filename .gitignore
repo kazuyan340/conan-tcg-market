@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+data/conan_tcg.db
+data/update_log.txt
+data/card_images/
+web/__pycache__/
+.claude/

@@ -1,0 +1,46 @@
+name: Daily card & price update
+
+on:
+  schedule:
+    - cron: "0 18 * * *"  # 毎日 UTC18:00 = JST 3:00
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Sync card list (diff update)
+        run: python scraper_cards.py
+
+      - name: Fetch high-rarity prices from Suruga-ya
+        run: python web/scraper_prices_surugaya.py
+
+      - name: Fetch high-rarity prices from Card Labo
+        run: python web/scraper_prices_cardlabo.py
+
+      - name: Fetch high-rarity prices from Ryuu no Shippo
+        run: python web/scraper_prices_ryuunoshippo.py
+
+      - name: Export static JSON for the site
+        run: python web/export_static.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/conan_tcg.db web/site/data/cards.json web/site/data/prices.json
+          git diff --cached --quiet || git commit -m "chore: daily card/price update"
+          git push

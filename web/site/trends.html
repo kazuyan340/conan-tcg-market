@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>価格情報 | 名探偵コナンTCG カード図鑑</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <h1 id="page-title">📊 価格の動き</h1>
+    <p id="last-updated" class="last-updated"></p>
+    <div class="nav-links">
+      <button type="button" id="cycle-btn" class="reset-btn"></button>
+      <a href="compare.html" class="reset-btn nav-btn">★ お気に入り</a>
+      <a href="index.html" class="reset-btn nav-btn">← 一覧へ戻る</a>
+    </div>
+  </div>
+</header>
+
+<div id="view-trends">
+  <section class="trend-section">
+    <h2>🔺 急上昇中のカード</h2>
+    <p class="trend-desc">直近の取得で前回より大きく値上がりしたカードです。</p>
+    <div id="spike-grid" class="card-grid"></div>
+    <p id="spike-empty" class="empty-message hidden">まだ急上昇と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+
+  <section class="trend-section">
+    <h2>📈 じわじわ上昇中のカード</h2>
+    <p class="trend-desc">一気にではなく、複数回の取得を通してコツコツ値上がりが続いているカードです。</p>
+    <div id="gradual-grid" class="card-grid"></div>
+    <p id="gradual-empty" class="empty-message hidden">まだじわじわ上昇と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+
+  <section class="trend-section">
+    <h2>🔻 急下降中のカード</h2>
+    <p class="trend-desc">直近の取得で前回より大きく値下がりしたカードです。</p>
+    <div id="crash-grid" class="card-grid"></div>
+    <p id="crash-empty" class="empty-message hidden">まだ急下降と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+
+  <section class="trend-section">
+    <h2>📉 じわじわ下降中のカード</h2>
+    <p class="trend-desc">一気にではなく、複数回の取得を通してコツコツ値下がりが続いているカードです。</p>
+    <div id="gradual-down-grid" class="card-grid"></div>
+    <p id="gradual-down-empty" class="empty-message hidden">まだじわじわ下降と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+</div>
+
+<div id="view-up" class="hidden">
+  <section class="trend-section">
+    <h2>最安値ベース</h2>
+    <p class="trend-desc">出品されている中で一番安い価格が、これまでの平均より上がったカードです。</p>
+    <div id="mover-grid-up-min" class="card-grid"></div>
+    <p id="mover-empty-up-min" class="empty-message hidden">まだ比較できるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+
+  <section class="trend-section">
+    <h2>平均値ベース</h2>
+    <p class="trend-desc">出品されている価格の平均が、これまでの平均より上がったカードです。</p>
+    <div id="mover-grid-up-avg" class="card-grid"></div>
+    <p id="mover-empty-up-avg" class="empty-message hidden">まだ比較できるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+</div>
+
+<div id="view-down" class="hidden">
+  <section class="trend-section">
+    <h2>最安値ベース</h2>
+    <p class="trend-desc">出品されている中で一番安い価格が、これまでの平均より下がったカードです。</p>
+    <div id="mover-grid-down-min" class="card-grid"></div>
+    <p id="mover-empty-down-min" class="empty-message hidden">まだ比較できるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+
+  <section class="trend-section">
+    <h2>平均値ベース</h2>
+    <p class="trend-desc">出品されている価格の平均が、これまでの平均より下がったカードです。</p>
+    <div id="mover-grid-down-avg" class="card-grid"></div>
+    <p id="mover-empty-down-avg" class="empty-message hidden">まだ比較できるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+</div>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+    <div class="modal-price-section">
+      <h3>相場推移</h3>
+      <div id="modal-price-stats" class="price-stats"></div>
+      <canvas id="price-chart" width="700" height="150"></canvas>
+      <p id="price-empty" class="price-empty hidden">価格データがありません。</p>
+    </div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script src="trends.js"></script>
+</body>
+</html>

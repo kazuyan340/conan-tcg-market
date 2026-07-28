@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+pillow
+matplotlib
+playwright
+playwright-stealth
