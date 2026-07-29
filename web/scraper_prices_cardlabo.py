@@ -142,10 +142,11 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
         run_recorded_at = datetime.now(timezone.utc).isoformat()
         for card_num, prices in all_prices.items():
             card_id = target_by_num[card_num]
+            count = len(prices)
             min_price = min(prices)
-            avg_price = round(sum(prices) / len(prices))
-            db.insert_price(conn, card_id, "カードラボ", min_price, recorded_at=run_recorded_at)
-            db.insert_price(conn, card_id, "カードラボ(平均)", avg_price, recorded_at=run_recorded_at)
+            avg_price = round(sum(prices) / count)
+            db.insert_price(conn, card_id, "カードラボ", min_price, recorded_at=run_recorded_at, sample_count=count)
+            db.insert_price(conn, card_id, "カードラボ(平均)", avg_price, recorded_at=run_recorded_at, sample_count=count)
 
         unmatched = sorted(set(target_by_num) - set(all_prices))
         summary = {

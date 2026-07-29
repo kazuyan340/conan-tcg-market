@@ -1,7 +1,28 @@
 // index.html / compare.html(お気に入り=価格チェック画面) で共有するロジック(データ取得・カードタイル描画・モーダル・お気に入り管理)
 // お気に入り=価格チェック対象。星をつけたカードがそのまま「お気に入り一覧」にも「価格チェック」にも並ぶ。
 const FAVORITES_KEY = "conanTcgFavorites";
-const CHART_COLORS = ["#2f6fed", "#e0592a", "#2fa84f", "#a83fd1", "#d4a72c", "#1d9e9e"];
+
+// サイト名(平均系列を除いた素の名前)ごとに色を固定する。
+// 以前はカード内での出現順で色を割り当てていたため、同じサイトでもカードによって
+// 別の色になってしまい見分けにくかった。既知のサイトは固定色、未知のサイトが
+// 出てきた場合はページ内で最初に割り当てた色を使い回す。
+const SITE_COLOR_MAP = { "駿河屋": "#2f6fed", "カードラボ": "#e0592a", "竜のしっぽ": "#2fa84f" };
+const FALLBACK_SITE_COLORS = ["#a83fd1", "#d4a72c", "#1d9e9e"];
+const fallbackSiteColorAssignments = {};
+
+function baseSiteName(site) {
+  return site.endsWith("(平均)") ? site.slice(0, -"(平均)".length) : site;
+}
+
+function colorForSite(site) {
+  const base = baseSiteName(site);
+  if (SITE_COLOR_MAP[base]) return SITE_COLOR_MAP[base];
+  if (!fallbackSiteColorAssignments[base]) {
+    const idx = Object.keys(fallbackSiteColorAssignments).length % FALLBACK_SITE_COLORS.length;
+    fallbackSiteColorAssignments[base] = FALLBACK_SITE_COLORS[idx];
+  }
+  return fallbackSiteColorAssignments[base];
+}
 
 let commonPrices = {};
 
@@ -148,10 +169,12 @@ function openModal(card) {
   renderPriceSection(card.id);
 
   document.getElementById("modal-overlay").classList.remove("hidden");
+  document.body.classList.add("modal-open");
 }
 
 function closeModal() {
   document.getElementById("modal-overlay").classList.add("hidden");
+  document.body.classList.remove("modal-open");
 }
 
 function bindModalEvents() {
@@ -164,47 +187,101 @@ function bindModalEvents() {
   });
 }
 
-// サイトごとの最新価格(平均系列は除く)を返す。{ site: {price, recorded_at} }
-function latestPricesBySite(history) {
+// サイトごとの最新の最安値・平均値を返す。
+// { site: {min: {price, recorded_at, sample_count}|null, avg: ...|null} }
+function latestStatsBySite(history) {
   const bySite = {};
   for (const h of history) {
-    if (h.site.endsWith("(平均)")) continue;
-    if (!bySite[h.site] || h.recorded_at > bySite[h.site].recorded_at) {
-      bySite[h.site] = h;
+    const key = h.site.endsWith("(平均)") ? "avg" : "min";
+    const base = baseSiteName(h.site);
+    const entry = (bySite[base] = bySite[base] || { min: null, avg: null });
+    if (!entry[key] || h.recorded_at > entry[key].recorded_at) {
+      entry[key] = { price: h.price, recorded_at: h.recorded_at, sample_count: h.sample_count };
     }
   }
   return bySite;
 }
 
-// 「今どのサイトが一番安いか」が一目で分かる行(安い順、最安値に🏆)。HTML文字列を返す。
-function siteSummaryHtml(history) {
-  const entries = Object.entries(latestPricesBySite(history)).sort((a, b) => a[1].price - b[1].price);
+// サイト別の最安値を表形式(HTML文字列)で返す。最安値が一番安いサイトを🏆で強調する。
+function siteSummaryTableHtml(history) {
+  const entries = Object.entries(latestStatsBySite(history));
   if (entries.length === 0) return "";
-  return entries
-    .map(([site, h], i) => `${i === 0 ? "🏆" : "・"}${escapeHtml(site)} ${h.price}円`)
-    .join("　");
+
+  entries.sort((a, b) => {
+    const pa = a[1].min ? a[1].min.price : Infinity;
+    const pb = b[1].min ? b[1].min.price : Infinity;
+    return pa - pb;
+  });
+
+  const rows = entries
+    .map(([site, stats], i) => {
+      const color = colorForSite(site);
+      const crown = i === 0 && stats.min ? "🏆" : "";
+      const minText = stats.min ? `${stats.min.price}円` : "-";
+      return `<tr>
+        <td><span class="site-swatch" style="background:${color}"></span>${escapeHtml(site)}${crown}</td>
+        <td>${minText}</td>
+      </tr>`;
+    })
+    .join("");
+
+  return `<table class="price-site-table">
+    <thead><tr><th>サイト</th><th>最安値</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
-// カード1件分の価格統計(全体の最安値/最高値/平均 + サイト別の現在価格)をHTML文字列で返す。
-function buildPriceStatsHtml(history) {
-  const prices = history.map((h) => h.price);
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
-  const avg = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+// 全サイト・全出品を1つのプールにまとめた枚数加重平均を計算する。
+// 例: 駿河屋で500円×4枚+600円×1枚(平均520円・件数5)、カードラボで550円×2枚(平均550円・件数2)
+//     なら、サイトごとの平均を単純に2つ平均するのではなく、
+//     (520*5 + 550*2) / (5+2) という「全7枚をまとめた場合の平均」を返す。
+// 件数(sample_count)が無い古いデータは1枚分として扱う(概算のフォールバック)。
+function pooledAveragePrice(history) {
+  const bySite = latestStatsBySite(history);
+  let weightedSum = 0;
+  let totalCount = 0;
+  for (const stats of Object.values(bySite)) {
+    if (!stats.avg) continue;
+    const count = stats.avg.sample_count || 1;
+    weightedSum += stats.avg.price * count;
+    totalCount += count;
+  }
+  if (totalCount === 0) return null;
+  return Math.round(weightedSum / totalCount);
+}
+
+// 「このカードの相場」を大きく強調表示するHTML文字列を返す(全サイト全出品の枚数加重平均)。
+function avgHighlightHtml(history) {
+  const avg = pooledAveragePrice(history);
+  if (avg === null) return "";
+
+  const mins = Object.values(latestStatsBySite(history)).map((s) => s.min && s.min.price).filter((p) => p != null);
+  const range = mins.length > 1
+    ? `<span class="price-avg-range">(最安 ${Math.min(...mins)}円 〜 ${Math.max(...mins)}円)</span>`
+    : "";
+
   const latestDate = [...history].sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1)).at(-1).recorded_at;
-  const overall = `最安値: ${min}円  最高値: ${max}円  平均: ${avg}円 (最新取得日時: ${formatDateTimeFull(latestDate)})`;
-  const siteSummary = siteSummaryHtml(history);
-  return siteSummary ? `${overall}<br>${siteSummary}` : overall;
+  return `<div class="price-avg-highlight">相場 <span class="price-avg-value">${avg}円</span>${range}</div>
+    <div class="price-avg-date">最新取得日時: ${formatDateTimeFull(latestDate)}</div>`;
+}
+
+// カード1件分の価格統計(相場の強調表示 + サイト別最安値の表)を
+// まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
+function buildPriceStatsHtml(history) {
+  const table = siteSummaryTableHtml(history);
+  return table ? `${avgHighlightHtml(history)}${table}` : avgHighlightHtml(history);
 }
 
 function renderPriceSection(cardId) {
   const history = commonPrices[String(cardId)] || [];
   const statsEl = document.getElementById("modal-price-stats");
+  const tableEl = document.getElementById("modal-price-table");
   const canvas = document.getElementById("price-chart");
   const emptyEl = document.getElementById("price-empty");
 
   if (history.length === 0) {
     statsEl.textContent = "";
+    if (tableEl) tableEl.innerHTML = "";
     canvas.classList.add("hidden");
     emptyEl.classList.remove("hidden");
     return;
@@ -213,7 +290,12 @@ function renderPriceSection(cardId) {
   canvas.classList.remove("hidden");
   emptyEl.classList.add("hidden");
 
-  statsEl.innerHTML = buildPriceStatsHtml(history);
+  if (tableEl) {
+    statsEl.innerHTML = avgHighlightHtml(history);
+    tableEl.innerHTML = siteSummaryTableHtml(history);
+  } else {
+    statsEl.innerHTML = buildPriceStatsHtml(history);
+  }
 
   drawPriceChart(canvas, history);
 }
@@ -242,13 +324,19 @@ function drawPriceChart(canvas, history) {
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
 
+  // グラフには各サイトの最安値の推移だけを描く(平均値はサイト別の1本の線として
+  // 描いても見づらいだけなので、「相場」の枠(avgHighlightHtml)で数値としてのみ使う)。
+  const shown = history.filter((p) => !p.site.endsWith("(平均)"));
+
   const bySite = {};
-  for (const point of history) {
-    (bySite[point.site] = bySite[point.site] || []).push(point);
+  for (const point of shown) {
+    const base = baseSiteName(point.site);
+    bySite[base] = bySite[base] || [];
+    bySite[base].push(point);
   }
 
-  const dates = [...new Set(history.map((h) => h.recorded_at))].sort();
-  const prices = history.map((h) => h.price);
+  const dates = [...new Set(shown.map((p) => p.recorded_at))].sort();
+  const prices = shown.map((p) => p.price);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const pad = Math.max(10, Math.round((maxPrice - minPrice) * 0.1));
@@ -276,13 +364,8 @@ function drawPriceChart(canvas, history) {
   ctx.fillText(String(yMax), margin.left - 6, margin.top + 8);
   ctx.fillText(String(yMin), margin.left - 6, margin.top + plotH);
 
-  let colorIndex = 0;
-  const legendItems = [];
-  for (const [site, points] of Object.entries(bySite)) {
-    const color = CHART_COLORS[colorIndex % CHART_COLORS.length];
-    colorIndex++;
-    legendItems.push({ site, color });
-
+  function drawSeries(points, color) {
+    if (points.length === 0) return;
     const sorted = [...points].sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -301,6 +384,13 @@ function drawPriceChart(canvas, history) {
       ctx.arc(xPos(p.recorded_at), yPos(p.price), 3, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  const legendItems = [];
+  for (const [base, points] of Object.entries(bySite)) {
+    const color = colorForSite(base);
+    legendItems.push({ site: base, color });
+    drawSeries(points, color);
   }
 
   let legendX = margin.left + 4;

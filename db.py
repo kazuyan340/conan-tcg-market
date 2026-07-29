@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS price_history (
     site TEXT NOT NULL,
     price INTEGER NOT NULL,
     recorded_at TEXT NOT NULL,
+    sample_count INTEGER,
     FOREIGN KEY (card_id) REFERENCES cards(id)
 );
 
@@ -71,6 +72,9 @@ def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    columns = [row["name"] for row in conn.execute("PRAGMA table_info(price_history)")]
+    if "sample_count" not in columns:
+        conn.execute("ALTER TABLE price_history ADD COLUMN sample_count INTEGER")
     conn.commit()
 
 
@@ -143,11 +147,18 @@ def count_cards(conn: sqlite3.Connection) -> int:
     return conn.execute("SELECT COUNT(*) FROM cards").fetchone()[0]
 
 
-def insert_price(conn: sqlite3.Connection, card_pk: int, site: str, price: int, recorded_at: str | None = None) -> None:
+def insert_price(
+    conn: sqlite3.Connection,
+    card_pk: int,
+    site: str,
+    price: int,
+    recorded_at: str | None = None,
+    sample_count: int | None = None,
+) -> None:
     recorded_at = recorded_at or datetime.now(timezone.utc).isoformat()
     conn.execute(
-        "INSERT INTO price_history (card_id, site, price, recorded_at) VALUES (?, ?, ?, ?)",
-        (card_pk, site, price, recorded_at),
+        "INSERT INTO price_history (card_id, site, price, recorded_at, sample_count) VALUES (?, ?, ?, ?, ?)",
+        (card_pk, site, price, recorded_at, sample_count),
     )
     conn.commit()
 

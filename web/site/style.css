@@ -405,20 +405,24 @@ body {
   cursor: default;
 }
 
-/* モーダル: タイトルバーなしでカードが浮かぶような見た目 */
+/* モーダル: タイトルバーなしでカードが浮かぶような見た目。
+   内容が画面に収まらない場合は overlay 自体を縦スクロールさせる
+   (modal-card 側でスクロールさせると閉じるボタンの位置が扱いにくいため)。 */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 100;
   padding: 24px;
+  overflow-y: auto;
 }
 
 .modal-overlay.hidden {
   display: none;
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 
 .modal-card {
@@ -426,7 +430,7 @@ body {
   border-radius: 14px;
   max-width: 760px;
   width: 100%;
-  max-height: 94vh;
+  margin: 0 auto;
   position: relative;
   padding: 16px 20px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
@@ -512,9 +516,77 @@ body {
   margin-bottom: 6px;
 }
 
+.price-avg-highlight {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.price-avg-value {
+  color: var(--accent);
+  margin: 0 4px;
+}
+
+.price-avg-range {
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: var(--muted);
+}
+
+.price-avg-date {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.price-site-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin: 6px 0 8px;
+}
+
+.price-site-table th,
+.price-site-table td {
+  text-align: left;
+  padding: 3px 8px 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.price-site-table th {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.site-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.price-detail-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.price-table-col {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.price-chart-col {
+  flex: 1 1 320px;
+  min-width: 280px;
+}
+
 #price-chart {
   width: 100%;
-  height: 150px;
+  height: 260px;
   display: block;
 }
 
@@ -525,6 +597,49 @@ body {
 
 .hidden {
   display: none !important;
+}
+
+.static-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+.static-section {
+  margin-bottom: 22px;
+}
+
+.static-section h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+.static-section p {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+
+.static-updated {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.site-disclaimer {
+  padding: 16px 20px 24px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+}
+
+.site-disclaimer p {
+  margin: 4px 0;
+}
+
+.site-disclaimer a {
+  color: var(--accent);
 }
 
 @media (prefers-color-scheme: dark) {

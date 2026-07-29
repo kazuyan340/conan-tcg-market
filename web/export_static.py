@@ -38,13 +38,18 @@ def export_cards(conn) -> list[dict]:
 
 
 def export_prices(conn) -> dict[str, list[dict]]:
-    rows = conn.execute("SELECT card_id, site, price, recorded_at FROM price_history ORDER BY recorded_at").fetchall()
+    rows = conn.execute(
+        "SELECT card_id, site, price, recorded_at, sample_count FROM price_history ORDER BY recorded_at"
+    ).fetchall()
     prices: dict[str, list[dict]] = {}
     for row in rows:
         key = str(row["card_id"])
-        prices.setdefault(key, []).append(
-            {"site": row["site"], "price": row["price"], "recorded_at": row["recorded_at"]}
-        )
+        prices.setdefault(key, []).append({
+            "site": row["site"],
+            "price": row["price"],
+            "recorded_at": row["recorded_at"],
+            "sample_count": row["sample_count"],
+        })
     return prices
 
 
