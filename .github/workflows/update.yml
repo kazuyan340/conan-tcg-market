@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    # 駿河屋がGitHub Actionsのクラウド(データセンター)IPを403でブロックするため、
+    # このジョブ全体を自宅/オフィスの通常回線を持つセルフホストランナー(自分のPC)で実行する。
+    runs-on: [self-hosted, self-hosted-conan]
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +54,7 @@ jobs:
           key: conan-tcg-db-${{ github.run_id }}
 
       - name: Commit updated data
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

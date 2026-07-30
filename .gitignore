@@ -5,3 +5,4 @@ data/update_log.txt
 data/card_images/
 web/__pycache__/
 .claude/
+actions-runner/
