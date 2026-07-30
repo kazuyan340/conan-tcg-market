@@ -205,8 +205,12 @@ function latestStatsBySite(history) {
 }
 
 // サイト別の最安値を表形式(HTML文字列)で返す。最安値が一番安いサイトを🏆で強調する。
+// データが無いサイトも(-表示で)必ず一覧に出す。「載っていない」のか「未取得」なのかを
+// 区別できるようにするため。
 function siteSummaryTableHtml(history) {
-  const entries = Object.entries(latestStatsBySite(history));
+  const bySite = latestStatsBySite(history);
+  const allSites = new Set([...Object.keys(SITE_COLOR_MAP), ...Object.keys(bySite)]);
+  const entries = [...allSites].map((site) => [site, bySite[site] || { min: null, avg: null }]);
   if (entries.length === 0) return "";
 
   entries.sort((a, b) => {

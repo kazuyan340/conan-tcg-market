@@ -113,6 +113,36 @@ function bindEvents() {
       }
     }
   });
+
+  document.getElementById("download-csv").addEventListener("click", downloadCsv);
+}
+
+// 今表示中(絞り込み後)の一覧をCSVとしてダウンロードする。サーバー処理は不要、ブラウザ内で完結。
+function csvEscape(value) {
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function downloadCsv() {
+  const header = ["順位", "カード名", "カード番号", "レアリティ", "色", "収録パック", "相場(円)"];
+  const rows = filteredEntries.map(({ card, price }, i) => [
+    i + 1,
+    card.name,
+    card.card_num || "",
+    card.rarity || "",
+    card.color || "",
+    card.pack || "",
+    price,
+  ]);
+  const csv = [header, ...rows].map((row) => row.map(csvEscape).join(",")).join("\r\n");
+
+  // ExcelでUTF-8を正しく開けるようBOMを付ける。
+  const blob = new Blob([String.fromCharCode(0xfeff) + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "conan_tcg_ranking.csv";
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function debounce(fn, ms) {

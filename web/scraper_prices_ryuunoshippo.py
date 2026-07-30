@@ -35,8 +35,9 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
-# C(コモン)/CP/R/RP は当面対象外(scraper_prices_surugaya.pyと同じ方針)
-EXCLUDED_RARITIES = ["C", "CP", "R", "RP"]
+# 名探偵コナンTCG専用カテゴリを丸ごと取得済みなので、C/CP/R/RPを除外しても追加アクセスは
+# 減らない(既に取得したデータを捨てているだけだった)。除外なしに変更。
+EXCLUDED_RARITIES = []
 
 REQUEST_TIMEOUT = 15
 REQUEST_DELAY_SEC = 30

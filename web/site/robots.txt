@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kazuyan340.github.io/conan-tcg-market/sitemap.xml

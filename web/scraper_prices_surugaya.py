@@ -32,10 +32,11 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
-# C(コモン)/CP/R/RP は当面対象外。それ以外(PRを含む)はいずれ全レアリティを対象にしたい
-# 意向のため、除外リストの形で持ち、対象レアリティはDBの実際の値からその都度算出する
+# 以前はC(コモン)/CP/R/RPを対象外にしていたが、駿河屋での該当ページ数を実測したところ
+# 4レアリティ合計22ページ(約11分)程度で許容範囲だったため全レアリティを対象にした。
+# 除外リストの形は残し、対象レアリティはDBの実際の値からその都度算出する
 # (新レアリティが増えても自動で対象に入る)。
-EXCLUDED_RARITIES = ["C", "CP", "R", "RP"]
+EXCLUDED_RARITIES = []
 
 REQUEST_TIMEOUT = 15
 REQUEST_DELAY_SEC = 30  # 駿河屋のCrawl-delay:30を厳守
