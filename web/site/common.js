@@ -300,13 +300,21 @@ function renderPriceSection(cardId) {
   drawPriceChart(canvas, history);
 }
 
-// ISO日時文字列を "7/21 14:27" のような短い日付時刻表示に変換する(グラフの軸ラベル用)
+// ISO日時文字列を "7/21" のような日付のみの表示に変換する(グラフの軸ラベル用。
+// 日単位でまとめて表示するため時刻までは出さない)
 function formatDateLabel(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${d.getMonth() + 1}/${d.getDate()} ${hh}:${mm}`;
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+// 実行時刻(recorded_at)を「実行日」単位のキーに丸める。駿河屋・カードラボ・竜のしっぽの
+// スクレイパーは同じ日次バッチでも数分〜十数分ずれた時刻に完了するため、そのままだと
+// グラフのX軸上で「同じ日の更新」のはずの点がずれて表示されてしまう。日単位のキーに
+// まとめることで、同じ日に取得した点は同じX位置に揃うようにする。
+function dayKey(iso) {
+  const d = new Date(iso);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
 }
 
 // ISO日時文字列を "2026/7/21 14:27" のような年まで含む表示に変換する(統計テキスト用)
@@ -335,7 +343,7 @@ function drawPriceChart(canvas, history) {
     bySite[base].push(point);
   }
 
-  const dates = [...new Set(shown.map((p) => p.recorded_at))].sort();
+  const dates = [...new Set(shown.map((p) => dayKey(p.recorded_at)))].sort();
   const prices = shown.map((p) => p.price);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
@@ -361,8 +369,10 @@ function drawPriceChart(canvas, history) {
   ctx.fillStyle = "#888";
   ctx.font = "11px sans-serif";
   ctx.textAlign = "right";
-  ctx.fillText(String(yMax), margin.left - 6, margin.top + 8);
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(yMax), margin.left - 6, margin.top);
   ctx.fillText(String(yMin), margin.left - 6, margin.top + plotH);
+  ctx.textBaseline = "alphabetic";
 
   function drawSeries(points, color) {
     if (points.length === 0) return;
@@ -372,7 +382,7 @@ function drawPriceChart(canvas, history) {
     ctx.lineWidth = 2;
     ctx.beginPath();
     sorted.forEach((p, i) => {
-      const x = xPos(p.recorded_at);
+      const x = xPos(dayKey(p.recorded_at));
       const y = yPos(p.price);
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
@@ -381,7 +391,7 @@ function drawPriceChart(canvas, history) {
 
     for (const p of sorted) {
       ctx.beginPath();
-      ctx.arc(xPos(p.recorded_at), yPos(p.price), 3, 0, Math.PI * 2);
+      ctx.arc(xPos(dayKey(p.recorded_at)), yPos(p.price), 3, 0, Math.PI * 2);
       ctx.fill();
     }
   }
