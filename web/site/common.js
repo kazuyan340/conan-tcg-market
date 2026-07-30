@@ -166,10 +166,12 @@ function openModal(card) {
     infoEl.appendChild(flavor);
   }
 
-  renderPriceSection(card.id);
-
+  // モーダルを先に表示してからグラフを描く(非表示中はcanvasのclientWidthが0になり、
+  // 解像度を正しく測れないため)。
   document.getElementById("modal-overlay").classList.remove("hidden");
   document.body.classList.add("modal-open");
+
+  renderPriceSection(card.id);
 }
 
 function closeModal() {
@@ -260,16 +262,21 @@ function avgHighlightHtml(history) {
     ? `<span class="price-avg-range">(最安 ${Math.min(...mins)}円 〜 ${Math.max(...mins)}円)</span>`
     : "";
 
-  const latestDate = [...history].sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1)).at(-1).recorded_at;
-  return `<div class="price-avg-highlight">相場 <span class="price-avg-value">${avg}円</span>${range}</div>
-    <div class="price-avg-date">最新取得日時: ${formatDateTimeFull(latestDate)}</div>`;
+  return `<div class="price-avg-highlight">相場 <span class="price-avg-value">${avg}円</span>${range}</div>`;
 }
 
-// カード1件分の価格統計(相場の強調表示 + サイト別最安値の表)を
+// 「最新取得日時」の行(HTML文字列)を返す。サイト別テーブルとひとまとめにして表示するため
+// avgHighlightHtmlとは分けている。
+function latestDateHtml(history) {
+  const latestDate = [...history].sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1)).at(-1).recorded_at;
+  return `<div class="price-avg-date">最新取得日時: ${formatDateTimeFull(latestDate)}</div>`;
+}
+
+// カード1件分の価格統計(相場の強調表示 + 最新取得日時 + サイト別最安値の表)を
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
 function buildPriceStatsHtml(history) {
   const table = siteSummaryTableHtml(history);
-  return table ? `${avgHighlightHtml(history)}${table}` : avgHighlightHtml(history);
+  return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}`;
 }
 
 function renderPriceSection(cardId) {
@@ -278,12 +285,14 @@ function renderPriceSection(cardId) {
   const tableEl = document.getElementById("modal-price-table");
   const canvas = document.getElementById("price-chart");
   const emptyEl = document.getElementById("price-empty");
+  const periodTabs = document.getElementById("period-tabs");
 
   if (history.length === 0) {
     statsEl.textContent = "";
     if (tableEl) tableEl.innerHTML = "";
     canvas.classList.add("hidden");
     emptyEl.classList.remove("hidden");
+    if (periodTabs) periodTabs.classList.add("hidden");
     return;
   }
 
@@ -291,10 +300,24 @@ function renderPriceSection(cardId) {
   emptyEl.classList.add("hidden");
 
   if (tableEl) {
-    statsEl.innerHTML = avgHighlightHtml(history);
+    statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
     tableEl.innerHTML = siteSummaryTableHtml(history);
   } else {
     statsEl.innerHTML = buildPriceStatsHtml(history);
+  }
+
+  // モーダル内は既定で全期間表示。7日/30日タブでその場で絞り込める。
+  if (periodTabs) {
+    periodTabs.classList.remove("hidden");
+    const tabs = periodTabs.querySelectorAll(".period-tab");
+    tabs.forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.days === "0");
+      tab.onclick = () => {
+        tabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        drawPriceChart(canvas, history, Number(tab.dataset.days) || null);
+      };
+    });
   }
 
   drawPriceChart(canvas, history);
@@ -326,15 +349,35 @@ function formatDateTimeFull(iso) {
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${hh}:${mm}`;
 }
 
-function drawPriceChart(canvas, history) {
+// historyを直近days日分だけに絞り込む(daysが無ければ全期間そのまま)。
+// 「直近」は現在時刻ではなく、そのカードの最新データ時点を基準にする
+// (自動更新が数日止まっていても「データが無い」と表示されるのを防ぐため)。
+function filterHistoryByDays(history, days) {
+  if (!days || history.length === 0) return history;
+  const latest = Math.max(...history.map((p) => new Date(p.recorded_at).getTime()));
+  const cutoff = latest - days * 24 * 60 * 60 * 1000;
+  return history.filter((p) => new Date(p.recorded_at).getTime() >= cutoff);
+}
+
+function drawPriceChart(canvas, history, days) {
+  // canvasの描画バッファ解像度をCSS表示サイズ(+devicePixelRatio)に合わせる。
+  // これをしないと、CSSで拡大表示されたぶん線がぼやけて薄く見えてしまう
+  // (canvas要素はwidth/height属性=描画解像度と、CSSサイズ=表示サイズが別物のため)。
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || canvas.width;
+  const h = canvas.clientHeight || canvas.height;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+
   const ctx = canvas.getContext("2d");
-  const w = canvas.width;
-  const h = canvas.height;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
+
+  const limited = filterHistoryByDays(history, days);
 
   // グラフには各サイトの最安値の推移だけを描く(平均値はサイト別の1本の線として
   // 描いても見づらいだけなので、「相場」の枠(avgHighlightHtml)で数値としてのみ使う)。
-  const shown = history.filter((p) => !p.site.endsWith("(平均)"));
+  const shown = limited.filter((p) => !p.site.endsWith("(平均)"));
 
   const bySite = {};
   for (const point of shown) {
@@ -351,7 +394,7 @@ function drawPriceChart(canvas, history) {
   const yMin = Math.max(0, minPrice - pad);
   const yMax = maxPrice + pad;
 
-  const margin = { left: 60, right: 60, top: 10, bottom: 40 };
+  const margin = { left: 45, right: 20, top: 10, bottom: 40 };
   const plotW = w - margin.left - margin.right;
   const plotH = h - margin.top - margin.bottom;
 

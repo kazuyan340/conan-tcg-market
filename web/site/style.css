@@ -288,11 +288,19 @@ body {
 }
 
 /* --- 価格チェックページ(複数カードの価格グラフを一望する) --- */
+/* 表とグラフを横並びにするため、1行あたりのカード数を2枚に固定して十分な幅を確保する
+   (auto-fitだと画面幅によっては1枚あたりが狭くなり、表+グラフが縦積みになってしまっていた)。 */
 .price-check-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   padding: 20px;
+}
+
+@media (max-width: 700px) {
+  .price-check-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .price-check-card {
@@ -300,6 +308,33 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px;
+}
+
+.price-check-card.over-threshold {
+  border-color: #d9364f;
+  box-shadow: 0 0 0 1px #d9364f;
+}
+
+.price-check-card.under-threshold {
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 1px #2f6fed;
+}
+
+.card-threshold-row {
+  display: block;
+  margin: 8px 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  cursor: default;
+}
+
+.card-threshold-row input {
+  width: 90px;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
 }
 
 .price-check-header {
@@ -337,9 +372,8 @@ body {
 
 .price-check-canvas {
   width: 100%;
-  height: 180px;
+  height: 200px;
   display: block;
-  margin-top: 6px;
 }
 
 .compare-remove {
@@ -575,13 +609,35 @@ body.modal-open {
 }
 
 .price-table-col {
-  flex: 1 1 220px;
-  min-width: 200px;
+  flex: 1 1 190px;
+  min-width: 170px;
 }
 
 .price-chart-col {
-  flex: 1 1 320px;
-  min-width: 280px;
+  flex: 1 1 280px;
+  min-width: 250px;
+}
+
+.period-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.period-tab {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.period-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 #price-chart {
@@ -624,6 +680,62 @@ body.modal-open {
 .static-updated {
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+}
+
+.contact-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.contact-form input,
+.contact-form textarea {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+  resize: vertical;
+}
+
+.contact-form button {
+  align-self: flex-start;
+}
+
+.history-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.history-date {
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-item a {
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item a:hover {
+  text-decoration: underline;
 }
 
 .site-disclaimer {

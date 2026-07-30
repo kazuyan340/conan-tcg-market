@@ -45,12 +45,23 @@
   </section>
 
   <section class="static-section">
-    <h2>お問い合わせ</h2>
-    <p>本サイトに関するお問い合わせ・不具合報告は、以下のGitHubリポジトリのIssueページからお願いします。</p>
-    <p><a href="https://github.com/kazuyan340/conan-tcg-market/issues" target="_blank" rel="noopener">GitHub Issuesでお問い合わせ →</a></p>
+    <h2>関連ページ</h2>
+    <p><a href="about.html">運営者情報</a></p>
   </section>
 
-  <p class="static-updated">制定日: 2026年7月29日</p>
+  <section class="static-section">
+    <h2>お問い合わせ</h2>
+    <p>本サイトに関するお問い合わせ・不具合報告は、以下のフォームからお願いします。</p>
+    <form class="contact-form" action="https://formsubmit.co/kazuyan.no.7@gmail.com" method="POST">
+      <input type="hidden" name="_subject" value="【名探偵コナンTCG カード図鑑】お問い合わせ">
+      <input type="hidden" name="_template" value="table">
+      <input type="hidden" name="_next" value="https://kazuyan340.github.io/conan-tcg-market/privacy.html">
+      <label>お名前(任意)<input type="text" name="name" placeholder="お名前"></label>
+      <label>返信先メールアドレス(任意)<input type="email" name="email" placeholder="example@example.com"></label>
+      <label>お問い合わせ内容<textarea name="message" rows="5" required placeholder="お問い合わせ内容をご記入ください"></textarea></label>
+      <button type="submit" class="reset-btn">送信する</button>
+    </form>
+  </section>
 </main>
 
 <footer class="site-disclaimer">
