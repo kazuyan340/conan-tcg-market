@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+env:
+  # セルフホストランナー(このPC)のPython 3.12への絶対パス。ランナーサービスは
+  # NETWORK SERVICEアカウントで動作しており、PCのPATH変更がサービスに反映されるのは
+  # 次回OS再起動後のため、PATHに頼らずフルパスで直接指定する。
+  PYTHON: C:\Users\kazuya.tohara\AppData\Local\Programs\Python\Python312\python.exe
+
 jobs:
   update:
     # 駿河屋がGitHub Actionsのクラウド(データセンター)IPを403でブロックするため、
@@ -20,7 +26,7 @@ jobs:
       # セルフホストランナー(このPC)にはPython 3.12が既に入っているため、
       # actions/setup-pythonは使わない(NETWORK SERVICEアカウントにレジストリ変更権限が無く失敗するため)。
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: ${{ env.PYTHON }} -m pip install -r requirements.txt
 
       - name: Restore price/card database (accumulates across daily runs)
         uses: actions/cache/restore@v4
@@ -31,19 +37,19 @@ jobs:
             conan-tcg-db-
 
       - name: Sync card list (diff update)
-        run: python scraper_cards.py
+        run: ${{ env.PYTHON }} scraper_cards.py
 
       - name: Fetch high-rarity prices from Suruga-ya
-        run: python web/scraper_prices_surugaya.py
+        run: ${{ env.PYTHON }} web/scraper_prices_surugaya.py
 
       - name: Fetch high-rarity prices from Card Labo
-        run: python web/scraper_prices_cardlabo.py
+        run: ${{ env.PYTHON }} web/scraper_prices_cardlabo.py
 
       - name: Fetch high-rarity prices from Ryuu no Shippo
-        run: python web/scraper_prices_ryuunoshippo.py
+        run: ${{ env.PYTHON }} web/scraper_prices_ryuunoshippo.py
 
       - name: Export static JSON for the site
-        run: python web/export_static.py
+        run: ${{ env.PYTHON }} web/export_static.py
 
       - name: Save price/card database for the next run
         uses: actions/cache/save@v4
