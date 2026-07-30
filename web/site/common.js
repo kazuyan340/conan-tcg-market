@@ -14,6 +14,21 @@ function baseSiteName(site) {
   return site.endsWith("(平均)") ? site.slice(0, -"(平均)".length) : site;
 }
 
+// 駿河屋アフィリエイト(Smart Biz Affiliate)のリンク生成。
+// user_id=固定のアフィリエイターID、goods_url=転送先URLをエンコードしたもの、という
+// 仕組みなので、カードごとの検索結果URLを組み立てて渡せば全カード分を自動生成できる。
+const SURUGAYA_AFFILIATE_USER_ID = "5367";
+
+function surugaSearchUrl(cardNum) {
+  const query = `名探偵コナンTCG ${cardNum}`;
+  return `https://www.suruga-ya.jp/search?category=&search_word=${encodeURIComponent(query)}`;
+}
+
+function surugaAffiliateUrl(cardNum) {
+  const target = surugaSearchUrl(cardNum);
+  return `https://affiliate.suruga-ya.jp/modules/af/af_jump.php?user_id=${SURUGAYA_AFFILIATE_USER_ID}&goods_url=${encodeURIComponent(target)}`;
+}
+
 function colorForSite(site) {
   const base = baseSiteName(site);
   if (SITE_COLOR_MAP[base]) return SITE_COLOR_MAP[base];
@@ -171,7 +186,7 @@ function openModal(card) {
   document.getElementById("modal-overlay").classList.remove("hidden");
   document.body.classList.add("modal-open");
 
-  renderPriceSection(card.id);
+  renderPriceSection(card.id, card.card_num);
 }
 
 function closeModal() {
@@ -207,7 +222,9 @@ function latestStatsBySite(history) {
 // サイト別の最安値を表形式(HTML文字列)で返す。最安値が一番安いサイトを🏆で強調する。
 // データが無いサイトも(-表示で)必ず一覧に出す。「載っていない」のか「未取得」なのかを
 // 区別できるようにするため。
-function siteSummaryTableHtml(history) {
+// cardNumを渡すと、駿河屋の行をアフィリエイトリンク化する(現状アフィリエイト提携済みは
+// 駿河屋のみのため)。景品表示法対応で「PR」表記を付ける。
+function siteSummaryTableHtml(history, cardNum) {
   const bySite = latestStatsBySite(history);
   const allSites = new Set([...Object.keys(SITE_COLOR_MAP), ...Object.keys(bySite)]);
   const entries = [...allSites].map((site) => [site, bySite[site] || { min: null, avg: null }]);
@@ -224,8 +241,11 @@ function siteSummaryTableHtml(history) {
       const color = colorForSite(site);
       const crown = i === 0 && stats.min ? "🏆" : "";
       const minText = stats.min ? `${stats.min.price}円` : "-";
+      const nameHtml = site === "駿河屋" && cardNum
+        ? `<a href="${surugaAffiliateUrl(cardNum)}" target="_blank" rel="nofollow noopener sponsored">${escapeHtml(site)}</a> <span class="pr-label">PR</span>`
+        : escapeHtml(site);
       return `<tr>
-        <td><span class="site-swatch" style="background:${color}"></span>${escapeHtml(site)}${crown}</td>
+        <td><span class="site-swatch" style="background:${color}"></span>${nameHtml}${crown}</td>
         <td>${minText}</td>
       </tr>`;
     })
@@ -278,12 +298,12 @@ function latestDateHtml(history) {
 
 // カード1件分の価格統計(相場の強調表示 + 最新取得日時 + サイト別最安値の表)を
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
-function buildPriceStatsHtml(history) {
-  const table = siteSummaryTableHtml(history);
+function buildPriceStatsHtml(history, cardNum) {
+  const table = siteSummaryTableHtml(history, cardNum);
   return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}`;
 }
 
-function renderPriceSection(cardId) {
+function renderPriceSection(cardId, cardNum) {
   const history = commonPrices[String(cardId)] || [];
   const statsEl = document.getElementById("modal-price-stats");
   const tableEl = document.getElementById("modal-price-table");
@@ -305,9 +325,9 @@ function renderPriceSection(cardId) {
 
   if (tableEl) {
     statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
-    tableEl.innerHTML = siteSummaryTableHtml(history);
+    tableEl.innerHTML = siteSummaryTableHtml(history, cardNum);
   } else {
-    statsEl.innerHTML = buildPriceStatsHtml(history);
+    statsEl.innerHTML = buildPriceStatsHtml(history, cardNum);
   }
 
   // モーダル内は既定で全期間表示。7日/30日タブでその場で絞り込める。
