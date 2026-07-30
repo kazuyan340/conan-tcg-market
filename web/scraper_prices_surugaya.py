@@ -25,11 +25,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 
 SEARCH_URL = "https://www.suruga-ya.jp/search"
+TOP_URL = "https://www.suruga-ya.jp/"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
 }
 
 # 以前はC(コモン)/CP/R/RPを対象外にしていたが、駿河屋での該当ページ数を実測したところ
@@ -51,10 +53,27 @@ PAGE_LINK_PATTERN = re.compile(r"[?&]page=(\d+)")
 logger = logging.getLogger(__name__)
 
 
-def fetch_search_page(rarity: str, page: int) -> str:
+def make_session() -> requests.Session:
+    """トップページに先にアクセスしてCookieを取得したセッションを返す。
+
+    検索URLへ直接アクセスすると403 Forbiddenになることがある
+    (2026-07-28頃からGitHub Actions実行環境で発生)。トップページ経由の
+    通常のブラウザ挙動に近づけることで回避を試みる。
+    """
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    resp = session.get(TOP_URL, timeout=REQUEST_TIMEOUT)
+    resp.raise_for_status()
+    return session
+
+
+def fetch_search_page(session: requests.Session, rarity: str, page: int) -> str:
     query = f"名探偵コナンTCG {rarity}"
     params = {"category": "", "search_word": query, "page": page}
-    resp = requests.get(SEARCH_URL, params=params, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+    resp = session.get(
+        SEARCH_URL, params=params, timeout=REQUEST_TIMEOUT,
+        headers={"Referer": TOP_URL},
+    )
     resp.raise_for_status()
     return resp.text
 
@@ -105,6 +124,13 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     first_request = True
 
     try:
+        try:
+            session = make_session()
+        except requests.RequestException as exc:
+            logger.warning("駿河屋のトップページ取得に失敗: %s", exc)
+            session = requests.Session()
+            session.headers.update(HEADERS)
+
         for rarity in target_rarities:
             page = 1
             last_page = 1
@@ -114,7 +140,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 first_request = False
 
                 try:
-                    html = fetch_search_page(rarity, page)
+                    html = fetch_search_page(session, rarity, page)
                 except requests.RequestException as exc:
                     logger.warning("駿河屋の取得に失敗 (rarity=%s page=%d): %s", rarity, page, exc)
                     break
