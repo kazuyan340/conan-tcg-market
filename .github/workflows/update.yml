@@ -46,11 +46,16 @@ jobs:
       - name: Fetch high-rarity prices from Suruga-ya
         run: ${{ env.PYTHON }} web/scraper_prices_surugaya.py
 
-      - name: Save price/card database for the next job
-        uses: actions/cache/save@v4
+      # ジョブ間のDB引き継ぎはcacheではなくartifactを使う。cacheのsave/restoreは
+      # 同一run内でも保存直後に別ジョブから読めない(反映の時間差がある)ことがあり、
+      # 実際にこれが原因で駿河屋の取得結果が次のジョブに渡らず消えたことがあった。
+      # artifactはrun内で確実に一貫性があるのでこちらを使う。
+      - name: Hand off database to the next job
+        uses: actions/upload-artifact@v4
         with:
+          name: conan-tcg-db
           path: data/conan_tcg.db
-          key: conan-tcg-db-${{ github.run_id }}
+          retention-days: 1
 
   fetch_others_and_publish:
     needs: fetch_surugaya
@@ -66,13 +71,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Restore price/card database (from the Suruga-ya job)
-        uses: actions/cache/restore@v4
+      - name: Receive database from the Suruga-ya job
+        uses: actions/download-artifact@v4
         with:
-          path: data/conan_tcg.db
-          key: conan-tcg-db-${{ github.run_id }}
-          restore-keys: |
-            conan-tcg-db-
+          name: conan-tcg-db
+          path: data
 
       - name: Fetch high-rarity prices from Card Labo
         run: python web/scraper_prices_cardlabo.py
