@@ -3,7 +3,7 @@
 // デッキの空き枠をクリックすると、右側の絞り込みがその枠に合った種類に切り替わる。
 const MAIN_DECK_SIZE = 40;
 const MAX_COPIES = 3;
-const DECK_STORAGE_KEY = "conanTcgDeckBuilder";
+const DECK_LIST_KEY = "conanTcgDeckBuilderList";
 const CARD_TYPES = ["キャラ", "イベント", "パートナー", "事件"];
 
 const FILTER_FIELDS = {
@@ -18,8 +18,13 @@ let cardById = new Map();
 let filteredCards = [];
 let selectedTypes = new Set(["キャラ", "イベント"]);
 
-// deck = { partner: cardId|null, case: cardId|null, main: { cardId: count } }
-let deck = { partner: null, case: null, main: {} };
+// 複数デッキを保存できるようにする。deckListの各要素が1デッキ分で、
+// deck変数はdeckList内の該当要素への参照(同じオブジェクトなので、deck.main[...]の
+// ようにdeckを直接書き換えれば、そのままdeckList側にも反映される)。
+// deck = { id, name, partner: cardId|null, case: cardId|null, main: { cardId: count } }
+let deckList = [];
+let currentDeckId = null;
+let deck = { id: null, name: "", partner: null, case: null, main: {} };
 
 const grid = document.getElementById("card-grid");
 const resultCount = document.getElementById("result-count");
@@ -35,6 +40,7 @@ async function init() {
   bindFilterDropdownPositioning();
   loadDeckFromUrlOrStorage();
   applyFilters();
+  renderDeckList();
   renderDeckPanel();
   renderLastUpdated();
 }
@@ -165,8 +171,10 @@ function bindEvents() {
   keywordInput.addEventListener("input", debounce(applyFilters, 200));
 
   document.getElementById("clear-deck").addEventListener("click", () => {
-    if (!confirm("デッキの内容をすべてクリアします。よろしいですか?")) return;
-    deck = { partner: null, case: null, main: {} };
+    if (!confirm("このデッキの内容をすべてクリアします。よろしいですか?")) return;
+    deck.partner = null;
+    deck.case = null;
+    deck.main = {};
     saveDeck();
     renderDeckPanel();
   });
@@ -190,38 +198,157 @@ function debounce(fn, ms) {
   };
 }
 
+// deckListとcurrentDeckIdをまとめてlocalStorageに保存する。deckはdeckList内の
+// 要素への参照なので、deck.main[...]などの変更はdeckList側にもすでに反映済み。
 function saveDeck() {
   try {
-    localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
+    localStorage.setItem(DECK_LIST_KEY, JSON.stringify({ decks: deckList, currentDeckId }));
   } catch {
     // localStorageが使えない環境では保存をあきらめる(致命的ではない)
   }
 }
 
+function makeEmptyDeck(name) {
+  return { id: `deck-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, name, partner: null, case: null, main: {} };
+}
+
+// 新しいデッキを作って切り替える。
+function createNewDeck() {
+  const name = prompt("デッキ名を入力してください", `デッキ${deckList.length + 1}`);
+  if (name === null) return;
+  const fresh = makeEmptyDeck(name || `デッキ${deckList.length + 1}`);
+  deckList.push(fresh);
+  currentDeckId = fresh.id;
+  deck = fresh;
+  saveDeck();
+  renderDeckList();
+  renderDeckPanel();
+}
+
+function switchToDeck(id) {
+  const found = deckList.find((d) => d.id === id);
+  if (!found || found.id === currentDeckId) return;
+  currentDeckId = id;
+  deck = found;
+  saveDeck();
+  renderDeckList();
+  renderDeckPanel();
+}
+
+function deleteDeck(id) {
+  if (!confirm("このデッキを削除します。よろしいですか?")) return;
+  deckList = deckList.filter((d) => d.id !== id);
+  if (deckList.length === 0) {
+    deckList = [makeEmptyDeck("デッキ1")];
+  }
+  if (currentDeckId === id) {
+    currentDeckId = deckList[0].id;
+    deck = deckList[0];
+  }
+  saveDeck();
+  renderDeckList();
+  renderDeckPanel();
+}
+
 function loadDeckFromUrlOrStorage() {
+  try {
+    const raw = localStorage.getItem(DECK_LIST_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.decks) && parsed.decks.length > 0) {
+        deckList = parsed.decks;
+        currentDeckId = deckList.some((d) => d.id === parsed.currentDeckId) ? parsed.currentDeckId : deckList[0].id;
+        deck = deckList.find((d) => d.id === currentDeckId);
+      }
+    }
+  } catch {
+    // 壊れたデータは無視して初期状態のまま
+  }
+
+  // 複数デッキ対応前の古いデータ(単一デッキ)が残っていれば、「デッキ1」として引き継ぐ。
+  if (deckList.length === 0) {
+    let migrated = null;
+    try {
+      const old = localStorage.getItem("conanTcgDeckBuilder");
+      if (old) {
+        const parsedOld = JSON.parse(old);
+        if (parsedOld && (parsedOld.partner || parsedOld.case || Object.keys(parsedOld.main || {}).length > 0)) {
+          migrated = makeEmptyDeck("デッキ1");
+          migrated.partner = parsedOld.partner ?? null;
+          migrated.case = parsedOld.case ?? null;
+          migrated.main = parsedOld.main || {};
+        }
+      }
+    } catch {
+      // 古いデータが壊れている場合は無視する
+    }
+    const fresh = migrated || makeEmptyDeck("デッキ1");
+    deckList = [fresh];
+    currentDeckId = fresh.id;
+    deck = fresh;
+  }
+
+  // URLに共有デッキが埋め込まれている場合は、既存のデッキを上書きせず
+  // 新しいデッキとして追加してから切り替える。
   const fromUrl = new URLSearchParams(location.search).get("deck");
   if (fromUrl) {
     try {
       const decoded = JSON.parse(decodeURIComponent(escape(atob(fromUrl))));
       if (decoded && typeof decoded === "object") {
-        deck = { partner: decoded.partner ?? null, case: decoded.case ?? null, main: decoded.main || {} };
-        saveDeck();
-        return;
+        const shared = makeEmptyDeck("共有されたデッキ");
+        shared.partner = decoded.partner ?? null;
+        shared.case = decoded.case ?? null;
+        shared.main = decoded.main || {};
+        deckList.push(shared);
+        currentDeckId = shared.id;
+        deck = shared;
       }
     } catch {
-      // URLのデッキデータが壊れている場合は無視してlocalStorageにフォールバック
+      // URLのデッキデータが壊れている場合は無視する
     }
   }
 
-  try {
-    const raw = localStorage.getItem(DECK_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      deck = { partner: parsed.partner ?? null, case: parsed.case ?? null, main: parsed.main || {} };
-    }
-  } catch {
-    // 壊れたデータは無視して初期状態のまま
+  saveDeck();
+}
+
+// デッキ一覧バー(保存済みデッキをカードで並べ、クリックで切り替え・削除できる)を描画する。
+function renderDeckList() {
+  const bar = document.getElementById("deck-list-bar");
+  bar.innerHTML = "";
+
+  for (const d of deckList) {
+    const tile = document.createElement("div");
+    tile.className = "deck-list-tile" + (d.id === currentDeckId ? " active" : "");
+
+    const partnerCard = d.partner ? cardById.get(d.partner) : null;
+    const caseCard = d.case ? cardById.get(d.case) : null;
+    const mainCount = Object.values(d.main || {}).reduce((sum, n) => sum + n, 0);
+
+    tile.innerHTML = `
+      <div class="deck-list-thumbs">
+        <div class="deck-list-thumb${partnerCard ? "" : " empty"}">${partnerCard ? `<img src="${partnerCard.image_url || ""}" alt="">` : ""}</div>
+        <div class="deck-list-thumb${caseCard ? "" : " empty"}">${caseCard ? `<img src="${caseCard.image_url || ""}" alt="">` : ""}</div>
+      </div>
+      <div class="deck-list-info">
+        <div class="deck-list-name">${escapeHtml(d.name || "無題のデッキ")}</div>
+        <div class="deck-list-count">${mainCount}/${MAIN_DECK_SIZE}枚</div>
+      </div>
+      <button type="button" class="deck-list-delete" title="このデッキを削除">&times;</button>
+    `;
+    tile.addEventListener("click", () => switchToDeck(d.id));
+    tile.querySelector(".deck-list-delete").addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteDeck(d.id);
+    });
+    bar.appendChild(tile);
   }
+
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "deck-list-add";
+  addBtn.textContent = "+ 新しいデッキ";
+  addBtn.addEventListener("click", createNewDeck);
+  bar.appendChild(addBtn);
 }
 
 function shareDeckUrl() {

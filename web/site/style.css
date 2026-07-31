@@ -779,6 +779,90 @@ body.modal-open {
 }
 
 /* デッキ作成ページ */
+.deck-list-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 20px 0;
+}
+
+.deck-list-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  background: var(--card-bg);
+  position: relative;
+}
+
+.deck-list-tile.active {
+  border-color: var(--accent);
+}
+
+.deck-list-thumbs {
+  display: flex;
+  gap: 3px;
+}
+
+.deck-list-thumb {
+  width: 28px;
+  aspect-ratio: 5 / 7;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #eee;
+}
+
+.deck-list-thumb.empty {
+  border: 1px dashed var(--border);
+  background: transparent;
+}
+
+.deck-list-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.deck-list-name {
+  font-size: 0.8rem;
+  font-weight: bold;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-list-count {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.deck-list-delete {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.deck-list-delete:hover {
+  color: #d33;
+}
+
+.deck-list-add {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
 .deck-layout {
   display: grid;
   grid-template-columns: 500px 600px;
