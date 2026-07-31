@@ -351,7 +351,7 @@ function renderDeckList() {
     tile.innerHTML = `
       <div class="deck-list-thumbs">
         <div class="deck-list-thumb${partnerCard ? "" : " empty"}">${partnerCard ? `<img src="${partnerCard.image_url || ""}" alt="">` : ""}</div>
-        <div class="deck-list-thumb${caseCard ? "" : " empty"}">${caseCard ? `<img src="${caseCard.image_url || ""}" alt="">` : ""}</div>
+        <div class="deck-list-thumb deck-list-thumb-case${caseCard ? "" : " empty"}">${caseCard ? `<img src="${caseCard.image_url || ""}" alt="">` : ""}</div>
       </div>
       <div class="deck-list-info">
         <div class="deck-list-name">${escapeHtml(d.name || "無題のデッキ")}</div>
