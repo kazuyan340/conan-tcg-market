@@ -25,6 +25,7 @@ let selectedTypes = new Set(["キャラ", "イベント"]);
 let deckList = [];
 let currentDeckId = null;
 let deck = { id: null, name: "", partner: null, case: null, main: {} };
+let openedSharedDeckFromUrl = false;
 
 const grid = document.getElementById("card-grid");
 const resultCount = document.getElementById("result-count");
@@ -43,6 +44,26 @@ async function init() {
   renderDeckList();
   renderDeckPanel();
   renderLastUpdated();
+  // URL経由で共有デッキを開いた場合は、選択画面を経由せずそのまま調整画面を開く。
+  if (openedSharedDeckFromUrl) {
+    showDeckEdit();
+  } else {
+    showDeckSelect();
+  }
+}
+
+// デッキ選択画面⇔調整画面の切り替え。
+function showDeckSelect() {
+  document.getElementById("view-deck-select").classList.remove("hidden");
+  document.getElementById("view-deck-edit").classList.add("hidden");
+  renderDeckList();
+}
+
+function showDeckEdit() {
+  document.getElementById("view-deck-select").classList.add("hidden");
+  document.getElementById("view-deck-edit").classList.remove("hidden");
+  document.getElementById("deck-edit-title").textContent = deck.name || "";
+  renderDeckPanel();
 }
 
 // .checkbox-listはposition:absoluteで浮かせているが、検索パネル自体が
@@ -180,6 +201,7 @@ function bindEvents() {
   });
 
   document.getElementById("share-deck").addEventListener("click", shareDeckUrl);
+  document.getElementById("back-to-deck-select").addEventListener("click", showDeckSelect);
 
   document.addEventListener("click", (e) => {
     for (const details of document.querySelectorAll(".filter-group[open]")) {
@@ -221,26 +243,27 @@ function createNewDeck() {
   currentDeckId = fresh.id;
   deck = fresh;
   saveDeck();
-  renderDeckList();
-  renderDeckPanel();
+  showDeckEdit();
 }
 
 function switchToDeck(id) {
   const found = deckList.find((d) => d.id === id);
-  if (!found || found.id === currentDeckId) return;
+  if (!found) return;
   currentDeckId = id;
   deck = found;
   saveDeck();
-  renderDeckList();
-  renderDeckPanel();
+  showDeckEdit();
 }
 
 function deleteDeck(id) {
+  // デッキが1個だけの場合に削除を許可すると、代わりに同じ名前の空デッキが
+  // 自動生成されて「消えていないように見える」ため、最後の1個は削除できない仕様にする。
+  if (deckList.length <= 1) {
+    alert("最後の1個のデッキは削除できません。");
+    return;
+  }
   if (!confirm("このデッキを削除します。よろしいですか?")) return;
   deckList = deckList.filter((d) => d.id !== id);
-  if (deckList.length === 0) {
-    deckList = [makeEmptyDeck("デッキ1")];
-  }
   if (currentDeckId === id) {
     currentDeckId = deckList[0].id;
     deck = deckList[0];
@@ -302,6 +325,7 @@ function loadDeckFromUrlOrStorage() {
         deckList.push(shared);
         currentDeckId = shared.id;
         deck = shared;
+        openedSharedDeckFromUrl = true;
       }
     } catch {
       // URLのデッキデータが壊れている場合は無視する

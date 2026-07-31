@@ -779,11 +779,30 @@ body.modal-open {
 }
 
 /* デッキ作成ページ */
+.deck-select-view {
+  padding: 10px 20px 24px;
+}
+
+.deck-select-view h2 {
+  font-size: 1.1rem;
+  margin: 0 0 12px;
+}
+
+.deck-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px 0;
+}
+
+.deck-edit-title {
+  font-weight: bold;
+}
+
 .deck-list-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 10px 20px 0;
 }
 
 .deck-list-tile {

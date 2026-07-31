@@ -20,9 +20,20 @@
   </div>
 </header>
 
-<div id="deck-list-bar" class="deck-list-bar"></div>
+<!-- デッキ選択画面: 保存済みデッキを選ぶ・新規作成する画面。 -->
+<div id="view-deck-select" class="deck-select-view">
+  <h2>デッキ一覧</h2>
+  <div id="deck-list-bar" class="deck-list-bar"></div>
+</div>
 
-<div class="deck-layout">
+<!-- デッキ調整画面: 選んだデッキの中身を編集する画面。 -->
+<div id="view-deck-edit" class="hidden">
+  <div class="deck-edit-header">
+    <button type="button" id="back-to-deck-select" class="reset-btn">← デッキ一覧に戻る</button>
+    <span id="deck-edit-title" class="deck-edit-title"></span>
+  </div>
+
+  <div class="deck-layout">
   <!-- 左側: デッキ全体(パートナー・事件・メインデッキ40枚)を常に表示。
        埋まっている枠はカード画像入りで表示され、何がデッキに入っているか一目で分かる。 -->
   <main class="deck-main">
@@ -77,6 +88,7 @@
 
     <div id="card-grid" class="card-grid deck-search-grid"></div>
   </aside>
+  </div>
 </div>
 
 <div id="modal-overlay" class="modal-overlay hidden">
