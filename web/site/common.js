@@ -257,14 +257,19 @@ function siteSummaryTableHtml(history, cardNum) {
   </table>`;
 }
 
-// 各サイトの「現在の最安値」を単純平均して「相場」を計算する。
+// 各サイトの現在の価格(mode="min"なら最安値、mode="avg"なら平均値)を単純平均する。
 // 例: 駿河屋の最安値700円・カードラボの最安値750円・竜のしっぽの最安値720円なら、
 //     (700+750+720)/3 = 723円。出品数による重み付けはしない。
-function pooledAveragePrice(history) {
+function siteAveragePrice(history, mode = "min") {
   const bySite = latestStatsBySite(history);
-  const mins = Object.values(bySite).map((s) => s.min && s.min.price).filter((p) => p != null);
-  if (mins.length === 0) return null;
-  return Math.round(mins.reduce((sum, p) => sum + p, 0) / mins.length);
+  const prices = Object.values(bySite).map((s) => s[mode] && s[mode].price).filter((p) => p != null);
+  if (prices.length === 0) return null;
+  return Math.round(prices.reduce((sum, p) => sum + p, 0) / prices.length);
+}
+
+// 「相場」として全ページ共通で使う数値(各サイト最安値の単純平均)。
+function pooledAveragePrice(history) {
+  return siteAveragePrice(history, "min");
 }
 
 // 「このカードの相場」を大きく強調表示するHTML文字列を返す(各サイト最安値の単純平均)。

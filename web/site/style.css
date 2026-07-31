@@ -778,6 +778,236 @@ body.modal-open {
   color: var(--accent);
 }
 
+/* デッキ作成ページ */
+.deck-layout {
+  display: grid;
+  grid-template-columns: 500px 600px;
+  justify-content: center;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 20px 24px;
+}
+
+.deck-main h3 {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+
+.deck-hint {
+  font-size: 0.66rem;
+  font-weight: normal;
+  color: var(--muted);
+}
+
+.deck-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.deck-count {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.deck-count-ok {
+  color: #2f9e44;
+  font-weight: bold;
+}
+
+.deck-total {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--accent);
+  margin-right: auto;
+}
+
+.deck-summary .reset-btn {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+}
+
+.deck-top-slots {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.deck-slot-section {
+  flex: 0 0 auto;
+}
+
+.deck-slot-section h3 {
+  margin: 0 0 4px;
+}
+
+.deck-top-slots .deck-slot-box {
+  width: 48px;
+}
+
+/* パートナー/事件の1枠、およびメインデッキの1枠(1枚)を表すカード形の箱。
+   非公式のファンメイドデッキメーカーのグリッド見た目を参考にしている。 */
+.deck-slot-box {
+  position: relative;
+  aspect-ratio: 5 / 7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card-bg);
+  cursor: pointer;
+}
+
+.deck-slot-box.empty {
+  border: 2px dashed var(--border);
+}
+
+.deck-slot-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 事件カードは縦向き/横向きが混在するため、高さはパートナー枠と揃えたまま、
+   横向きのカードは幅を切らずにそのまま横長で表示する。 */
+#deck-case {
+  width: fit-content;
+  min-width: 48px;
+  height: 67.2px; /* パートナー枠(幅48px, aspect-ratio 5/7)と同じ高さに揃える */
+  aspect-ratio: auto;
+}
+
+#deck-case img {
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.deck-slot-clear {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 15px;
+  height: 15px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.deck-main-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  max-width: 460px;
+}
+
+.deck-search-panel {
+  position: sticky;
+  top: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+
+.deck-search-panel .filter-item {
+  margin-bottom: 6px;
+}
+
+.deck-search-panel input[type="text"] {
+  width: 100%;
+}
+
+.deck-type-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.type-toggle {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.type-toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.deck-search-grid {
+  padding: 0;
+  margin-top: 8px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+/* 事件カードは横向きのものがあるため、枠は縦長のまま・画像はトリミングせず
+   (object-fit: contain)そのままの縦横比で収める。 */
+.deck-search-grid .deck-tile-img-wrap img {
+  object-fit: contain;
+}
+
+.deck-search-grid .card-tile {
+  padding: 3px;
+}
+
+.deck-tile-img-wrap {
+  position: relative;
+  line-height: 0;
+}
+
+.deck-info-btn {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.55rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1px 0 0;
+}
+
+@media (max-width: 900px) {
+  .deck-layout {
+    grid-template-columns: 1fr;
+  }
+  .deck-search-panel {
+    position: static;
+    max-height: none;
+  }
+  .deck-main-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+  .deck-search-grid {
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1b1c1f;
