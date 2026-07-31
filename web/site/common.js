@@ -396,6 +396,35 @@ function dedupeLatestPerSiteDay(points) {
   return [...latestByKey.values()];
 }
 
+// 「相場」(全サイト枚数加重平均)の日次推移を返す。各サイトの平均値系列を日ごとに
+// 1点にまとめたうえで、その日にデータがある全サイトをsample_countで加重平均する
+// (pooledAveragePriceの「最新1点だけ」版を、日ごとに算出したもの)。
+function pooledAverageSeries(history) {
+  const avgPoints = dedupeLatestPerSiteDay(history.filter((p) => p.site.endsWith("(平均)")));
+  const byDay = new Map();
+  for (const p of avgPoints) {
+    const day = dayKey(p.recorded_at);
+    if (!byDay.has(day)) byDay.set(day, []);
+    byDay.get(day).push(p);
+  }
+  const series = [];
+  for (const points of byDay.values()) {
+    let weightedSum = 0;
+    let totalCount = 0;
+    for (const p of points) {
+      const count = p.sample_count || 1;
+      weightedSum += p.price * count;
+      totalCount += count;
+    }
+    if (totalCount > 0) {
+      series.push({ recorded_at: points[0].recorded_at, price: Math.round(weightedSum / totalCount) });
+    }
+  }
+  return series.sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
+}
+
+const MARKET_LINE_COLOR = "#222";
+
 function drawPriceChart(canvas, history, days) {
   // canvasの描画バッファ解像度をCSS表示サイズ(+devicePixelRatio)に合わせる。
   // これをしないと、CSSで拡大表示されたぶん線がぼやけて薄く見えてしまう
@@ -412,9 +441,11 @@ function drawPriceChart(canvas, history, days) {
 
   const limited = filterHistoryByDays(history, days);
 
-  // グラフには各サイトの最安値の推移だけを描く(平均値はサイト別の1本の線として
-  // 描いても見づらいだけなので、「相場」の枠(avgHighlightHtml)で数値としてのみ使う)。
+  // グラフには各サイトの最安値の推移に加えて、全サイトを枚数加重平均した「相場」の
+  // 推移も重ねて描く(数値としては avgHighlightHtml で強調表示済みだが、グラフでも
+  // 推移を追えるようにしてほしいという要望に対応)。
   const shown = dedupeLatestPerSiteDay(limited.filter((p) => !p.site.endsWith("(平均)")));
+  const pooledSeries = pooledAverageSeries(limited);
 
   const bySite = {};
   for (const point of shown) {
@@ -423,8 +454,8 @@ function drawPriceChart(canvas, history, days) {
     bySite[base].push(point);
   }
 
-  const dates = [...new Set(shown.map((p) => dayKey(p.recorded_at)))].sort();
-  const prices = shown.map((p) => p.price);
+  const dates = [...new Set([...shown, ...pooledSeries].map((p) => dayKey(p.recorded_at)))].sort();
+  const prices = [...shown, ...pooledSeries].map((p) => p.price);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const pad = Math.max(10, Math.round((maxPrice - minPrice) * 0.1));
@@ -454,12 +485,13 @@ function drawPriceChart(canvas, history, days) {
   ctx.fillText(String(yMin), margin.left - 6, margin.top + plotH);
   ctx.textBaseline = "alphabetic";
 
-  function drawSeries(points, color) {
+  function drawSeries(points, color, { dashed = false, lineWidth = 2 } = {}) {
     if (points.length === 0) return;
     const sorted = [...points].sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(dashed ? [6, 4] : []);
     ctx.beginPath();
     sorted.forEach((p, i) => {
       const x = xPos(dayKey(p.recorded_at));
@@ -468,6 +500,7 @@ function drawPriceChart(canvas, history, days) {
       else ctx.lineTo(x, y);
     });
     ctx.stroke();
+    ctx.setLineDash([]);
 
     for (const p of sorted) {
       ctx.beginPath();
@@ -481,6 +514,13 @@ function drawPriceChart(canvas, history, days) {
     const color = colorForSite(base);
     legendItems.push({ site: base, color });
     drawSeries(points, color);
+  }
+
+  // 相場(全サイト枚数加重平均)は、サイト別の実勢価格と区別しやすいよう
+  // 太めの点線で目立たせて重ねて描く。
+  if (pooledSeries.length > 0) {
+    legendItems.push({ site: "相場", color: MARKET_LINE_COLOR });
+    drawSeries(pooledSeries, MARKET_LINE_COLOR, { dashed: true, lineWidth: 3 });
   }
 
   let legendX = margin.left + 4;
