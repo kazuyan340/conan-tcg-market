@@ -383,6 +383,19 @@ function filterHistoryByDays(history, days) {
   return history.filter((p) => new Date(p.recorded_at).getTime() >= cutoff);
 }
 
+// 同じサイト・同じ日に複数の取得ポイントがある場合(手動での再実行など)、
+// 同じX位置(日)に2点存在してグラフの線がジグザグに折れて見えてしまうため、
+// サイトごとに1日1点(その日の最新値)だけになるよう間引く。
+function dedupeLatestPerSiteDay(points) {
+  const latestByKey = new Map();
+  for (const p of points) {
+    const key = `${baseSiteName(p.site)}|${dayKey(p.recorded_at)}`;
+    const existing = latestByKey.get(key);
+    if (!existing || p.recorded_at > existing.recorded_at) latestByKey.set(key, p);
+  }
+  return [...latestByKey.values()];
+}
+
 function drawPriceChart(canvas, history, days) {
   // canvasの描画バッファ解像度をCSS表示サイズ(+devicePixelRatio)に合わせる。
   // これをしないと、CSSで拡大表示されたぶん線がぼやけて薄く見えてしまう
@@ -401,7 +414,7 @@ function drawPriceChart(canvas, history, days) {
 
   // グラフには各サイトの最安値の推移だけを描く(平均値はサイト別の1本の線として
   // 描いても見づらいだけなので、「相場」の枠(avgHighlightHtml)で数値としてのみ使う)。
-  const shown = limited.filter((p) => !p.site.endsWith("(平均)"));
+  const shown = dedupeLatestPerSiteDay(limited.filter((p) => !p.site.endsWith("(平均)")));
 
   const bySite = {};
   for (const point of shown) {

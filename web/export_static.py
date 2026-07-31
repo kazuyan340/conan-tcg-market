@@ -71,10 +71,20 @@ def _price_points_by_card_site(conn, series: str = "min") -> dict[tuple[int, str
         f"WHERE {site_condition} ORDER BY card_id, site, recorded_at"
     ).fetchall()
 
-    by_card_site: dict[tuple[int, str], list[tuple[str, int]]] = defaultdict(list)
+    # 同じ日に手動再実行などで複数回記録された場合、同じ日の重複ポイントが
+    # 「直近2時点の変化」に紛れ込んで実際には値動きしていないのに急上昇/急下降と
+    # 誤検出することがあるため、(card_id, site, 日付)ごとにその日の最新値だけ残す。
+    # rowsはrecorded_at昇順なので、同じ日は後から出てくるものが最新値として上書きされる。
+    latest_by_day: dict[tuple[int, str], dict[str, tuple[str, int]]] = defaultdict(dict)
     for row in rows:
         site = row["site"][: -len("(平均)")] if series == "avg" else row["site"]
-        by_card_site[(row["card_id"], site)].append((row["recorded_at"], row["price"]))
+        key = (row["card_id"], site)
+        day = row["recorded_at"][:10]
+        latest_by_day[key][day] = (row["recorded_at"], row["price"])
+
+    by_card_site: dict[tuple[int, str], list[tuple[str, int]]] = {
+        key: [days[day] for day in sorted(days)] for key, days in latest_by_day.items()
+    }
     return by_card_site
 
 
