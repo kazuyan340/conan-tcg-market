@@ -8,21 +8,22 @@ on:
 permissions:
   contents: write
 
-env:
-  # セルフホストランナー(このPC)のPython 3.12への絶対パス。ランナーサービスは
-  # NETWORK SERVICEアカウントで動作しており、PCのPATH変更がサービスに反映されるのは
-  # 次回OS再起動後のため、PATHに頼らずフルパスで直接指定する。
-  PYTHON: C:\Users\kazuya.tohara\AppData\Local\Programs\Python\Python312\python.exe
-  # Windows既定のコードページ(cp932)だとログ内の日本語が文字化けするため、
-  # Pythonの標準出力/エラー出力を明示的にUTF-8に固定する。
-  PYTHONIOENCODING: utf-8
-
 jobs:
-  update:
-    # 駿河屋がGitHub Actionsのクラウド(データセンター)IPを403でブロックするため、
-    # このジョブ全体を自宅/オフィスの通常回線を持つセルフホストランナー(自分のPC)で実行する。
+  # 駿河屋はGitHub Actionsのクラウド(データセンター)IPを403でブロックするため、
+  # このジョブだけ通常回線を持つセルフホストランナー(自分のPC)で実行する。
+  # 逆にカードラボ・竜のしっぽはそのPCの回線(会社Wi-Fi)側で接続リセットされるため、
+  # 元通りGitHub Actions側で実行する(fetch_others_and_publishジョブ)。
+  fetch_surugaya:
     runs-on: [self-hosted, self-hosted-conan]
-    timeout-minutes: 90
+    timeout-minutes: 60
+    env:
+      # セルフホストランナー(このPC)のPython 3.12への絶対パス。ランナーサービスは
+      # NETWORK SERVICEアカウントで動作しており、PCのPATH変更がサービスに反映されるのは
+      # 次回OS再起動後のため、PATHに頼らずフルパスで直接指定する。
+      PYTHON: C:\Users\kazuya.tohara\AppData\Local\Programs\Python\Python312\python.exe
+      # Windows既定のコードページ(cp932)だとログ内の日本語が文字化けするため、
+      # Pythonの標準出力/エラー出力を明示的にUTF-8に固定する。
+      PYTHONIOENCODING: utf-8
     steps:
       - uses: actions/checkout@v4
 
@@ -45,14 +46,42 @@ jobs:
       - name: Fetch high-rarity prices from Suruga-ya
         run: ${{ env.PYTHON }} web/scraper_prices_surugaya.py
 
+      - name: Save price/card database for the next job
+        uses: actions/cache/save@v4
+        with:
+          path: data/conan_tcg.db
+          key: conan-tcg-db-${{ github.run_id }}
+
+  fetch_others_and_publish:
+    needs: fetch_surugaya
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore price/card database (from the Suruga-ya job)
+        uses: actions/cache/restore@v4
+        with:
+          path: data/conan_tcg.db
+          key: conan-tcg-db-${{ github.run_id }}
+          restore-keys: |
+            conan-tcg-db-
+
       - name: Fetch high-rarity prices from Card Labo
-        run: ${{ env.PYTHON }} web/scraper_prices_cardlabo.py
+        run: python web/scraper_prices_cardlabo.py
 
       - name: Fetch high-rarity prices from Ryuu no Shippo
-        run: ${{ env.PYTHON }} web/scraper_prices_ryuunoshippo.py
+        run: python web/scraper_prices_ryuunoshippo.py
 
       - name: Export static JSON for the site
-        run: ${{ env.PYTHON }} web/export_static.py
+        run: python web/export_static.py
 
       - name: Save price/card database for the next run
         uses: actions/cache/save@v4
@@ -61,7 +90,6 @@ jobs:
           key: conan-tcg-db-${{ github.run_id }}
 
       - name: Commit updated data
-        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
