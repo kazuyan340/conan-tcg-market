@@ -257,26 +257,17 @@ function siteSummaryTableHtml(history, cardNum) {
   </table>`;
 }
 
-// 全サイト・全出品を1つのプールにまとめた枚数加重平均を計算する。
-// 例: 駿河屋で500円×4枚+600円×1枚(平均520円・件数5)、カードラボで550円×2枚(平均550円・件数2)
-//     なら、サイトごとの平均を単純に2つ平均するのではなく、
-//     (520*5 + 550*2) / (5+2) という「全7枚をまとめた場合の平均」を返す。
-// 件数(sample_count)が無い古いデータは1枚分として扱う(概算のフォールバック)。
+// 各サイトの「現在の最安値」を単純平均して「相場」を計算する。
+// 例: 駿河屋の最安値700円・カードラボの最安値750円・竜のしっぽの最安値720円なら、
+//     (700+750+720)/3 = 723円。出品数による重み付けはしない。
 function pooledAveragePrice(history) {
   const bySite = latestStatsBySite(history);
-  let weightedSum = 0;
-  let totalCount = 0;
-  for (const stats of Object.values(bySite)) {
-    if (!stats.avg) continue;
-    const count = stats.avg.sample_count || 1;
-    weightedSum += stats.avg.price * count;
-    totalCount += count;
-  }
-  if (totalCount === 0) return null;
-  return Math.round(weightedSum / totalCount);
+  const mins = Object.values(bySite).map((s) => s.min && s.min.price).filter((p) => p != null);
+  if (mins.length === 0) return null;
+  return Math.round(mins.reduce((sum, p) => sum + p, 0) / mins.length);
 }
 
-// 「このカードの相場」を大きく強調表示するHTML文字列を返す(全サイト全出品の枚数加重平均)。
+// 「このカードの相場」を大きく強調表示するHTML文字列を返す(各サイト最安値の単純平均)。
 function avgHighlightHtml(history) {
   const avg = pooledAveragePrice(history);
   if (avg === null) return "";
@@ -396,29 +387,21 @@ function dedupeLatestPerSiteDay(points) {
   return [...latestByKey.values()];
 }
 
-// 「相場」(全サイト枚数加重平均)の日次推移を返す。各サイトの平均値系列を日ごとに
-// 1点にまとめたうえで、その日にデータがある全サイトをsample_countで加重平均する
+// 「相場」(各サイト最安値の単純平均)の日次推移を返す。各サイトの最安値系列を日ごとに
+// 1点にまとめたうえで、その日にデータがある全サイトの最安値を単純平均する
 // (pooledAveragePriceの「最新1点だけ」版を、日ごとに算出したもの)。
 function pooledAverageSeries(history) {
-  const avgPoints = dedupeLatestPerSiteDay(history.filter((p) => p.site.endsWith("(平均)")));
+  const minPoints = dedupeLatestPerSiteDay(history.filter((p) => !p.site.endsWith("(平均)")));
   const byDay = new Map();
-  for (const p of avgPoints) {
+  for (const p of minPoints) {
     const day = dayKey(p.recorded_at);
     if (!byDay.has(day)) byDay.set(day, []);
     byDay.get(day).push(p);
   }
   const series = [];
   for (const points of byDay.values()) {
-    let weightedSum = 0;
-    let totalCount = 0;
-    for (const p of points) {
-      const count = p.sample_count || 1;
-      weightedSum += p.price * count;
-      totalCount += count;
-    }
-    if (totalCount > 0) {
-      series.push({ recorded_at: points[0].recorded_at, price: Math.round(weightedSum / totalCount) });
-    }
+    const avg = points.reduce((sum, p) => sum + p.price, 0) / points.length;
+    series.push({ recorded_at: points[0].recorded_at, price: Math.round(avg) });
   }
   return series.sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
 }
@@ -441,7 +424,7 @@ function drawPriceChart(canvas, history, days) {
 
   const limited = filterHistoryByDays(history, days);
 
-  // グラフには各サイトの最安値の推移に加えて、全サイトを枚数加重平均した「相場」の
+  // グラフには各サイトの最安値の推移に加えて、各サイト最安値を単純平均した「相場」の
   // 推移も重ねて描く(数値としては avgHighlightHtml で強調表示済みだが、グラフでも
   // 推移を追えるようにしてほしいという要望に対応)。
   const shown = dedupeLatestPerSiteDay(limited.filter((p) => !p.site.endsWith("(平均)")));
@@ -516,7 +499,7 @@ function drawPriceChart(canvas, history, days) {
     drawSeries(points, color);
   }
 
-  // 相場(全サイト枚数加重平均)は、サイト別の実勢価格と区別しやすいよう
+  // 相場(各サイト最安値の単純平均)は、サイト別の実勢価格と区別しやすいよう
   // 太めの点線で目立たせて重ねて描く。
   if (pooledSeries.length > 0) {
     legendItems.push({ site: "相場", color: MARKET_LINE_COLOR });

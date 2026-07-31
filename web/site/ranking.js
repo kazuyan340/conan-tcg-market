@@ -153,7 +153,7 @@ function debounce(fn, ms) {
   };
 }
 
-// ランキング用のカード代表価格(全サイト全出品の枚数加重平均)。データが無ければnull。
+// ランキング用のカード代表価格(各サイト最安値の単純平均)。データが無ければnull。
 function cardPrice(card) {
   return pooledAveragePrice(commonPrices[String(card.id)] || []);
 }
