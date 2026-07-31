@@ -32,10 +32,30 @@ async function init() {
   populateFilterOptions();
   bindEvents();
   bindModalEvents();
+  bindFilterDropdownPositioning();
   loadDeckFromUrlOrStorage();
   applyFilters();
   renderDeckPanel();
   renderLastUpdated();
+}
+
+// .checkbox-listはposition:absoluteで浮かせているが、検索パネル自体が
+// overflow-y:autoでスクロールする箱になっているため、そのままだと箱の外に出る分が
+// 切れて表示され、下の方のチェックが押せなくなる。開いた瞬間にposition:fixedへ
+// 切り替えて、実際の画面上の座標を計算し直すことでこれを回避する。
+function bindFilterDropdownPositioning() {
+  for (const details of document.querySelectorAll(".deck-search-panel .filter-group")) {
+    details.addEventListener("toggle", () => {
+      const list = details.querySelector(".checkbox-list");
+      if (!list) return;
+      if (details.open) {
+        const rect = details.getBoundingClientRect();
+        list.style.position = "fixed";
+        list.style.top = `${rect.bottom + 4}px`;
+        list.style.left = `${rect.left}px`;
+      }
+    });
+  }
 }
 
 function valuesForField(card, field) {
@@ -79,9 +99,23 @@ function syncTypeToggleButtons() {
 
 // デッキの枠(パートナー/事件/メインデッキ)をクリックしたときに呼ぶ。右側の絞り込みを
 // その種類だけにして、検索パネルにスクロールする。
+// 色/レアリティ/レベル/収録パックのチェックを全部外し、キーワードもクリアする。
+// パートナー⇔事件⇔メインデッキと切り替えたときに、前の絞り込み条件(例: レアリティSEC)が
+// 残ったまま新しい種類には該当カードが無く「0件」になってしまう問題を防ぐため。
+function resetCheckboxFilters() {
+  keywordInput.value = "";
+  for (const checkbox of document.querySelectorAll(".checkbox-list input:checked")) {
+    checkbox.checked = false;
+  }
+  for (const field of Object.keys(FILTER_FIELDS)) {
+    updateCountBadge(field);
+  }
+}
+
 function focusPickerOn(type) {
   selectedTypes = new Set([type]);
   syncTypeToggleButtons();
+  resetCheckboxFilters();
   applyFilters();
   document.querySelector(".deck-search-panel").scrollIntoView({ behavior: "smooth", block: "start" });
   keywordInput.focus();
@@ -408,6 +442,7 @@ function renderDeckPanel() {
 function focusPickerOnMain() {
   selectedTypes = new Set(["キャラ", "イベント"]);
   syncTypeToggleButtons();
+  resetCheckboxFilters();
   applyFilters();
   document.querySelector(".deck-search-panel").scrollIntoView({ behavior: "smooth", block: "start" });
   keywordInput.focus();
