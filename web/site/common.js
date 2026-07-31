@@ -468,7 +468,10 @@ function drawPriceChart(canvas, history, days) {
   ctx.fillText(String(yMin), margin.left - 6, margin.top + plotH);
   ctx.textBaseline = "alphabetic";
 
-  function drawSeries(points, color, { dashed = false, lineWidth = 2 } = {}) {
+  // ホバー時にツールチップで値を出すため、描画した各点の座標と内容を控えておく。
+  const hitPoints = [];
+
+  function drawSeries(points, color, label, { dashed = false, lineWidth = 2 } = {}) {
     if (points.length === 0) return;
     const sorted = [...points].sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
     ctx.strokeStyle = color;
@@ -486,9 +489,12 @@ function drawPriceChart(canvas, history, days) {
     ctx.setLineDash([]);
 
     for (const p of sorted) {
+      const x = xPos(dayKey(p.recorded_at));
+      const y = yPos(p.price);
       ctx.beginPath();
-      ctx.arc(xPos(dayKey(p.recorded_at)), yPos(p.price), 3, 0, Math.PI * 2);
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
       ctx.fill();
+      hitPoints.push({ x, y, label, price: p.price, date: formatDateLabel(p.recorded_at) });
     }
   }
 
@@ -496,14 +502,14 @@ function drawPriceChart(canvas, history, days) {
   for (const [base, points] of Object.entries(bySite)) {
     const color = colorForSite(base);
     legendItems.push({ site: base, color });
-    drawSeries(points, color);
+    drawSeries(points, color, base);
   }
 
   // 相場(各サイト最安値の単純平均)は、サイト別の実勢価格と区別しやすいよう
   // 太めの点線で目立たせて重ねて描く。
   if (pooledSeries.length > 0) {
     legendItems.push({ site: "相場", color: MARKET_LINE_COLOR });
-    drawSeries(pooledSeries, MARKET_LINE_COLOR, { dashed: true, lineWidth: 3 });
+    drawSeries(pooledSeries, MARKET_LINE_COLOR, "相場", { dashed: true, lineWidth: 3 });
   }
 
   let legendX = margin.left + 4;
@@ -543,4 +549,61 @@ function drawPriceChart(canvas, history, days) {
     ctx.fillText(formatDateLabel(date), 0, 0);
     ctx.restore();
   }
+
+  setupChartHover(canvas, hitPoints);
+}
+
+// 全グラフで使い回す単一のツールチップ要素(初回呼び出し時に1つだけ作る)。
+let chartTooltipEl = null;
+function getChartTooltip() {
+  if (!chartTooltipEl) {
+    chartTooltipEl = document.createElement("div");
+    chartTooltipEl.className = "chart-tooltip";
+    document.body.appendChild(chartTooltipEl);
+  }
+  return chartTooltipEl;
+}
+
+// canvas上のマウス位置に一番近い点(一定距離以内)を探し、ツールチップで
+// 「サイト名: 価格円(日付)」を表示する。drawPriceChartが呼ばれるたびに
+// hitPoints(点の座標一覧)は最新化されるが、イベントリスナー自体は
+// canvasごとに1回だけ登録する(再登録による多重発火を防ぐため)。
+function setupChartHover(canvas, hitPoints) {
+  canvas._chartHitPoints = hitPoints;
+  if (canvas._chartHoverBound) return;
+  canvas._chartHoverBound = true;
+
+  const tooltip = getChartTooltip();
+  const HIT_RADIUS = 10;
+
+  canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    let nearest = null;
+    let nearestDist = HIT_RADIUS;
+    for (const p of canvas._chartHitPoints || []) {
+      const dist = Math.hypot(p.x - mx, p.y - my);
+      if (dist <= nearestDist) {
+        nearest = p;
+        nearestDist = dist;
+      }
+    }
+
+    if (nearest) {
+      tooltip.textContent = `${nearest.label}: ${nearest.price}円 (${nearest.date})`;
+      tooltip.style.left = `${e.clientX + 12}px`;
+      tooltip.style.top = `${e.clientY + 12}px`;
+      tooltip.style.display = "block";
+      canvas.style.cursor = "pointer";
+    } else {
+      tooltip.style.display = "none";
+      canvas.style.cursor = "default";
+    }
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    tooltip.style.display = "none";
+  });
 }
