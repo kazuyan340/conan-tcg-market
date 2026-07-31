@@ -876,6 +876,12 @@ body.modal-open {
   color: var(--muted);
 }
 
+.deck-list-price {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
 .deck-list-delete {
   border: none;
   background: none;

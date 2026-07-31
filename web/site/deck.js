@@ -336,6 +336,27 @@ function loadDeckFromUrlOrStorage() {
 }
 
 // デッキ一覧バー(保存済みデッキをカードで並べ、クリックで切り替え・削除できる)を描画する。
+// 指定したデッキ(deckList中の1件)の合計金額を計算する。現在編集中でないデッキも含めて
+// 一覧に金額を出すための共通ヘルパー(ページを開くたびに最新のprices.jsonから計算するので、
+// 毎晩の自動更新結果がそのまま反映される)。
+function computeDeckTotal(d) {
+  let total = 0;
+  const partnerCard = d.partner ? cardById.get(d.partner) : null;
+  const caseCard = d.case ? cardById.get(d.case) : null;
+  for (const c of [partnerCard, caseCard]) {
+    if (!c) continue;
+    const p = cardPrice(c);
+    if (p !== null) total += p;
+  }
+  for (const [idStr, count] of Object.entries(d.main || {})) {
+    const card = cardById.get(Number(idStr));
+    if (!card) continue;
+    const p = cardPrice(card);
+    if (p !== null) total += p * count;
+  }
+  return total;
+}
+
 function renderDeckList() {
   const bar = document.getElementById("deck-list-bar");
   bar.innerHTML = "";
@@ -347,6 +368,7 @@ function renderDeckList() {
     const partnerCard = d.partner ? cardById.get(d.partner) : null;
     const caseCard = d.case ? cardById.get(d.case) : null;
     const mainCount = Object.values(d.main || {}).reduce((sum, n) => sum + n, 0);
+    const total = computeDeckTotal(d);
 
     tile.innerHTML = `
       <div class="deck-list-thumbs">
@@ -356,6 +378,7 @@ function renderDeckList() {
       <div class="deck-list-info">
         <div class="deck-list-name">${escapeHtml(d.name || "無題のデッキ")}</div>
         <div class="deck-list-count">${mainCount}/${MAIN_DECK_SIZE}枚</div>
+        <div class="deck-list-price">${total.toLocaleString()}円</div>
       </div>
       <button type="button" class="deck-list-delete" title="このデッキを削除">&times;</button>
     `;
