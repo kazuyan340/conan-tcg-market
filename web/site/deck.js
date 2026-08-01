@@ -331,21 +331,27 @@ function loadDeckFromUrlOrStorage() {
     deck = fresh;
   }
 
-  // URLに共有デッキが埋め込まれている場合は、既存のデッキを上書きせず
-  // 新しいデッキとして追加してから切り替える。
+  // URLに共有デッキが埋め込まれている場合は、確認してから既存のデッキを上書きせず
+  // 新しいデッキとして追加する。保存しない場合は何もせず通常通りの一覧を表示する。
   const fromUrl = new URLSearchParams(location.search).get("deck");
   if (fromUrl) {
     try {
       const decoded = JSON.parse(decodeURIComponent(escape(atob(fromUrl))));
       if (decoded && typeof decoded === "object") {
-        const shared = makeEmptyDeck("共有されたデッキ");
-        shared.partner = decoded.partner ?? null;
-        shared.case = decoded.case ?? null;
-        shared.main = decoded.main || {};
-        deckList.push(shared);
-        currentDeckId = shared.id;
-        deck = shared;
-        openedSharedDeckFromUrl = true;
+        if (confirm("共有されたデッキを保存しますか?(自分のデッキ一覧に新しく追加されます)")) {
+          const shared = makeEmptyDeck("共有されたデッキ");
+          shared.partner = decoded.partner ?? null;
+          shared.case = decoded.case ?? null;
+          shared.main = decoded.main || {};
+          deckList.push(shared);
+          currentDeckId = shared.id;
+          deck = shared;
+          saveDeck();
+          openedSharedDeckFromUrl = true;
+        }
+        // URLにデッキデータを残したままだと、再読み込みのたびにまた確認が出てしまうため、
+        // 保存の有無に関わらずURLからは消しておく。
+        history.replaceState(null, "", location.pathname);
       }
     } catch {
       // URLのデッキデータが壊れている場合は無視する
