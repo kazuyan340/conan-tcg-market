@@ -213,6 +213,7 @@ function bindEvents() {
 
   document.getElementById("share-deck").addEventListener("click", shareDeckUrl);
   document.getElementById("back-to-deck-select").addEventListener("click", showDeckSelect);
+  document.getElementById("rename-deck-btn").addEventListener("click", renameDeck);
 
   document.addEventListener("click", (e) => {
     for (const details of document.querySelectorAll(".filter-group[open]")) {
@@ -255,6 +256,16 @@ function createNewDeck() {
   deck = fresh;
   saveDeck();
   showDeckEdit();
+}
+
+// 編集画面のタイトル横「✏️ 名前を変更」ボタン用。現在編集中のデッキ名を変更する。
+function renameDeck() {
+  const name = prompt("デッキ名を入力してください", deck.name || "");
+  if (name === null || name.trim() === "") return;
+  deck.name = name.trim();
+  saveDeck();
+  document.getElementById("deck-edit-title").textContent = deck.name;
+  renderDeckList();
 }
 
 function switchToDeck(id) {
