@@ -58,10 +58,8 @@ async function init() {
     `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`,
   ], "down");
 
-  renderMoverGrid("mover-grid-up-min", "mover-empty-up-min", moversRes.min.up, cardById, "up");
-  renderMoverGrid("mover-grid-up-avg", "mover-empty-up-avg", moversRes.avg.up, cardById, "up");
-  renderMoverGrid("mover-grid-down-min", "mover-empty-down-min", moversRes.min.down, cardById, "down");
-  renderMoverGrid("mover-grid-down-avg", "mover-empty-down-avg", moversRes.avg.down, cardById, "down");
+  renderMoverGrid("mover-grid-up", "mover-empty-up", moversRes.up, cardById, "up");
+  renderMoverGrid("mover-grid-down", "mover-empty-down", moversRes.down, cardById, "down");
 }
 
 // サイトをまたいだ価格差を混同しないよう判定自体はサイト単位で行っているため(export_static.py参照)、

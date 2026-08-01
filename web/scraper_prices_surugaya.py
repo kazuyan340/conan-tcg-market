@@ -159,11 +159,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
 
                 page += 1
 
-        # 出品が複数あるカードは、最安値と平均値を別系列として保存する
-        # (最安値: 従来通り "駿河屋"。平均値: "駿河屋(平均)" として区別し、
-        #  急上昇/値上がり値下がりの判定は最安値系列だけを使うようにする)
-        # sample_count には出品件数(在庫の枚数分)を記録し、複数サイトの平均を
-        # あとで枚数加重(プール平均)で1つに合算できるようにする。
+        # sample_count には出品件数(在庫の枚数分)を記録する。
         # 同じ実行内では同じ時刻にしないと、グラフ上で同じ日時なのに別の点として
         # ずれて表示されてしまうため、この回の実行全体で1つのタイムスタンプに揃える。
         run_recorded_at = datetime.now(timezone.utc).isoformat()
@@ -171,9 +167,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             card_id = target_by_num[card_num]
             count = len(prices)
             min_price = min(prices)
-            avg_price = round(sum(prices) / count)
             db.insert_price(conn, card_id, "駿河屋", min_price, recorded_at=run_recorded_at, sample_count=count)
-            db.insert_price(conn, card_id, "駿河屋(平均)", avg_price, recorded_at=run_recorded_at, sample_count=count)
 
         unmatched = sorted(set(target_by_num) - set(all_prices))
         summary = {

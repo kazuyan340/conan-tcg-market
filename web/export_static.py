@@ -53,22 +53,18 @@ def export_prices(conn) -> dict[str, list[dict]]:
     return prices
 
 
-def _price_points_by_card_site(conn, series: str = "min") -> dict[tuple[int, str], list[tuple[str, int]]]:
-    """(card_id, site) -> [(recorded_at, price), ...] (日時順)。
-
-    series="min": 各サイトの最安値系列(site が "(平均)" で終わらないもの)
-    series="avg": 各サイトの平均値系列(site が "(平均)" で終わるもの、キーのsiteは"(平均)"を除いた名前)
+def _price_points_by_card_site(conn) -> dict[tuple[int, str], list[tuple[str, int]]]:
+    """(card_id, site) -> [(recorded_at, price), ...] (日時順、各サイトの最安値系列)。
 
     サイトごとに独立した時系列として扱う。駿河屋とカードラボのように仕入れ元が
     違えば価格帯そのものが異なるため、サイトをまたいで1本の時系列にすると
     「サイトが入れ替わっただけ」を値上がり/値下がりと誤検出してしまう
     (実際に複数サイト導入時にこれで急上昇/急下降が大量に誤検出された)。
-    最安値と平均値は同じ日時に別の値として並存するため、混ぜずに系列ごとに扱う。
+    "(平均)"系列(過去の名残でDBに残っている可能性がある)は対象外にする。
     """
-    site_condition = "site LIKE '%(平均)'" if series == "avg" else "site NOT LIKE '%(平均)'"
     rows = conn.execute(
-        f"SELECT card_id, site, price, recorded_at FROM price_history "
-        f"WHERE {site_condition} ORDER BY card_id, site, recorded_at"
+        "SELECT card_id, site, price, recorded_at FROM price_history "
+        "WHERE site NOT LIKE '%(平均)' ORDER BY card_id, site, recorded_at"
     ).fetchall()
 
     # 同じ日に手動再実行などで複数回記録された場合、同じ日の重複ポイントが
@@ -77,8 +73,7 @@ def _price_points_by_card_site(conn, series: str = "min") -> dict[tuple[int, str
     # rowsはrecorded_at昇順なので、同じ日は後から出てくるものが最新値として上書きされる。
     latest_by_day: dict[tuple[int, str], dict[str, tuple[str, int]]] = defaultdict(dict)
     for row in rows:
-        site = row["site"][: -len("(平均)")] if series == "avg" else row["site"]
-        key = (row["card_id"], site)
+        key = (row["card_id"], row["site"])
         day = row["recorded_at"][:10]
         latest_by_day[key][day] = (row["recorded_at"], row["price"])
 
@@ -99,7 +94,7 @@ def compute_trends(conn) -> dict[str, list[dict]]:
     サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する
     (詳細は _price_points_by_card_site のdocstring参照)。
     """
-    by_card_site = _price_points_by_card_site(conn, series="min")
+    by_card_site = _price_points_by_card_site(conn)
 
     spikes = []
     crashes = []
@@ -193,7 +188,7 @@ def compute_movers(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
     変化が無い(0%)カードはどちらにも含めない。サイトをまたいだ価格差を値動きと
     誤認しないよう、サイトごとに独立して判定する。
 
-    by_card_site は _price_points_by_card_site() の結果をそのまま渡す(min系列/avg系列どちらでも可)。
+    by_card_site は _price_points_by_card_site() の結果をそのまま渡す。
     """
     up = []
     down = []
@@ -244,10 +239,7 @@ def main():
     with open(OUTPUT_DIR / "trends.json", "w", encoding="utf-8") as f:
         json.dump(trends, f, ensure_ascii=False, separators=(",", ":"))
 
-    movers = {
-        "min": compute_movers(_price_points_by_card_site(conn, series="min")),
-        "avg": compute_movers(_price_points_by_card_site(conn, series="avg")),
-    }
+    movers = compute_movers(_price_points_by_card_site(conn))
     with open(OUTPUT_DIR / "movers.json", "w", encoding="utf-8") as f:
         json.dump(movers, f, ensure_ascii=False, separators=(",", ":"))
 
@@ -261,10 +253,7 @@ def main():
         f"trends.json: 急上昇{len(trends['spike'])}件 / じわじわ上昇{len(trends['gradual'])}件 / "
         f"急下降{len(trends['crash'])}件 / じわじわ下降{len(trends['gradual_down'])}件"
     )
-    print(
-        f"movers.json: [最安値] 値上がり{len(movers['min']['up'])}件/値下がり{len(movers['min']['down'])}件 "
-        f"[平均値] 値上がり{len(movers['avg']['up'])}件/値下がり{len(movers['avg']['down'])}件"
-    )
+    print(f"movers.json: 値上がり{len(movers['up'])}件/値下がり{len(movers['down'])}件")
     print(f"meta.json: generated_at={meta['generated_at']}")
 
     conn.close()
