@@ -215,20 +215,6 @@ body {
   padding: 0;
 }
 
-.site-heading {
-  grid-column: 1 / -1;
-  margin: 10px 0 0;
-  padding-bottom: 4px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
-}
-
-.site-heading:first-child {
-  margin-top: 0;
-}
-
 .trend-badge {
   background: var(--accent);
   color: #fff;
@@ -659,6 +645,28 @@ body.modal-open {
 }
 
 .period-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.site-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.site-tab {
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.site-tab.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;

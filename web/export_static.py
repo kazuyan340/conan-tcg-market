@@ -83,7 +83,44 @@ def _price_points_by_card_site(conn) -> dict[tuple[int, str], list[tuple[str, in
     return by_card_site
 
 
-def compute_trends(conn) -> dict[str, list[dict]]:
+POOLED_SITE_LABEL = "全体"
+
+
+def _pooled_points_by_card(
+    by_card_site: dict[tuple[int, str], list[tuple[str, int]]],
+) -> dict[int, list[tuple[str, int]]]:
+    """(card_id) -> [(日付, 全サイト単純平均価格), ...]。
+
+    common.jsのpooledAverageSeries()と同じ考え方: 各サイトの最安値系列を日ごとに
+    1点にまとめた上で、その日に値がある全サイトを単純平均する(サイトの重み付けはしない)。
+    サイト単位ではなく「全体」という1つの仮想サイトとして扱い、trends/moversの
+    判定・表示ロジックにそのまま乗せられるようにする。
+    """
+    by_card_day: dict[int, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+    for (card_id, _site), points in by_card_site.items():
+        for recorded_at, price in points:
+            day = recorded_at[:10]
+            by_card_day[card_id][day].append(price)
+
+    result: dict[int, list[tuple[str, int]]] = {}
+    for card_id, days in by_card_day.items():
+        result[card_id] = [
+            (day, round(sum(days[day]) / len(days[day]))) for day in sorted(days)
+        ]
+    return result
+
+
+def _all_price_series(conn) -> dict[tuple[int, str], list[tuple[str, int]]]:
+    """サイトごとの最安値系列に、「全体」(相場・全サイト単純平均)の系列を加えたもの。"""
+    by_card_site = _price_points_by_card_site(conn)
+    pooled = _pooled_points_by_card(by_card_site)
+    combined = dict(by_card_site)
+    for card_id, points in pooled.items():
+        combined[(card_id, POOLED_SITE_LABEL)] = points
+    return combined
+
+
+def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
     """価格が急上昇/じわじわ上昇/急下降/じわじわ下降しているカードを判定する。
 
     - 急上昇/急下降: 直近2時点の変化率の絶対値が SPIKE_MIN_PCT 以上
@@ -92,10 +129,11 @@ def compute_trends(conn) -> dict[str, list[dict]]:
       変化(=急上昇/急下降と同じもの)は除外する。
 
     サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する
-    (詳細は _price_points_by_card_site のdocstring参照)。
-    """
-    by_card_site = _price_points_by_card_site(conn)
+    (詳細は _price_points_by_card_site のdocstring参照)。「全体」(相場)も1つの
+    仮想サイトとして同じ扱いで含まれる。
 
+    by_card_site は _all_price_series() の結果を渡す。
+    """
     spikes = []
     crashes = []
     gradual_up = []
@@ -167,16 +205,28 @@ def compute_trends(conn) -> dict[str, list[dict]]:
     spikes = [item for item in spikes if (item["card_id"], item["site"]) not in gradual_up_keys]
     crashes = [item for item in crashes if (item["card_id"], item["site"]) not in gradual_down_keys]
 
-    spikes.sort(key=lambda x: x["change_pct"], reverse=True)
-    crashes.sort(key=lambda x: x["change_pct"])
-    gradual_up.sort(key=lambda x: x["change_pct"], reverse=True)
-    gradual_down.sort(key=lambda x: x["change_pct"])
     return {
-        "spike": spikes[:SPIKE_LIMIT],
-        "gradual": gradual_up[:GRADUAL_LIMIT],
-        "crash": crashes[:SPIKE_LIMIT],
-        "gradual_down": gradual_down[:GRADUAL_LIMIT],
+        "spike": _sort_limit_per_site(spikes, SPIKE_LIMIT, reverse=True),
+        "gradual": _sort_limit_per_site(gradual_up, GRADUAL_LIMIT, reverse=True),
+        "crash": _sort_limit_per_site(crashes, SPIKE_LIMIT, reverse=False),
+        "gradual_down": _sort_limit_per_site(gradual_down, GRADUAL_LIMIT, reverse=False),
     }
+
+
+def _sort_limit_per_site(items: list[dict], limit: int, reverse: bool) -> list[dict]:
+    """サイト(「全体」含む)ごとに変化率順でソートし、上位limit件だけ残す。
+    全サイトまとめて1つの上位N件にすると、値動きの大きいサイトだけで埋まってしまい、
+    タブで切り替えたときに他のサイトがほぼ空になってしまうため、サイトごとに独立して絞り込む。
+    """
+    by_site: dict[str, list[dict]] = defaultdict(list)
+    for item in items:
+        by_site[item["site"]].append(item)
+
+    result = []
+    for site_items in by_site.values():
+        site_items.sort(key=lambda x: x["change_pct"], reverse=reverse)
+        result.extend(site_items[:limit])
+    return result
 
 
 def compute_movers(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
@@ -188,7 +238,7 @@ def compute_movers(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
     変化が無い(0%)カードはどちらにも含めない。サイトをまたいだ価格差を値動きと
     誤認しないよう、サイトごとに独立して判定する。
 
-    by_card_site は _price_points_by_card_site() の結果をそのまま渡す。
+    by_card_site は _all_price_series() の結果を渡す(「全体」含む)。
     """
     up = []
     down = []
@@ -217,9 +267,10 @@ def compute_movers(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
         else:
             down.append(item)
 
-    up.sort(key=lambda x: x["change_pct"], reverse=True)
-    down.sort(key=lambda x: x["change_pct"])
-    return {"up": up[:MOVERS_LIMIT], "down": down[:MOVERS_LIMIT]}
+    return {
+        "up": _sort_limit_per_site(up, MOVERS_LIMIT, reverse=True),
+        "down": _sort_limit_per_site(down, MOVERS_LIMIT, reverse=False),
+    }
 
 
 def main():
@@ -235,11 +286,13 @@ def main():
     with open(OUTPUT_DIR / "prices.json", "w", encoding="utf-8") as f:
         json.dump(prices, f, ensure_ascii=False, separators=(",", ":"))
 
-    trends = compute_trends(conn)
+    all_series = _all_price_series(conn)
+
+    trends = compute_trends(all_series)
     with open(OUTPUT_DIR / "trends.json", "w", encoding="utf-8") as f:
         json.dump(trends, f, ensure_ascii=False, separators=(",", ":"))
 
-    movers = compute_movers(_price_points_by_card_site(conn))
+    movers = compute_movers(all_series)
     with open(OUTPUT_DIR / "movers.json", "w", encoding="utf-8") as f:
         json.dump(movers, f, ensure_ascii=False, separators=(",", ":"))
 

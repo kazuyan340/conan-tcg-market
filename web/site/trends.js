@@ -1,11 +1,19 @@
 // 「価格の動き」「値上がり」「値下がり」の3ビューを1ページにまとめ、
 // ヘッダーのボタンを押すたびに 値上がり → 値下がり → 価格の動き → (繰り返し) と切り替える。
+// さらに上部のサイトタブ(全体/駿河屋/カードラボ/竜のしっぽ)で、どのサイト基準の
+// 値動きを見るかを選べる(「全体」は各サイト最安値を単純平均した「相場」の日次推移が基準)。
 const VIEWS = [
   { id: "view-trends", title: "📊 価格の動き", nextLabel: "🔺 値上がりを見る" },
   { id: "view-up", title: "🔺 値上がりしたカード", nextLabel: "🔻 値下がりを見る" },
   { id: "view-down", title: "🔻 値下がりしたカード", nextLabel: "📊 価格の動きを見る" },
 ];
+const SITES = ["全体", "駿河屋", "カードラボ", "竜のしっぽ"];
 let currentView = 0;
+let selectedSite = SITES[0];
+
+let trendsRes = {};
+let moversRes = {};
+let cardById = new Map();
 
 // URLの ?view=up|down|trends で直接そのビューを開けるようにする(一覧画面からのワンクリック導線用)。
 function viewIndexFromUrl() {
@@ -25,13 +33,32 @@ function showView(index) {
   window.scrollTo({ top: 0 });
 }
 
+function renderSiteTabs() {
+  const container = document.getElementById("site-tabs");
+  container.innerHTML = "";
+  for (const site of SITES) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "site-tab" + (site === selectedSite ? " active" : "");
+    btn.textContent = site;
+    btn.addEventListener("click", () => {
+      selectedSite = site;
+      renderSiteTabs();
+      renderAll();
+    });
+    container.appendChild(btn);
+  }
+}
+
 async function init() {
-  const [allCards, trendsRes, moversRes] = await Promise.all([
+  const [allCards, trendsData, moversData] = await Promise.all([
     loadCardData(),
     fetch("data/trends.json").then((r) => r.json()),
     fetch("data/movers.json").then((r) => r.json()),
   ]);
-  const cardById = new Map(allCards.map((c) => [c.id, c]));
+  cardById = new Map(allCards.map((c) => [c.id, c]));
+  trendsRes = trendsData;
+  moversRes = moversData;
 
   bindModalEvents();
 
@@ -39,39 +66,35 @@ async function init() {
     showView((currentView + 1) % VIEWS.length);
   });
   showView(viewIndexFromUrl());
+  renderSiteTabs();
+  renderAll();
   renderLastUpdated();
-
-  renderTrendGrid("spike-grid", "spike-empty", trendsRes.spike, cardById, (item) => [
-    `+${item.change_pct}%`,
-    `${item.previous_price}円 → ${item.latest_price}円`,
-  ], "up");
-  renderTrendGrid("gradual-grid", "gradual-empty", trendsRes.gradual, cardById, (item) => [
-    `+${item.change_pct}%`,
-    `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`,
-  ], "up");
-  renderTrendGrid("crash-grid", "crash-empty", trendsRes.crash, cardById, (item) => [
-    `${item.change_pct}%`,
-    `${item.previous_price}円 → ${item.latest_price}円`,
-  ], "down");
-  renderTrendGrid("gradual-down-grid", "gradual-down-empty", trendsRes.gradual_down, cardById, (item) => [
-    `${item.change_pct}%`,
-    `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`,
-  ], "down");
-
-  renderMoverGrid("mover-grid-up", "mover-empty-up", moversRes.up, cardById, "up");
-  renderMoverGrid("mover-grid-down", "mover-empty-down", moversRes.down, cardById, "down");
 }
 
-// サイトをまたいだ価格差を混同しないよう判定自体はサイト単位で行っているため(export_static.py参照)、
-// 表示側も見やすいようサイトごとに小見出しを立てて分ける。
-function groupBySite(items) {
-  const groups = new Map();
-  for (const item of items) {
-    const site = item.site || "";
-    if (!groups.has(site)) groups.set(site, []);
-    groups.get(site).push(item);
-  }
-  return groups;
+function bySite(items, site) {
+  return (items || []).filter((item) => item.site === site);
+}
+
+function renderAll() {
+  renderTrendGrid("spike-grid", "spike-empty", bySite(trendsRes.spike, selectedSite), (item) => [
+    `+${item.change_pct}%`,
+    `${item.previous_price}円 → ${item.latest_price}円`,
+  ], "up");
+  renderTrendGrid("gradual-grid", "gradual-empty", bySite(trendsRes.gradual, selectedSite), (item) => [
+    `+${item.change_pct}%`,
+    `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`,
+  ], "up");
+  renderTrendGrid("crash-grid", "crash-empty", bySite(trendsRes.crash, selectedSite), (item) => [
+    `${item.change_pct}%`,
+    `${item.previous_price}円 → ${item.latest_price}円`,
+  ], "down");
+  renderTrendGrid("gradual-down-grid", "gradual-down-empty", bySite(trendsRes.gradual_down, selectedSite), (item) => [
+    `${item.change_pct}%`,
+    `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`,
+  ], "down");
+
+  renderMoverGrid("mover-grid-up", "mover-empty-up", bySite(moversRes.up, selectedSite), "up");
+  renderMoverGrid("mover-grid-down", "mover-empty-down", bySite(moversRes.down, selectedSite), "down");
 }
 
 function appendCardTile(grid, item, card, badgeLinesFn, badgeClass) {
@@ -89,7 +112,7 @@ function appendCardTile(grid, item, card, badgeLinesFn, badgeClass) {
   grid.appendChild(tile);
 }
 
-function renderTrendGrid(gridId, emptyId, items, cardById, badgeLinesFn, badgeClass = "") {
+function renderTrendGrid(gridId, emptyId, items, badgeLinesFn, badgeClass = "") {
   const grid = document.getElementById(gridId);
   const emptyMessage = document.getElementById(emptyId);
   grid.innerHTML = "";
@@ -100,21 +123,14 @@ function renderTrendGrid(gridId, emptyId, items, cardById, badgeLinesFn, badgeCl
   }
   emptyMessage.classList.add("hidden");
 
-  for (const [site, siteItems] of groupBySite(items)) {
-    const heading = document.createElement("h4");
-    heading.className = "site-heading";
-    heading.textContent = site;
-    grid.appendChild(heading);
-
-    for (const item of siteItems) {
-      const card = cardById.get(item.card_id);
-      if (!card) continue;
-      appendCardTile(grid, item, card, badgeLinesFn, badgeClass);
-    }
+  for (const item of items) {
+    const card = cardById.get(item.card_id);
+    if (!card) continue;
+    appendCardTile(grid, item, card, badgeLinesFn, badgeClass);
   }
 }
 
-function renderMoverGrid(gridId, emptyId, items, cardById, direction) {
+function renderMoverGrid(gridId, emptyId, items, direction) {
   const grid = document.getElementById(gridId);
   const emptyMessage = document.getElementById(emptyId);
   grid.innerHTML = "";
@@ -130,17 +146,10 @@ function renderMoverGrid(gridId, emptyId, items, cardById, direction) {
     `平均${item.average_price}円 → ${item.latest_price}円`,
   ];
 
-  for (const [site, siteItems] of groupBySite(items)) {
-    const heading = document.createElement("h4");
-    heading.className = "site-heading";
-    heading.textContent = site;
-    grid.appendChild(heading);
-
-    for (const item of siteItems) {
-      const card = cardById.get(item.card_id);
-      if (!card) continue;
-      appendCardTile(grid, item, card, badgeLinesFn, direction);
-    }
+  for (const item of items) {
+    const card = cardById.get(item.card_id);
+    if (!card) continue;
+    appendCardTile(grid, item, card, badgeLinesFn, direction);
   }
 }
 
