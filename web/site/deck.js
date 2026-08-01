@@ -256,32 +256,41 @@ function switchToDeck(id) {
 }
 
 function deleteDeck(id) {
-  // デッキが1個だけの場合に削除を許可すると、代わりに同じ名前の空デッキが
-  // 自動生成されて「消えていないように見える」ため、最後の1個は削除できない仕様にする。
-  if (deckList.length <= 1) {
-    alert("最後の1個のデッキは削除できません。");
-    return;
-  }
   if (!confirm("このデッキを削除します。よろしいですか?")) return;
   deckList = deckList.filter((d) => d.id !== id);
   if (currentDeckId === id) {
-    currentDeckId = deckList[0].id;
-    deck = deckList[0];
+    if (deckList.length > 0) {
+      currentDeckId = deckList[0].id;
+      deck = deckList[0];
+    } else {
+      // デッキが0個になった場合は選択中のデッキも無しにする(0個で問題ない)。
+      currentDeckId = null;
+      deck = { id: null, name: "", partner: null, case: null, main: {} };
+    }
   }
   saveDeck();
   renderDeckList();
-  renderDeckPanel();
 }
 
 function loadDeckFromUrlOrStorage() {
+  // DECK_LIST_KEY自体が存在するかどうかで、「一度も使ったことが無い(初回)」と
+  // 「使った結果、自分で全デッキを削除して0件にした」を区別する。後者の場合は
+  // 0件のまま尊重し、勝手に「デッキ1」を作り直さない。
+  let hasExistingListKey = false;
   try {
     const raw = localStorage.getItem(DECK_LIST_KEY);
-    if (raw) {
+    if (raw !== null) {
+      hasExistingListKey = true;
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.decks) && parsed.decks.length > 0) {
+      if (Array.isArray(parsed.decks)) {
         deckList = parsed.decks;
-        currentDeckId = deckList.some((d) => d.id === parsed.currentDeckId) ? parsed.currentDeckId : deckList[0].id;
-        deck = deckList.find((d) => d.id === currentDeckId);
+        if (deckList.length > 0) {
+          currentDeckId = deckList.some((d) => d.id === parsed.currentDeckId) ? parsed.currentDeckId : deckList[0].id;
+          deck = deckList.find((d) => d.id === currentDeckId);
+        } else {
+          currentDeckId = null;
+          deck = { id: null, name: "", partner: null, case: null, main: {} };
+        }
       }
     }
   } catch {
@@ -289,7 +298,7 @@ function loadDeckFromUrlOrStorage() {
   }
 
   // 複数デッキ対応前の古いデータ(単一デッキ)が残っていれば、「デッキ1」として引き継ぐ。
-  if (deckList.length === 0) {
+  if (!hasExistingListKey && deckList.length === 0) {
     let migrated = null;
     try {
       const old = localStorage.getItem("conanTcgDeckBuilder");
