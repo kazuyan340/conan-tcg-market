@@ -26,6 +26,8 @@ let deckList = [];
 let currentDeckId = null;
 let deck = { id: null, name: "", partner: null, case: null, main: {} };
 let openedSharedDeckFromUrl = false;
+const INCLUDE_PARTNER_CASE_KEY = "conanTcgDeckIncludePartnerCase";
+let includePartnerCaseInTotal = localStorage.getItem(INCLUDE_PARTNER_CASE_KEY) !== "false";
 
 const grid = document.getElementById("card-grid");
 const resultCount = document.getElementById("result-count");
@@ -191,6 +193,15 @@ function updateCountBadge(field) {
 function bindEvents() {
   keywordInput.addEventListener("input", debounce(applyFilters, 200));
 
+  const includeCheckbox = document.getElementById("include-partner-case");
+  includeCheckbox.checked = includePartnerCaseInTotal;
+  includeCheckbox.addEventListener("change", () => {
+    includePartnerCaseInTotal = includeCheckbox.checked;
+    localStorage.setItem(INCLUDE_PARTNER_CASE_KEY, String(includePartnerCaseInTotal));
+    renderDeckPanel();
+    renderDeckList();
+  });
+
   document.getElementById("clear-deck").addEventListener("click", () => {
     if (!confirm("このデッキの内容をすべてクリアします。よろしいですか?")) return;
     deck.partner = null;
@@ -350,12 +361,14 @@ function loadDeckFromUrlOrStorage() {
 // 毎晩の自動更新結果がそのまま反映される)。
 function computeDeckTotal(d) {
   let total = 0;
-  const partnerCard = d.partner ? cardById.get(d.partner) : null;
-  const caseCard = d.case ? cardById.get(d.case) : null;
-  for (const c of [partnerCard, caseCard]) {
-    if (!c) continue;
-    const p = cardPrice(c);
-    if (p !== null) total += p;
+  if (includePartnerCaseInTotal) {
+    const partnerCard = d.partner ? cardById.get(d.partner) : null;
+    const caseCard = d.case ? cardById.get(d.case) : null;
+    for (const c of [partnerCard, caseCard]) {
+      if (!c) continue;
+      const p = cardPrice(c);
+      if (p !== null) total += p;
+    }
   }
   for (const [idStr, count] of Object.entries(d.main || {})) {
     const card = cardById.get(Number(idStr));
@@ -583,20 +596,11 @@ function renderDeckPanel() {
     .filter((e) => e.card)
     .sort((a, b) => a.card.name.localeCompare(b.card.name, "ja"));
 
-  let total = 0;
-  const partnerCard = deck.partner ? cardById.get(deck.partner) : null;
-  const caseCard = deck.case ? cardById.get(deck.case) : null;
-  for (const c of [partnerCard, caseCard]) {
-    if (!c) continue;
-    const p = cardPrice(c);
-    if (p !== null) total += p;
-  }
+  const total = computeDeckTotal(deck);
 
   let slotsFilled = 0;
   for (const { card, count } of entries) {
-    const price = cardPrice(card);
     for (let i = 0; i < count; i++) {
-      if (price !== null) total += price;
       const slot = document.createElement("div");
       slot.className = "deck-slot-box";
       slot.title = `${card.name}(クリックで1枚減らす)`;

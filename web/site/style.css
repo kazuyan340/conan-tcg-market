@@ -953,6 +953,15 @@ body.modal-open {
   margin-right: auto;
 }
 
+.deck-total-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .deck-summary .reset-btn {
   padding: 3px 8px;
   font-size: 0.72rem;
