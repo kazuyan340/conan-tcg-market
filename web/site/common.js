@@ -72,9 +72,26 @@ function mercariAffiliateUrl(query) {
   return `https://jp.mercari.com/search?afid=${MERCARI_AFFILIATE_ID}&keyword=${encodeURIComponent(query)}`;
 }
 
-// サイト名 -> (cardNum, cardName, cardRarity) => 検索/アフィリエイトURL、の対応表。
-// 駿河屋・メルカリはアフィリエイトリンク+「PR」表記、他はアフィリエイト無しの
-// 素の検索リンク。
+// カードのpack列(例: "CT-P10 Case-Booster 10 追憶の盟友")から、収録弾名だけを
+// 抜き出す(例: "追憶の盟友")。先頭から英数字/ハイフンだけのトークン(型番・製品種別・
+// 通し番号)を読み飛ばし、日本語が混ざったトークンが出てきたらそこから最後まで採用する。
+// "探偵マスターズ2026"のようにそもそも型番が付かないパック名は、最初のトークンの
+// 時点で日本語混じりなので何も削られず、そのまま使われる。
+const ASCII_TOKEN_PATTERN = /^[A-Za-z0-9-]+$/;
+
+function packDisplayName(pack) {
+  if (!pack) return "";
+  const tokens = pack.split(/\s+/);
+  let start = 0;
+  while (start < tokens.length - 1 && ASCII_TOKEN_PATTERN.test(tokens[start])) {
+    start++;
+  }
+  return tokens.slice(start).join(" ");
+}
+
+// サイト名 -> (cardNum, cardName, cardRarity, cardPack) => 検索/アフィリエイトURL、
+// の対応表。駿河屋・メルカリはアフィリエイトリンク+「PR」表記、他はアフィリエイト
+// 無しの素の検索リンク。
 const SITE_LINK_BUILDERS = {
   "駿河屋": { url: (cardNum) => surugaAffiliateUrl(cardNum), pr: true },
   "カードラボ": { url: (cardNum) => cardLaboSearchUrl(cardNum), pr: false },
@@ -82,7 +99,8 @@ const SITE_LINK_BUILDERS = {
   "メルカード": { url: (cardNum, cardName) => mercardSearchUrl(cardName), pr: false, requiresName: true },
   "フルアヘッド": { url: (cardNum) => fullaheadSearchUrl(cardNum), pr: false },
   "メルカリ": {
-    url: (cardNum, cardName, cardRarity) => mercariAffiliateUrl(`${cardName} ${cardRarity || ""}`.trim()),
+    url: (cardNum, cardName, cardRarity, cardPack) =>
+      mercariAffiliateUrl(`${cardName} ${cardRarity || ""} ${packDisplayName(cardPack)}`.replace(/\s+/g, " ").trim()),
     pr: true,
     requiresName: true,
   },
@@ -245,7 +263,7 @@ function openModal(card) {
   document.getElementById("modal-overlay").classList.remove("hidden");
   document.body.classList.add("modal-open");
 
-  renderPriceSection(card.id, card.card_num, card.name, card.rarity);
+  renderPriceSection(card.id, card.card_num, card.name, card.rarity, card.pack);
 }
 
 function closeModal() {
@@ -283,7 +301,7 @@ function latestPriceBySite(history) {
 // 「PR」表記、他は素の検索リンク(アフィリエイト提携が無いサイトに「PR」を
 // 付けると景表法上不正確なため)。メルカリは価格の自動取得をしていないため、
 // bySiteに実データが無くてもSITE_COLOR_MAP経由で必ず行に出し、検索リンクだけ設置する。
-function siteSummaryTableHtml(history, cardNum, cardName, cardRarity) {
+function siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardPack) {
   const bySite = latestPriceBySite(history);
   const allSites = new Set([...Object.keys(SITE_COLOR_MAP), ...Object.keys(bySite)]);
   const entries = [...allSites].map((site) => [site, bySite[site] || null]);
@@ -303,7 +321,7 @@ function siteSummaryTableHtml(history, cardNum, cardName, cardRarity) {
       const linkBuilder = SITE_LINK_BUILDERS[site];
       const canLink = linkBuilder && (linkBuilder.requiresName ? cardName : cardNum);
       const nameHtml = canLink
-        ? `<a href="${linkBuilder.url(cardNum, cardName, cardRarity)}" target="_blank" rel="nofollow noopener${linkBuilder.pr ? " sponsored" : ""}">${escapeHtml(site)}</a>${linkBuilder.pr ? ' <span class="pr-label">PR</span>' : ""}`
+        ? `<a href="${linkBuilder.url(cardNum, cardName, cardRarity, cardPack)}" target="_blank" rel="nofollow noopener${linkBuilder.pr ? " sponsored" : ""}">${escapeHtml(site)}</a>${linkBuilder.pr ? ' <span class="pr-label">PR</span>' : ""}`
         : escapeHtml(site);
       return `<tr>
         <td><span class="site-swatch" style="background:${color}"></span>${nameHtml}${crown}</td>
@@ -350,12 +368,12 @@ function latestDateHtml(history) {
 
 // カード1件分の価格統計(相場の強調表示 + 最新取得日時 + サイト別最安値の表)を
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
-function buildPriceStatsHtml(history, cardNum, cardName, cardRarity) {
-  const table = siteSummaryTableHtml(history, cardNum, cardName, cardRarity);
+function buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack) {
+  const table = siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardPack);
   return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}`;
 }
 
-function renderPriceSection(cardId, cardNum, cardName, cardRarity) {
+function renderPriceSection(cardId, cardNum, cardName, cardRarity, cardPack) {
   const history = commonPrices[String(cardId)] || [];
   const statsEl = document.getElementById("modal-price-stats");
   const tableEl = document.getElementById("modal-price-table");
@@ -377,9 +395,9 @@ function renderPriceSection(cardId, cardNum, cardName, cardRarity) {
 
   if (tableEl) {
     statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
-    tableEl.innerHTML = siteSummaryTableHtml(history, cardNum, cardName, cardRarity);
+    tableEl.innerHTML = siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardPack);
   } else {
-    statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity);
+    statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack);
   }
 
   // モーダル内は既定で全期間表示。7日/30日タブでその場で絞り込める。
