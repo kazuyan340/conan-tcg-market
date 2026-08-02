@@ -56,7 +56,7 @@ jobs:
             echo "found=false" >> $env:GITHUB_OUTPUT
             Write-Host "db-storeアセットが未作成(移行直後の初回のみ想定)。旧cacheから一度だけ復元する。"
           }
-        shell: pwsh
+        shell: powershell
 
       - name: (Migration bridge) restore from old cache if the release asset was missing
         if: steps.release_restore.outputs.found != 'true'
