@@ -58,12 +58,17 @@ def fetch_page(page: int) -> str:
 
 
 def parse_items(html: str) -> list[tuple[str, int]]:
-    """(card_num, price) のリストを返す。"""
+    """(card_num, price) のリストを返す(売り切れ商品は除外)。"""
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for name_el in soup.select("span.itemName"):
         container = name_el.find_parent("div")
         if not container:
+            continue
+        # 売り切れ商品は<p class="soldout">sold out</p>が同じブロック内に付くが、
+        # 価格(<strong>)自体は最後に売れた時の値段が残ったままなので、これを
+        # チェックしないと在庫切れの古い価格を最新の相場として記録してしまう。
+        if container.select_one(".soldout"):
             continue
         price_el = container.select_one(".itemPrice strong")
         if not price_el:
