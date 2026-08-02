@@ -59,6 +59,11 @@ jobs:
             # which previously corrupted a quoted string and broke parsing.
             Write-Host "db-store release asset not found yet (expected on first run after migration). Falling back to the old cache once."
           }
+          # PowerShell keeps $LASTEXITCODE from the `gh` call above even after
+          # it's handled here, and GitHub Actions fails the step based on that
+          # value - reset it explicitly so a "not found yet" outcome isn't
+          # treated as a step failure.
+          exit 0
         shell: powershell
 
       - name: (Migration bridge) restore from old cache if the release asset was missing
