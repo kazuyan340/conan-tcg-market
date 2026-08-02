@@ -10,13 +10,22 @@ HTML構造(`li.list_item_cell`, `.goods_name`, `.price .figure`)もほぼ同一�
 表記、例: 1011)と、"P001"のような英字始まりのカード(パートナー/PRカード等、
 card_idそのままの表記)の両方があるため、両方を吸収できる正規化を行う。
 そのため、カード番号ではなく (card_id, rarity) の組み合わせでカードを特定する。
+
 ただし「PR」のように同じcard_idに何十種類ものプロモ違いが存在するレアリティだと、
 (card_id, rarity)だけでは1枚に絞り込めないことが珍しくない
 (例: 江戸川コナンのPRカードだけでcard_id=P001に15種類ある)。この場合に全候補へ
 同じ価格を書き込むと、無関係な高額商品の値段が別カードに紐付く事故になる
 (実際に「探偵マスターズ2026」の未開封パック598,000円が江戸川コナンPR007の
-相場として誤登録された)。そのため(card_id, rarity)が1枚に一意に絞れる場合のみ
-記録し、複数候補がある場合は諦めて記録しない(誤った値段を出すより欠測の方が安全)。
+相場として誤登録された)。曖昧な場合は以下の優先順位で絞り込みを試みる。
+
+1. 収録パック表記(例: "【CT-P09】"、構築済みデッキなら"【CTD-01】") - 江戸川コナンの
+   「D」レアリティがCT-D01とCT-D08の2つの構築済みデッキに再録されている、といった
+   ケースを区別できる。ただしPRカードにはそもそも収録パック表記が付かない。
+2. カード名の後ろに付く注釈(例: "江戸川コナン(探偵マスターズ2026)")と、DBの`pack`列
+   (例: "PRカード(セブン‐イレブンキャンペーン)")の文字列に重なりがあるかどうか。
+   注釈が無い商品や、同じイベント内に複数種類のPRカードがある場合(探偵マスターズ等)
+   は依然として絞り込めない。
+3. それでも複数候補が残る場合は、誤った値段を出すより記録しない方が安全なため諦める。
 
 対象カテゴリは「パートナー」「キャラ」「イベント」「事件」の4つ(単品カードのみ。
 「サプライ・未開封」「セット販売」「デッキ販売」は除外)。
@@ -53,14 +62,20 @@ REQUEST_TIMEOUT = 15
 REQUEST_DELAY_SEC = 30
 MAX_PAGES_PER_CATEGORY = 60
 
-# 名前部分の末尾、レアリティ・色・内部ID(半角[]/全角[]どちらもあり得る)を取り出す。
-# 収録パックの表記(末尾の【...】)が無い商品(一部のPRカード等)もあるため任意にする。
-# 内部IDの中に「SEC版」等の接頭辞が付くケース(例: ［SEC版P079]）もあるため、
+# 名前部分の末尾、レアリティ・色・内部ID・収録パックを取り出す(半角[]/全角[]の
+# どちらもあり得る)。収録パック表記(末尾の【...】)はPRカード等には無いため任意。
+# 内部IDの中に「SEC版」等の接頭辞が付くケース(例: [SEC版P079])もあるため、
 # 一旦カッコの中身を丸ごと拾ってから、末尾の英数字部分だけをIDとして取り出す。
 NAME_PATTERN = re.compile(
-    "【([^】]+)】《[^》]+》[［\\[]([^\\]］]+)[\\]］](?:【[^】]+】)?\\s*$"
+    r"【([^】]+)】《[^》]+》[\[【［]([^\]］]+)[\]］](?:【([^】]+)】)?\s*$"
 )
 ID_TAIL_PATTERN = re.compile(r"[A-Za-z0-9]+$")
+ALNUM_ONLY_PATTERN = re.compile(r"[^A-Za-z0-9]+")
+# カード名の後ろに付く注釈(例: "(探偵マスターズ2026)")を拾う。
+ANNOTATION_PATTERN = re.compile(r"[（(]([^）)]+)[）)]")
+# 注釈とDBのpack列を突き合わせるときに無視する記号類(空白・カッコ・各種ハイフン)。
+# 長音記号「ー」は正式な文字として使われるカードもあるため対象に含めない。
+DECORATION_PATTERN = re.compile(r"[\s()（）\-‐‑‒–—−]+")
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +89,21 @@ def normalize_id(value: str) -> str:
     return str(int(value)) if value.isdigit() else value.upper()
 
 
+def normalize_pack_code(value: str) -> str:
+    """収録パック表記の表記ゆれ(ハイフンの有無・位置)を吸収する。
+
+    例: メルカードの「CTD-01」「CT-P09」と、DBの`pack`列の先頭トークン
+    「CT-D01」「CT-P09」は、記号を除去すればどちらも一致する形になる
+    (「CTD01」「CTP09」)。
+    """
+    return ALNUM_ONLY_PATTERN.sub("", value).upper()
+
+
+def normalize_annotation_text(value: str) -> str:
+    """カード名の注釈とDBのpack列を比較するため、空白・カッコ・ハイフン類を除去する。"""
+    return DECORATION_PATTERN.sub("", value)
+
+
 def fetch_page(category: str, page: int) -> str:
     params = {"num": PAGE_SIZE, "page": page}
     resp = requests.get(f"{BASE_URL}/{category}", params=params, headers=HEADERS, timeout=REQUEST_TIMEOUT)
@@ -81,8 +111,11 @@ def fetch_page(category: str, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, int]]:
-    """(内部ID, レアリティ, 価格) のリストを返す(在庫切れ商品・未開封の非単品商品は除外)。"""
+def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int]]:
+    """(内部ID, レアリティ, 収録パック表記, 名前の注釈, 価格) のリストを返す。
+
+    収録パック表記・注釈は無ければNone。在庫切れ商品・未開封の非単品商品は除外する。
+    """
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for li in soup.select("li.list_item_cell"):
@@ -105,7 +138,10 @@ def parse_items(html: str) -> list[tuple[str, str, int]]:
         m = NAME_PATTERN.search(name_text)
         if not m:
             continue
-        rarity, model_number = m.group(1), m.group(2)
+        rarity, model_number, pack = m.group(1), m.group(2), m.group(3)
+
+        annotation_matches = ANNOTATION_PATTERN.findall(name_text[:m.start()])
+        annotation = annotation_matches[-1] if annotation_matches else None
 
         price_text = price_el.get_text().split("円")[0].replace(",", "").strip()
         try:
@@ -113,7 +149,7 @@ def parse_items(html: str) -> list[tuple[str, str, int]]:
         except ValueError:
             continue
 
-        results.append((model_number, rarity, price))
+        results.append((model_number, rarity, pack, annotation, price))
     return results
 
 
@@ -125,13 +161,25 @@ def parse_total_count(html: str) -> int:
     return int(el.get_text().replace(",", ""))
 
 
-def build_lookup(conn) -> dict[tuple[str, str], list[int]]:
-    """(正規化card_id, レアリティ) -> 該当するcards.idのリスト、の対応表を作る。"""
+def build_lookup(conn):
+    """カード特定用の対応表を3種類作る。
+
+    - (正規化card_id, レアリティ, 正規化パックコード) -> cards.idのリスト(先頭パックのみ)
+    - (正規化card_id, レアリティ) -> cards.idのリスト
+    - cards.id -> 正規化したpack列全文(注釈との突き合わせ用)
+    """
+    lookup_with_pack: dict[tuple[str, str, str], list[int]] = defaultdict(list)
     lookup: dict[tuple[str, str], list[int]] = defaultdict(list)
+    pack_text_by_id: dict[int, str] = {}
     for row in db.search_cards(conn):
-        key = (normalize_id(row["card_id"]), row["rarity"])
-        lookup[key].append(row["id"])
-    return lookup
+        base_key = (normalize_id(row["card_id"]), row["rarity"])
+        lookup[base_key].append(row["id"])
+        pack = row["pack"] or ""
+        pack_text_by_id[row["id"]] = normalize_annotation_text(pack)
+        pack_code = pack.split()[0] if pack.split() else ""
+        if pack_code:
+            lookup_with_pack[(base_key[0], base_key[1], normalize_pack_code(pack_code))].append(row["id"])
+    return lookup_with_pack, lookup, pack_text_by_id
 
 
 def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=None) -> dict:
@@ -145,7 +193,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
         conn = db.get_connection()
         db.init_db(conn)
 
-    lookup = build_lookup(conn)
+    lookup_with_pack, lookup, pack_text_by_id = build_lookup(conn)
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
@@ -170,13 +218,35 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     total = parse_total_count(html)
                     last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-                for model_number, rarity, price in parse_items(html):
-                    key = (normalize_id(model_number), rarity)
-                    candidates = lookup.get(key, [])
-                    # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの
-                    # 絵違いが多数ある等)。誤った値段を割り当てるより、
-                    # 記録しない方が安全なためスキップする。
-                    if len(candidates) == 1:
+                for model_number, rarity, pack, annotation, price in parse_items(html):
+                    norm_id = normalize_id(model_number)
+                    base_key = (norm_id, rarity)
+                    candidates = None
+
+                    if pack:
+                        pack_candidates = lookup_with_pack.get((norm_id, rarity, normalize_pack_code(pack)))
+                        if pack_candidates and len(pack_candidates) == 1:
+                            candidates = pack_candidates
+
+                    if candidates is None and annotation:
+                        norm_annotation = normalize_annotation_text(annotation)
+                        if norm_annotation:
+                            matches = [
+                                pk for pk in lookup.get(base_key, [])
+                                if norm_annotation in pack_text_by_id.get(pk, "")
+                            ]
+                            if len(matches) == 1:
+                                candidates = matches
+
+                    if candidates is None:
+                        base_candidates = lookup.get(base_key, [])
+                        # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの
+                        # 絵違いが多数ある等)。誤った値段を割り当てるより、
+                        # 記録しない方が安全なためスキップする。
+                        if len(base_candidates) == 1:
+                            candidates = base_candidates
+
+                    if candidates:
                         all_prices[candidates[0]].append(price)
 
                 if progress_callback:
