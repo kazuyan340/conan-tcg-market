@@ -39,8 +39,8 @@ function surugaAffiliateUrl(cardNum) {
 // (「PR」表記は付けない=金銭的な結びつきが無いことを景表法上も正しく反映する)。
 // カードラボ・竜のしっぽはカード番号そのままでサイト内検索がヒットすることを確認済み。
 // メルカードは内部管理番号が独自体系のため、カード番号ではなくカード名で検索する。
-// フルアヘッド(MakeShop)は検索フォームがPOST専用でGETリンクを組み立てられなかったため、
-// Googleのsite:検索で代用する。
+// フルアヘッド(MakeShop)はページ内の検索フォーム自体はPOST専用だが、隠しフィールド名
+// (name="search")と同じ名前でGETパラメータを渡せば同じ検索結果が得られることを確認済み。
 function cardLaboSearchUrl(cardNum) {
   return `https://www.c-labo-online.jp/product-list/?keyword=${encodeURIComponent(cardNum)}`;
 }
@@ -54,7 +54,7 @@ function mercardSearchUrl(cardName) {
 }
 
 function fullaheadSearchUrl(cardNum) {
-  return `https://www.google.com/search?q=${encodeURIComponent(`site:full-conan.com ${cardNum}`)}`;
+  return `https://www.full-conan.com/shop/shopbrand.html?search=${encodeURIComponent(cardNum)}`;
 }
 
 // サイト名 -> (cardNum, cardName) => 検索/アフィリエイトURL、の対応表。
