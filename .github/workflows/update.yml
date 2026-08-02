@@ -35,7 +35,31 @@ jobs:
       - name: Install dependencies
         run: ${{ env.PYTHON }} -m pip install -r requirements.txt
 
+      # 以前はactions/cacheのrestore-keys(前方一致でその時点の最新キャッシュを復元)を
+      # 使っていたが、7/31頃から常に同じ古いキャッシュキーだけが復元され続けるという
+      # 不具合が発生し、それ以降の価格履歴が毎回上書きで消え続けていたことが判明した
+      # (原因はGitHub Actions側の挙動と見られ、こちらでは制御できない)。
+      # 曖昧な前方一致検索が原因の可能性が高いため、名前が変わらない固定のGitHub
+      # Releaseアセット(db-store)への確実な上書き保存に切り替えた。初回(移行直後)は
+      # まだアセットが無いので、その場合だけ旧cacheから一度きり復元して橋渡しする。
       - name: Restore price/card database (accumulates across daily runs)
+        id: release_restore
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $gh = "C:\Program Files\GitHub CLI\gh.exe"
+          if (-not (Test-Path $gh)) { $gh = "gh" }
+          & $gh release download db-store --repo ${{ github.repository }} --pattern conan_tcg.db --dir data --clobber
+          if ($LASTEXITCODE -eq 0) {
+            echo "found=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "found=false" >> $env:GITHUB_OUTPUT
+            Write-Host "db-storeアセットが未作成(移行直後の初回のみ想定)。旧cacheから一度だけ復元する。"
+          }
+        shell: pwsh
+
+      - name: (Migration bridge) restore from old cache if the release asset was missing
+        if: steps.release_restore.outputs.found != 'true'
         uses: actions/cache/restore@v4
         with:
           path: data/conan_tcg.db
@@ -95,11 +119,12 @@ jobs:
       - name: Export static JSON for the site
         run: python web/export_static.py
 
+      # 固定名のReleaseアセットに毎回上書きする(--clobber)。cache/saveと違って
+      # キー名の曖昧な前方一致検索が発生しないため、確実に最新状態を次回に引き継げる。
       - name: Save price/card database for the next run
-        uses: actions/cache/save@v4
-        with:
-          path: data/conan_tcg.db
-          key: conan-tcg-db-${{ github.run_id }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload db-store data/conan_tcg.db --repo ${{ github.repository }} --clobber
 
       - name: Commit updated data
         run: |
