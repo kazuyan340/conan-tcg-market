@@ -54,7 +54,10 @@ jobs:
             echo "found=true" >> $env:GITHUB_OUTPUT
           } else {
             echo "found=false" >> $env:GITHUB_OUTPUT
-            Write-Host "db-storeアセットが未作成(移行直後の初回のみ想定)。旧cacheから一度だけ復元する。"
+            # Note (kept in ASCII on purpose): Windows PowerShell 5.1 misreads
+            # non-ASCII text in this inline script as the system codepage,
+            # which previously corrupted a quoted string and broke parsing.
+            Write-Host "db-store release asset not found yet (expected on first run after migration). Falling back to the old cache once."
           }
         shell: powershell
 
