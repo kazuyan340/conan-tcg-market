@@ -38,8 +38,11 @@ def export_cards(conn) -> list[dict]:
 
 
 def export_prices(conn) -> dict[str, list[dict]]:
+    # "(平均)"系列は過去の名残でDBに残っている場合があるが、現在のスクレイパーは
+    # もう書き込まないし、フロントエンドも表示に使わないため出力からも除外する。
     rows = conn.execute(
-        "SELECT card_id, site, price, recorded_at, sample_count FROM price_history ORDER BY recorded_at"
+        "SELECT card_id, site, price, recorded_at, sample_count FROM price_history "
+        "WHERE site NOT LIKE '%(平均)' ORDER BY recorded_at"
     ).fetchall()
     prices: dict[str, list[dict]] = {}
     for row in rows:

@@ -6,7 +6,13 @@ const FAVORITES_KEY = "conanTcgFavorites";
 // 以前はカード内での出現順で色を割り当てていたため、同じサイトでもカードによって
 // 別の色になってしまい見分けにくかった。既知のサイトは固定色、未知のサイトが
 // 出てきた場合はページ内で最初に割り当てた色を使い回す。
-const SITE_COLOR_MAP = { "駿河屋": "#2f6fed", "カードラボ": "#e0592a", "竜のしっぽ": "#2fa84f" };
+const SITE_COLOR_MAP = {
+  "駿河屋": "#2f6fed",
+  "カードラボ": "#e0592a",
+  "竜のしっぽ": "#2fa84f",
+  "メルカード": "#d6337a",
+  "フルアヘッド": "#7a5cd6",
+};
 const FALLBACK_SITE_COLORS = ["#a83fd1", "#d4a72c", "#1d9e9e"];
 const fallbackSiteColorAssignments = {};
 
@@ -28,6 +34,38 @@ function surugaAffiliateUrl(cardNum) {
   const target = surugaSearchUrl(cardNum);
   return `https://affiliate.suruga-ya.jp/modules/af/af_jump.php?user_id=${SURUGAYA_AFFILIATE_USER_ID}&goods_url=${encodeURIComponent(target)}`;
 }
+
+// 駿河屋以外はアフィリエイト提携が無いため、素の検索ページへのリンクのみ設置する
+// (「PR」表記は付けない=金銭的な結びつきが無いことを景表法上も正しく反映する)。
+// カードラボ・竜のしっぽはカード番号そのままでサイト内検索がヒットすることを確認済み。
+// メルカードは内部管理番号が独自体系のため、カード番号ではなくカード名で検索する。
+// フルアヘッド(MakeShop)は検索フォームがPOST専用でGETリンクを組み立てられなかったため、
+// Googleのsite:検索で代用する。
+function cardLaboSearchUrl(cardNum) {
+  return `https://www.c-labo-online.jp/product-list/?keyword=${encodeURIComponent(cardNum)}`;
+}
+
+function ryuunoshippoSearchUrl(cardNum) {
+  return `https://www.ryuunoshippo.com/product-list?keyword=${encodeURIComponent(cardNum)}`;
+}
+
+function mercardSearchUrl(cardName) {
+  return `https://www.mercardconan.jp/product-list?keyword=${encodeURIComponent(cardName)}`;
+}
+
+function fullaheadSearchUrl(cardNum) {
+  return `https://www.google.com/search?q=${encodeURIComponent(`site:full-conan.com ${cardNum}`)}`;
+}
+
+// サイト名 -> (cardNum, cardName) => 検索/アフィリエイトURL、の対応表。
+// 駿河屋だけアフィリエイトリンク+「PR」表記、他はアフィリエイト無しの素の検索リンク。
+const SITE_LINK_BUILDERS = {
+  "駿河屋": { url: (cardNum) => surugaAffiliateUrl(cardNum), pr: true },
+  "カードラボ": { url: (cardNum) => cardLaboSearchUrl(cardNum), pr: false },
+  "竜のしっぽ": { url: (cardNum) => ryuunoshippoSearchUrl(cardNum), pr: false },
+  "メルカード": { url: (cardNum, cardName) => mercardSearchUrl(cardName), pr: false },
+  "フルアヘッド": { url: (cardNum) => fullaheadSearchUrl(cardNum), pr: false },
+};
 
 function colorForSite(site) {
   const base = baseSiteName(site);
@@ -186,7 +224,7 @@ function openModal(card) {
   document.getElementById("modal-overlay").classList.remove("hidden");
   document.body.classList.add("modal-open");
 
-  renderPriceSection(card.id, card.card_num);
+  renderPriceSection(card.id, card.card_num, card.name);
 }
 
 function closeModal() {
@@ -204,16 +242,13 @@ function bindModalEvents() {
   });
 }
 
-// サイトごとの最新の最安値・平均値を返す。
-// { site: {min: {price, recorded_at, sample_count}|null, avg: ...|null} }
-function latestStatsBySite(history) {
+// サイトごとの最新の最安値を返す。{ site: {price, recorded_at, sample_count}|null }
+function latestPriceBySite(history) {
   const bySite = {};
   for (const h of history) {
-    const key = h.site.endsWith("(平均)") ? "avg" : "min";
     const base = baseSiteName(h.site);
-    const entry = (bySite[base] = bySite[base] || { min: null, avg: null });
-    if (!entry[key] || h.recorded_at > entry[key].recorded_at) {
-      entry[key] = { price: h.price, recorded_at: h.recorded_at, sample_count: h.sample_count };
+    if (!bySite[base] || h.recorded_at > bySite[base].recorded_at) {
+      bySite[base] = { price: h.price, recorded_at: h.recorded_at, sample_count: h.sample_count };
     }
   }
   return bySite;
@@ -222,27 +257,30 @@ function latestStatsBySite(history) {
 // サイト別の最安値を表形式(HTML文字列)で返す。最安値が一番安いサイトを🏆で強調する。
 // データが無いサイトも(-表示で)必ず一覧に出す。「載っていない」のか「未取得」なのかを
 // 区別できるようにするため。
-// cardNumを渡すと、駿河屋の行をアフィリエイトリンク化する(現状アフィリエイト提携済みは
-// 駿河屋のみのため)。景品表示法対応で「PR」表記を付ける。
-function siteSummaryTableHtml(history, cardNum) {
-  const bySite = latestStatsBySite(history);
+// cardNum/cardNameを渡すと、SITE_LINK_BUILDERSにあるサイト名をそのカードの検索
+// ページへのリンクにする。駿河屋のみアフィリエイトリンク+「PR」表記、他は素の検索
+// リンク(アフィリエイト提携が無いサイトに「PR」を付けると景表法上不正確なため)。
+function siteSummaryTableHtml(history, cardNum, cardName) {
+  const bySite = latestPriceBySite(history);
   const allSites = new Set([...Object.keys(SITE_COLOR_MAP), ...Object.keys(bySite)]);
-  const entries = [...allSites].map((site) => [site, bySite[site] || { min: null, avg: null }]);
+  const entries = [...allSites].map((site) => [site, bySite[site] || null]);
   if (entries.length === 0) return "";
 
   entries.sort((a, b) => {
-    const pa = a[1].min ? a[1].min.price : Infinity;
-    const pb = b[1].min ? b[1].min.price : Infinity;
+    const pa = a[1] ? a[1].price : Infinity;
+    const pb = b[1] ? b[1].price : Infinity;
     return pa - pb;
   });
 
   const rows = entries
     .map(([site, stats], i) => {
       const color = colorForSite(site);
-      const crown = i === 0 && stats.min ? "🏆" : "";
-      const minText = stats.min ? `${stats.min.price}円` : "-";
-      const nameHtml = site === "駿河屋" && cardNum
-        ? `<a href="${surugaAffiliateUrl(cardNum)}" target="_blank" rel="nofollow noopener sponsored">${escapeHtml(site)}</a> <span class="pr-label">PR</span>`
+      const crown = i === 0 && stats ? "🏆" : "";
+      const minText = stats ? `${stats.price}円` : "-";
+      const linkBuilder = SITE_LINK_BUILDERS[site];
+      const canLink = linkBuilder && (site === "メルカード" ? cardName : cardNum);
+      const nameHtml = canLink
+        ? `<a href="${linkBuilder.url(cardNum, cardName)}" target="_blank" rel="nofollow noopener${linkBuilder.pr ? " sponsored" : ""}">${escapeHtml(site)}</a>${linkBuilder.pr ? ' <span class="pr-label">PR</span>' : ""}`
         : escapeHtml(site);
       return `<tr>
         <td><span class="site-swatch" style="background:${color}"></span>${nameHtml}${crown}</td>
@@ -257,19 +295,14 @@ function siteSummaryTableHtml(history, cardNum) {
   </table>`;
 }
 
-// 各サイトの現在の価格(mode="min"なら最安値、mode="avg"なら平均値)を単純平均する。
+// 「相場」として全ページ共通で使う数値: 各サイトの現在の最安値を単純平均する。
 // 例: 駿河屋の最安値700円・カードラボの最安値750円・竜のしっぽの最安値720円なら、
 //     (700+750+720)/3 = 723円。出品数による重み付けはしない。
-function siteAveragePrice(history, mode = "min") {
-  const bySite = latestStatsBySite(history);
-  const prices = Object.values(bySite).map((s) => s[mode] && s[mode].price).filter((p) => p != null);
+function pooledAveragePrice(history) {
+  const bySite = latestPriceBySite(history);
+  const prices = Object.values(bySite).map((s) => s.price).filter((p) => p != null);
   if (prices.length === 0) return null;
   return Math.round(prices.reduce((sum, p) => sum + p, 0) / prices.length);
-}
-
-// 「相場」として全ページ共通で使う数値(各サイト最安値の単純平均)。
-function pooledAveragePrice(history) {
-  return siteAveragePrice(history, "min");
 }
 
 // 「このカードの相場」を大きく強調表示するHTML文字列を返す(各サイト最安値の単純平均)。
@@ -277,7 +310,7 @@ function avgHighlightHtml(history) {
   const avg = pooledAveragePrice(history);
   if (avg === null) return "";
 
-  const mins = Object.values(latestStatsBySite(history)).map((s) => s.min && s.min.price).filter((p) => p != null);
+  const mins = Object.values(latestPriceBySite(history)).map((s) => s.price).filter((p) => p != null);
   const range = mins.length > 1
     ? `<span class="price-avg-range">(最安 ${Math.min(...mins)}円 〜 ${Math.max(...mins)}円)</span>`
     : "";
@@ -294,12 +327,12 @@ function latestDateHtml(history) {
 
 // カード1件分の価格統計(相場の強調表示 + 最新取得日時 + サイト別最安値の表)を
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
-function buildPriceStatsHtml(history, cardNum) {
-  const table = siteSummaryTableHtml(history, cardNum);
+function buildPriceStatsHtml(history, cardNum, cardName) {
+  const table = siteSummaryTableHtml(history, cardNum, cardName);
   return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}`;
 }
 
-function renderPriceSection(cardId, cardNum) {
+function renderPriceSection(cardId, cardNum, cardName) {
   const history = commonPrices[String(cardId)] || [];
   const statsEl = document.getElementById("modal-price-stats");
   const tableEl = document.getElementById("modal-price-table");
@@ -321,9 +354,9 @@ function renderPriceSection(cardId, cardNum) {
 
   if (tableEl) {
     statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
-    tableEl.innerHTML = siteSummaryTableHtml(history, cardNum);
+    tableEl.innerHTML = siteSummaryTableHtml(history, cardNum, cardName);
   } else {
-    statsEl.innerHTML = buildPriceStatsHtml(history, cardNum);
+    statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName);
   }
 
   // モーダル内は既定で全期間表示。7日/30日タブでその場で絞り込める。

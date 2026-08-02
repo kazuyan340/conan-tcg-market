@@ -1,8 +1,11 @@
 name: Daily card and price update
 
 on:
+  # GitHubは「毎時ちょうど(0分)」のスケジュールは混雑しやすく遅延しがちと公式に
+  # 注意喚起している。実際に7/29〜8/1の4日間、0分ちょうど(18:00 UTC)指定だと
+  # 毎日2時間40分〜3時間48分遅れて発火していたため、0分から外れた17分に変更した。
   schedule:
-    - cron: "0 18 * * *"  # 毎日 UTC18:00 = JST 3:00
+    - cron: "17 17 * * *"  # 毎日 UTC17:17 = JST 2:17(遅延を見込んで本来の3:00より早めに設定)
   workflow_dispatch: {}
 
 permissions:
@@ -82,6 +85,12 @@ jobs:
 
       - name: Fetch high-rarity prices from Ryuu no Shippo
         run: python web/scraper_prices_ryuunoshippo.py
+
+      - name: Fetch prices from Mercard Akihabara
+        run: python web/scraper_prices_mercard.py
+
+      - name: Fetch prices from Full Ahead
+        run: python web/scraper_prices_fullahead.py
 
       - name: Export static JSON for the site
         run: python web/export_static.py

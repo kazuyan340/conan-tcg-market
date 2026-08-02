@@ -192,7 +192,7 @@ function render() {
     const tableCol = document.createElement("div");
     tableCol.className = "price-table-col";
     const tableWrap = document.createElement("div");
-    if (history.length > 0) tableWrap.innerHTML = siteSummaryTableHtml(history, card.card_num);
+    if (history.length > 0) tableWrap.innerHTML = siteSummaryTableHtml(history, card.card_num, card.name);
     tableCol.append(overRow, underRow, tableWrap);
 
     const chartCol = document.createElement("div");
