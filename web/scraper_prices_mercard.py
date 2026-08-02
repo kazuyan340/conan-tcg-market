@@ -10,8 +10,13 @@ HTML構造(`li.list_item_cell`, `.goods_name`, `.price .figure`)もほぼ同一�
 表記、例: 1011)と、"P001"のような英字始まりのカード(パートナー/PRカード等、
 card_idそのままの表記)の両方があるため、両方を吸収できる正規化を行う。
 そのため、カード番号ではなく (card_id, rarity) の組み合わせでカードを特定する。
-まれに同じ(card_id, rarity)に複数の絵違い(SEC違いなど)が存在する場合は、
-区別できないため両方に同じ価格を記録する。
+ただし「PR」のように同じcard_idに何十種類ものプロモ違いが存在するレアリティだと、
+(card_id, rarity)だけでは1枚に絞り込めないことが珍しくない
+(例: 江戸川コナンのPRカードだけでcard_id=P001に15種類ある)。この場合に全候補へ
+同じ価格を書き込むと、無関係な高額商品の値段が別カードに紐付く事故になる
+(実際に「探偵マスターズ2026」の未開封パック598,000円が江戸川コナンPR007の
+相場として誤登録された)。そのため(card_id, rarity)が1枚に一意に絞れる場合のみ
+記録し、複数候補がある場合は諦めて記録しない(誤った値段を出すより欠測の方が安全)。
 
 対象カテゴリは「パートナー」「キャラ」「イベント」「事件」の4つ(単品カードのみ。
 「サプライ・未開封」「セット販売」「デッキ販売」は除外)。
@@ -77,7 +82,7 @@ def fetch_page(category: str, page: int) -> str:
 
 
 def parse_items(html: str) -> list[tuple[str, str, int]]:
-    """(内部ID, レアリティ, 価格) のリストを返す(在庫切れ商品は除外)。"""
+    """(内部ID, レアリティ, 価格) のリストを返す(在庫切れ商品・未開封の非単品商品は除外)。"""
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for li in soup.select("li.list_item_cell"):
@@ -88,7 +93,16 @@ def parse_items(html: str) -> list[tuple[str, str, int]]:
         if not name_el or not price_el:
             continue
 
-        m = NAME_PATTERN.search(name_el.get_text())
+        name_text = name_el.get_text()
+        # 「未開封」はプロモパック/イベント参加賞のパッケージ丸ごとの出品で、
+        # 中身の1枚だけの単品カードとは全く別物の値段になる(数十万円クラスのことも
+        # ある)。同じ【レアリティ】《色》［ID]の書式を使いまわしているせいで単品と
+        # 誤マッチしてしまうため、ここで除外する(実際に江戸川コナンPR007が
+        # 「探偵マスターズ2026」未開封パックの598,000円と誤って紐付いた事例あり)。
+        if "未開封" in name_text:
+            continue
+
+        m = NAME_PATTERN.search(name_text)
         if not m:
             continue
         rarity, model_number = m.group(1), m.group(2)
@@ -158,8 +172,12 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
 
                 for model_number, rarity, price in parse_items(html):
                     key = (normalize_id(model_number), rarity)
-                    for card_pk in lookup.get(key, []):
-                        all_prices[card_pk].append(price)
+                    candidates = lookup.get(key, [])
+                    # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの
+                    # 絵違いが多数ある等)。誤った値段を割り当てるより、
+                    # 記録しない方が安全なためスキップする。
+                    if len(candidates) == 1:
+                        all_prices[candidates[0]].append(price)
 
                 if progress_callback:
                     progress_callback(category, page, len(all_prices))
