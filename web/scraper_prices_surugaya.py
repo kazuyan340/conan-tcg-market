@@ -10,6 +10,14 @@
 
 駿河屋のrobots.txtは `Crawl-delay: 30` を指定しているため、
 リクエスト間隔は30秒を厳守する。
+
+品切れの商品もこのデータレイヤーには残ったままで、しかも直近の販売価格が
+`price`にそのまま入っているため、そのまま使うと「品切れなのに購入できる値段」を
+誤って記録してしまう(実例: B07002 SRが品切れなのにprice:200が埋め込まれていた)。
+データレイヤー側だけでは品切れかどうか判別できないため、同じページの見た目側
+(`.item_price`ブロック、品切れは"price_teika"ではなく"price"クラス+「品切れ」表記)を
+BeautifulSoupで別途パースし、データレイヤーの並び順(item_nameが出現する順序)と
+1対1で対応することを確認した上で突き合わせて、品切れの回だけ除外する。
 """
 import logging
 import re
@@ -20,6 +28,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
+from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
@@ -78,10 +87,23 @@ def fetch_search_page(session: requests.Session, rarity: str, page: int) -> str:
     return resp.text
 
 
+def parse_soldout_flags(html: str) -> list[bool]:
+    """ページ内の商品を出現順に見て、それぞれ品切れかどうかを返す。
+
+    品切れの商品は価格欄が"price_teika"クラスの実売価格表示ではなく、
+    "price"クラスのみで中身が「品切れ」というテキストになる。
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    return ["品切れ" in block.get_text() for block in soup.select(".item_price")]
+
+
 def parse_items(html: str) -> list[tuple[str, str, int]]:
-    """(card_num, rarity, price) のリストを返す。"""
+    """(card_num, rarity, price) のリストを返す(品切れ商品は除外)。"""
+    soldout_flags = parse_soldout_flags(html)
     results = []
-    for raw_name, price_str in ITEM_PATTERN.findall(html):
+    for i, (raw_name, price_str) in enumerate(ITEM_PATTERN.findall(html)):
+        if i < len(soldout_flags) and soldout_flags[i]:
+            continue
         m = NAME_PATTERN.match(raw_name)
         if not m:
             continue
