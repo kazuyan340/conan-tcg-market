@@ -140,4 +140,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add web/site/data/cards.json web/site/data/prices.json web/site/data/trends.json web/site/data/movers.json web/site/data/meta.json
           git diff --cached --quiet || git commit -m "chore: daily card/price update"
+          # このジョブは駿河屋取得(30秒間隔のクロール遅延込み)のせいで50〜90分かかることがあり、
+          # その間に他のpush(手動でのコード修正など)が入ると素のgit pushは
+          # "fetch first"で弾かれて、この回のデータ更新がまるごと失われてしまう。
+          # そのため、pushする直前に一度rebaseで追従してからpushし直す。
+          git pull --rebase origin master
           git push
