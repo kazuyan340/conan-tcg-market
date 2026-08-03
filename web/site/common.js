@@ -521,7 +521,44 @@ function drawPriceChart(canvas, history, days) {
   const yMin = Math.max(0, minPrice - pad);
   const yMax = maxPrice + pad;
 
-  const margin = { left: 45, right: 20, top: 10, bottom: 40 };
+  const marginLeft = 45;
+  const marginRight = 20;
+  const marginBottom = 40;
+
+  // サイトが増えて凡例が1行に収まらなくなった場合(サイト名が右端で切れて見えなくなる
+  // 問題があった)、折り返して複数行にする。行数ぶんグラフ本体の開始位置を下にずらす
+  // 必要があるため、軸やグラフ本体を描く前に凡例の行数を確定させておく。
+  const legendItems = [];
+  for (const base of Object.keys(bySite)) {
+    legendItems.push({ site: base, color: colorForSite(base) });
+  }
+  if (pooledSeries.length > 0) {
+    legendItems.push({ site: "相場", color: MARKET_LINE_COLOR });
+  }
+
+  ctx.font = "11px sans-serif";
+  const legendGap = 30;
+  const legendRowHeight = 16;
+  const legendFirstRowY = 10;
+  const legendRows = [[]];
+  let legendX = marginLeft + 4;
+  for (const item of legendItems) {
+    const itemWidth = 11 + ctx.measureText(item.site).width;
+    const currentRow = legendRows[legendRows.length - 1];
+    if (legendX + itemWidth > w - marginRight && currentRow.length > 0) {
+      legendRows.push([]);
+      legendX = marginLeft + 4;
+    }
+    legendRows[legendRows.length - 1].push({ ...item, x: legendX });
+    legendX += itemWidth + legendGap;
+  }
+
+  const margin = {
+    left: marginLeft,
+    right: marginRight,
+    top: legendRows.length <= 1 ? legendFirstRowY : legendFirstRowY + legendRows.length * legendRowHeight - 6,
+    bottom: marginBottom,
+  };
   const plotW = w - margin.left - margin.right;
   const plotH = h - margin.top - margin.bottom;
 
@@ -574,30 +611,27 @@ function drawPriceChart(canvas, history, days) {
     }
   }
 
-  const legendItems = [];
   for (const [base, points] of Object.entries(bySite)) {
-    const color = colorForSite(base);
-    legendItems.push({ site: base, color });
-    drawSeries(points, color, base);
+    drawSeries(points, colorForSite(base), base);
   }
 
   // 相場(各サイト最安値の単純平均)は、サイト別の実勢価格と区別しやすいよう
   // 太めの点線で目立たせて重ねて描く。
   if (pooledSeries.length > 0) {
-    legendItems.push({ site: "相場", color: MARKET_LINE_COLOR });
     drawSeries(pooledSeries, MARKET_LINE_COLOR, "相場", { dashed: true, lineWidth: 3 });
   }
 
-  let legendX = margin.left + 4;
   ctx.font = "11px sans-serif";
-  for (const { site, color } of legendItems) {
-    ctx.fillStyle = color;
-    ctx.fillRect(legendX, margin.top - 2, 8, 8);
-    ctx.fillStyle = "#555";
-    ctx.textAlign = "left";
-    ctx.fillText(site, legendX + 11, margin.top + 6);
-    legendX += ctx.measureText(site).width + 30;
-  }
+  legendRows.forEach((row, rowIndex) => {
+    const y = legendFirstRowY + rowIndex * legendRowHeight;
+    for (const { site, color, x } of row) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y - 2, 8, 8);
+      ctx.fillStyle = "#555";
+      ctx.textAlign = "left";
+      ctx.fillText(site, x + 11, y + 6);
+    }
+  });
 
   // x軸に日付ラベル(取得日)を表示。重ならないよう間引く。
   const maxLabels = Math.max(2, Math.floor(plotW / 80));
