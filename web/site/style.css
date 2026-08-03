@@ -178,6 +178,24 @@ body {
   color: var(--text);
 }
 
+/* 隣に並ぶ.filter-group summary(色/レアリティ等のプルダウン)と枠線・背景が
+   同じだと、プルダウンだと思ってクリックされてしまう(展開されず即リセットされて
+   戸惑う)ため、あえて枠なしのテキストリンク調にして動きの違いを見た目でも示す。 */
+.filter-reset-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.filter-reset-btn:hover {
+  background: rgba(47, 111, 237, 0.12);
+}
+
 .nav-btn {
   display: inline-block;
   text-decoration: none;
@@ -596,6 +614,31 @@ body.modal-open {
   padding: 0 3px;
   margin-left: 3px;
   vertical-align: middle;
+}
+
+/* サイト別最安値の表とは別枠であることが分かるように、表からは少し離し、
+   単独のボタンらしい見た目(角丸のピル+ブランドカラー)にする。 */
+.mercari-check-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #ff5b6d;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.mercari-check-btn:hover {
+  background: #e64d5e;
+}
+
+.mercari-check-btn .pr-label {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .chart-tooltip {

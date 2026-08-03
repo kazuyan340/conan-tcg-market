@@ -12,7 +12,6 @@ const SITE_COLOR_MAP = {
   "竜のしっぽ": "#2fa84f",
   "メルカード": "#d6337a",
   "フルアヘッド": "#7a5cd6",
-  "メルカリ": "#ff5b6d",
 };
 const FALLBACK_SITE_COLORS = ["#a83fd1", "#d4a72c", "#1d9e9e"];
 const fallbackSiteColorAssignments = {};
@@ -60,13 +59,10 @@ function fullaheadSearchUrl(cardNum) {
 
 // メルカリアンバサダーのリンク生成。検索結果URLに afid= を足すだけで
 // アフィリエイトリンクになる仕組み(実際にメルカリアンバサダーの管理画面で
-// 生成して確認済み)。メルカリは単品のカード番号での検索ができないため、
-// 駿河屋等と違って自動の価格取得はせず、検索リンクの設置のみ行う。
+// 生成して確認済み)。メルカリは単品のカード番号での検索ができず、他サイトのように
+// 「最安値○○円」という自動比較はできないため、サイト別最安値の表には載せず、
+// 別枠の「🔍メルカリで価格を確認する」ボタンとして独立させる(mercariButtonHtml参照)。
 const MERCARI_AFFILIATE_ID = "8969530097";
-
-function mercariSearchUrl(query) {
-  return `https://jp.mercari.com/search?keyword=${encodeURIComponent(query)}`;
-}
 
 function mercariAffiliateUrl(query) {
   return `https://jp.mercari.com/search?afid=${MERCARI_AFFILIATE_ID}&keyword=${encodeURIComponent(query)}`;
@@ -89,21 +85,22 @@ function packDisplayName(pack) {
   return tokens.slice(start).join(" ");
 }
 
-// サイト名 -> (cardNum, cardName, cardRarity, cardPack) => 検索/アフィリエイトURL、
-// の対応表。駿河屋・メルカリはアフィリエイトリンク+「PR」表記、他はアフィリエイト
-// 無しの素の検索リンク。
+// メルカリの「🔍価格を確認する」ボタン(HTML文字列)を返す。サイト別最安値の表とは
+// 別枠の要素として、呼び出し側で表のすぐ下などに追加してもらう想定。
+function mercariButtonHtml(cardName, cardRarity, cardPack) {
+  if (!cardName) return "";
+  const query = `${cardName} ${cardRarity || ""} ${packDisplayName(cardPack)}`.replace(/\s+/g, " ").trim();
+  return `<a class="mercari-check-btn" href="${mercariAffiliateUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 メルカリで価格を確認する <span class="pr-label">PR</span></a>`;
+}
+
+// サイト名 -> (cardNum, cardName) => 検索/アフィリエイトURL、の対応表。
+// 駿河屋のみアフィリエイトリンク+「PR」表記、他はアフィリエイト無しの素の検索リンク。
 const SITE_LINK_BUILDERS = {
   "駿河屋": { url: (cardNum) => surugaAffiliateUrl(cardNum), pr: true },
   "カードラボ": { url: (cardNum) => cardLaboSearchUrl(cardNum), pr: false },
   "竜のしっぽ": { url: (cardNum) => ryuunoshippoSearchUrl(cardNum), pr: false },
   "メルカード": { url: (cardNum, cardName) => mercardSearchUrl(cardName), pr: false, requiresName: true },
   "フルアヘッド": { url: (cardNum) => fullaheadSearchUrl(cardNum), pr: false },
-  "メルカリ": {
-    url: (cardNum, cardName, cardRarity, cardPack) =>
-      mercariAffiliateUrl(`${cardName} ${cardRarity || ""} ${packDisplayName(cardPack)}`.replace(/\s+/g, " ").trim()),
-    pr: true,
-    requiresName: true,
-  },
 };
 
 function colorForSite(site) {
@@ -296,12 +293,11 @@ function latestPriceBySite(history) {
 // サイト別の最安値を表形式(HTML文字列)で返す。最安値が一番安いサイトを🏆で強調する。
 // データが無いサイトも(-表示で)必ず一覧に出す。「載っていない」のか「未取得」なのかを
 // 区別できるようにするため。
-// cardNum/cardName/cardRarityを渡すと、SITE_LINK_BUILDERSにあるサイト名をその
-// カードの検索ページへのリンクにする。駿河屋・メルカリはアフィリエイトリンク+
-// 「PR」表記、他は素の検索リンク(アフィリエイト提携が無いサイトに「PR」を
-// 付けると景表法上不正確なため)。メルカリは価格の自動取得をしていないため、
-// bySiteに実データが無くてもSITE_COLOR_MAP経由で必ず行に出し、検索リンクだけ設置する。
-function siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardPack) {
+// cardNum/cardNameを渡すと、SITE_LINK_BUILDERSにあるサイト名をそのカードの検索
+// ページへのリンクにする。駿河屋のみアフィリエイトリンク+「PR」表記、他は素の
+// 検索リンク(アフィリエイト提携が無いサイトに「PR」を付けると景表法上不正確なため)。
+// メルカリは価格の自動取得ができないため、この表には含めない(mercariButtonHtml参照)。
+function siteSummaryTableHtml(history, cardNum, cardName) {
   const bySite = latestPriceBySite(history);
   const allSites = new Set([...Object.keys(SITE_COLOR_MAP), ...Object.keys(bySite)]);
   const entries = [...allSites].map((site) => [site, bySite[site] || null]);
@@ -321,7 +317,7 @@ function siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardPack) 
       const linkBuilder = SITE_LINK_BUILDERS[site];
       const canLink = linkBuilder && (linkBuilder.requiresName ? cardName : cardNum);
       const nameHtml = canLink
-        ? `<a href="${linkBuilder.url(cardNum, cardName, cardRarity, cardPack)}" target="_blank" rel="nofollow noopener${linkBuilder.pr ? " sponsored" : ""}">${escapeHtml(site)}</a>${linkBuilder.pr ? ' <span class="pr-label">PR</span>' : ""}`
+        ? `<a href="${linkBuilder.url(cardNum, cardName)}" target="_blank" rel="nofollow noopener${linkBuilder.pr ? " sponsored" : ""}">${escapeHtml(site)}</a>${linkBuilder.pr ? ' <span class="pr-label">PR</span>' : ""}`
         : escapeHtml(site);
       return `<tr>
         <td><span class="site-swatch" style="background:${color}"></span>${nameHtml}${crown}</td>
@@ -369,8 +365,9 @@ function latestDateHtml(history) {
 // カード1件分の価格統計(相場の強調表示 + 最新取得日時 + サイト別最安値の表)を
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
 function buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack) {
-  const table = siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardPack);
-  return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}`;
+  const table = siteSummaryTableHtml(history, cardNum, cardName);
+  const mercariBtn = mercariButtonHtml(cardName, cardRarity, cardPack);
+  return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}${mercariBtn}`;
 }
 
 function renderPriceSection(cardId, cardNum, cardName, cardRarity, cardPack) {
@@ -395,7 +392,7 @@ function renderPriceSection(cardId, cardNum, cardName, cardRarity, cardPack) {
 
   if (tableEl) {
     statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
-    tableEl.innerHTML = siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardPack);
+    tableEl.innerHTML = `${siteSummaryTableHtml(history, cardNum, cardName)}${mercariButtonHtml(cardName, cardRarity, cardPack)}`;
   } else {
     statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack);
   }
