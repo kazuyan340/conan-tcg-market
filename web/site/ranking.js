@@ -55,7 +55,7 @@ function populateFilterOptions() {
       checkbox.type = "checkbox";
       checkbox.value = v;
       checkbox.dataset.field = field;
-      checkbox.addEventListener("change", () => {
+      bindTriStateFilterCheckbox(checkbox, () => {
         updateCountBadge(field);
         applyFilters();
       });
@@ -66,15 +66,10 @@ function populateFilterOptions() {
   }
 }
 
-function getChecked(field) {
-  const { listId } = FILTER_FIELDS[field];
-  return [...document.querySelectorAll(`#${listId} input:checked`)].map((el) => el.value);
-}
-
 function updateCountBadge(field) {
-  const { groupId } = FILTER_FIELDS[field];
+  const { listId, groupId } = FILTER_FIELDS[field];
   const badge = document.querySelector(`#${groupId} .count-badge`);
-  const n = getChecked(field).length;
+  const n = filterSelectionCount(listId);
   badge.textContent = n ? ` (${n})` : "";
   badge.classList.toggle("hidden", n === 0);
 }
@@ -98,7 +93,7 @@ function bindEvents() {
   document.getElementById("reset-filters").addEventListener("click", () => {
     keywordInput.value = "";
     for (const checkbox of document.querySelectorAll(".checkbox-list input")) {
-      checkbox.checked = false;
+      resetTriStateCheckbox(checkbox);
     }
     for (const field of Object.keys(FILTER_FIELDS)) {
       updateCountBadge(field);
@@ -161,8 +156,8 @@ function cardPrice(card) {
 function applyFilters() {
   const keyword = keywordInput.value.trim().toLowerCase();
   const selected = {};
-  for (const field of Object.keys(FILTER_FIELDS)) {
-    selected[field] = getChecked(field);
+  for (const [field, { listId }] of Object.entries(FILTER_FIELDS)) {
+    selected[field] = getFilterSelection(listId);
   }
 
   filteredEntries = allCards
@@ -172,9 +167,8 @@ function applyFilters() {
         if (!haystack.includes(keyword)) return false;
       }
       for (const field of Object.keys(FILTER_FIELDS)) {
-        if (selected[field].length === 0) continue;
         const cardValues = valuesForField(c, field);
-        if (!selected[field].some((v) => cardValues.includes(v))) return false;
+        if (!matchesFilterSelection(cardValues, selected[field])) return false;
       }
       return true;
     })

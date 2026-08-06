@@ -2,6 +2,65 @@
 // お気に入り=価格チェック対象。星をつけたカードがそのまま「お気に入り一覧」にも「価格チェック」にも並ぶ。
 const FAVORITES_KEY = "conanTcgFavorites";
 
+// 一覧・相場ランキング・デッキ作成の3画面で共有する、絞り込みチェックボックスの
+// 3状態切り替え(未選択→含める→除外→未選択)。除外中は checkbox.dataset.exclude="1"
+// を立て、見た目(チェックボックスの色・ラベルの赤字取り消し線)はCSS側で表現する。
+// クリックの既定動作(2状態トグル)は打ち消し、代わりに3状態を手動で管理する。
+function bindTriStateFilterCheckbox(checkbox, onChange) {
+  checkbox.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (checkbox.dataset.exclude === "1") {
+      // 除外 -> 未選択
+      checkbox.checked = false;
+      checkbox.dataset.exclude = "";
+    } else if (checkbox.checked) {
+      // 含める -> 除外
+      checkbox.dataset.exclude = "1";
+    } else {
+      // 未選択 -> 含める
+      checkbox.checked = true;
+      checkbox.dataset.exclude = "";
+    }
+    const label = checkbox.closest("label");
+    if (label) label.classList.toggle("filter-exclude", checkbox.dataset.exclude === "1");
+    onChange();
+  });
+}
+
+// 指定した絞り込みリスト(listId)内のチェックボックスから、含める値/除外する値を集める。
+function getFilterSelection(listId) {
+  const include = [];
+  const exclude = [];
+  for (const el of document.querySelectorAll(`#${listId} input`)) {
+    if (el.dataset.exclude === "1") exclude.push(el.value);
+    else if (el.checked) include.push(el.value);
+  }
+  return { include, exclude };
+}
+
+// カードの値一覧(例: レアリティなら["SR"])が、絞り込み条件(含める/除外)を満たすか。
+// 除外指定した値が1つでも含まれていれば不採用。含める指定がある場合はそのいずれかを
+// 持っている必要がある(何も指定が無ければ素通り)。
+function matchesFilterSelection(cardValues, selection) {
+  if (selection.exclude.some((v) => cardValues.includes(v))) return false;
+  if (selection.include.length > 0 && !selection.include.some((v) => cardValues.includes(v))) return false;
+  return true;
+}
+
+// バッジに表示する選択数(含める+除外の合計)。
+function filterSelectionCount(listId) {
+  const { include, exclude } = getFilterSelection(listId);
+  return include.length + exclude.length;
+}
+
+// リセット時に3状態の状態(exclude属性・ラベルの赤字クラス)もまとめて解除する。
+function resetTriStateCheckbox(checkbox) {
+  checkbox.checked = false;
+  checkbox.dataset.exclude = "";
+  const label = checkbox.closest("label");
+  if (label) label.classList.remove("filter-exclude");
+}
+
 // サイト名(平均系列を除いた素の名前)ごとに色を固定する。
 // 以前はカード内での出現順で色を割り当てていたため、同じサイトでもカードによって
 // 別の色になってしまい見分けにくかった。既知のサイトは固定色、未知のサイトが
