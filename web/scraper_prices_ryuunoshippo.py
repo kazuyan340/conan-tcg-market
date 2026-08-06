@@ -56,22 +56,29 @@ def fetch_page(page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, int]]:
-    """(card_num, rarity, price) のリストを返す(在庫切れ商品は除外)。"""
+def parse_items(html: str) -> list[tuple[str, str, int | None]]:
+    """(card_num, rarity, price) のリストを返す。在庫切れの場合はpriceがNoneになる
+    (呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。
+    """
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for li in soup.select("li.list_item_cell"):
-        if "list_item_soldout" in (li.get("class") or []):
-            continue
         name_el = li.select_one(".goods_name")
-        price_el = li.select_one(".price .figure")
-        if not name_el or not price_el:
+        if not name_el:
             continue
 
         m = NAME_PATTERN.search(name_el.get_text())
         if not m:
             continue
         rarity, card_num = m.group(1), m.group(2)
+
+        if "list_item_soldout" in (li.get("class") or []):
+            results.append((card_num, rarity, None))
+            continue
+
+        price_el = li.select_one(".price .figure")
+        if not price_el:
+            continue
 
         price_text = price_el.get_text().split("円")[0].replace(",", "").strip()
         try:
@@ -110,6 +117,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     logger.info("価格取得対象: %d件 (レアリティ: %s)", len(target_by_num), ", ".join(target_rarities))
 
     all_prices: dict[str, list[int]] = defaultdict(list)
+    soldout_card_nums: set[str] = set()
     first_request = True
 
     try:
@@ -133,7 +141,10 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             for card_num, rarity, price in parse_items(html):
                 if card_num not in target_by_num:
                     continue
-                all_prices[card_num].append(price)
+                if price is None:
+                    soldout_card_nums.add(card_num)
+                else:
+                    all_prices[card_num].append(price)
 
             if progress_callback:
                 progress_callback(page, last_page, len(all_prices))
@@ -146,6 +157,14 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             count = len(prices)
             min_price = min(prices)
             db.insert_price(conn, card_id, "竜のしっぽ", min_price, recorded_at=run_recorded_at, sample_count=count)
+
+        # 在庫切れと確認できたカードは、次に再入荷して確認できるまで最安値を出せないため、
+        # フロント側の「何日か経ったら-にする」猶予を待たずその場で古い記録を消す。
+        confirmed_soldout = soldout_card_nums - set(all_prices)
+        if confirmed_soldout:
+            soldout_ids = [target_by_num[num] for num in confirmed_soldout if num in target_by_num]
+            deleted = db.delete_prices(conn, soldout_ids, "竜のしっぽ")
+            logger.info("在庫切れ確認: %d件の古い価格記録を削除", deleted)
 
         unmatched = sorted(set(target_by_num) - set(all_prices))
         summary = {

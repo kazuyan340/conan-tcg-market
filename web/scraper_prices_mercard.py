@@ -111,19 +111,18 @@ def fetch_page(category: str, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int]]:
+def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int | None]]:
     """(内部ID, レアリティ, 収録パック表記, 名前の注釈, 価格) のリストを返す。
 
-    収録パック表記・注釈は無ければNone。在庫切れ商品・未開封の非単品商品は除外する。
+    収録パック表記・注釈は無ければNone。在庫切れの場合は価格がNoneになる
+    (呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。
+    未開封の非単品商品(プロモパック丸ごとの出品等)は除外する。
     """
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for li in soup.select("li.list_item_cell"):
-        if "list_item_soldout" in (li.get("class") or []):
-            continue
         name_el = li.select_one(".goods_name")
-        price_el = li.select_one(".price .figure")
-        if not name_el or not price_el:
+        if not name_el:
             continue
 
         name_text = name_el.get_text()
@@ -142,6 +141,14 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int]]
 
         annotation_matches = ANNOTATION_PATTERN.findall(name_text[:m.start()])
         annotation = annotation_matches[-1] if annotation_matches else None
+
+        if "list_item_soldout" in (li.get("class") or []):
+            results.append((model_number, rarity, pack, annotation, None))
+            continue
+
+        price_el = li.select_one(".price .figure")
+        if not price_el:
+            continue
 
         price_text = price_el.get_text().split("円")[0].replace(",", "").strip()
         try:
@@ -182,6 +189,36 @@ def build_lookup(conn):
     return lookup_with_pack, lookup, pack_text_by_id
 
 
+def resolve_candidate(model_number, rarity, pack, annotation, lookup_with_pack, lookup, pack_text_by_id):
+    """(内部ID, レアリティ, 収録パック表記, 注釈) から、1枚に絞り込めればそのcards.idを、
+    絞り込めなければNoneを返す。優先順位はparse_items/モジュールdocstring参照。
+    """
+    norm_id = normalize_id(model_number)
+    base_key = (norm_id, rarity)
+
+    if pack:
+        pack_candidates = lookup_with_pack.get((norm_id, rarity, normalize_pack_code(pack)))
+        if pack_candidates and len(pack_candidates) == 1:
+            return pack_candidates[0]
+
+    if annotation:
+        norm_annotation = normalize_annotation_text(annotation)
+        if norm_annotation:
+            matches = [
+                pk for pk in lookup.get(base_key, [])
+                if norm_annotation in pack_text_by_id.get(pk, "")
+            ]
+            if len(matches) == 1:
+                return matches[0]
+
+    base_candidates = lookup.get(base_key, [])
+    # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの絵違いが多数ある等)。
+    # 誤った値段/在庫状況を割り当てるより、記録しない方が安全なためスキップする。
+    if len(base_candidates) == 1:
+        return base_candidates[0]
+    return None
+
+
 def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=None) -> dict:
     """メルカードからカード価格を取得し price_history に保存する。
 
@@ -197,6 +234,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
+    soldout_pks: set[int] = set()
     first_request = True
 
     try:
@@ -219,35 +257,15 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
                 for model_number, rarity, pack, annotation, price in parse_items(html):
-                    norm_id = normalize_id(model_number)
-                    base_key = (norm_id, rarity)
-                    candidates = None
-
-                    if pack:
-                        pack_candidates = lookup_with_pack.get((norm_id, rarity, normalize_pack_code(pack)))
-                        if pack_candidates and len(pack_candidates) == 1:
-                            candidates = pack_candidates
-
-                    if candidates is None and annotation:
-                        norm_annotation = normalize_annotation_text(annotation)
-                        if norm_annotation:
-                            matches = [
-                                pk for pk in lookup.get(base_key, [])
-                                if norm_annotation in pack_text_by_id.get(pk, "")
-                            ]
-                            if len(matches) == 1:
-                                candidates = matches
-
-                    if candidates is None:
-                        base_candidates = lookup.get(base_key, [])
-                        # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの
-                        # 絵違いが多数ある等)。誤った値段を割り当てるより、
-                        # 記録しない方が安全なためスキップする。
-                        if len(base_candidates) == 1:
-                            candidates = base_candidates
-
-                    if candidates:
-                        all_prices[candidates[0]].append(price)
+                    card_pk = resolve_candidate(
+                        model_number, rarity, pack, annotation, lookup_with_pack, lookup, pack_text_by_id
+                    )
+                    if card_pk is None:
+                        continue
+                    if price is None:
+                        soldout_pks.add(card_pk)
+                    else:
+                        all_prices[card_pk].append(price)
 
                 if progress_callback:
                     progress_callback(category, page, len(all_prices))
@@ -259,6 +277,13 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             count = len(prices)
             min_price = min(prices)
             db.insert_price(conn, card_pk, "メルカード", min_price, recorded_at=run_recorded_at, sample_count=count)
+
+        # 在庫切れと確認できたカードは、次に再入荷して確認できるまで最安値を出せないため、
+        # フロント側の「何日か経ったら-にする」猶予を待たずその場で古い記録を消す。
+        confirmed_soldout = soldout_pks - set(all_prices)
+        if confirmed_soldout:
+            deleted = db.delete_prices(conn, list(confirmed_soldout), "メルカード")
+            logger.info("在庫切れ確認: %d件の古い価格記録を削除", deleted)
 
         summary = {
             "target": len(lookup),

@@ -167,3 +167,19 @@ def get_price_history(conn: sqlite3.Connection, card_pk: int) -> list[sqlite3.Ro
     return conn.execute(
         "SELECT * FROM price_history WHERE card_id = ? ORDER BY recorded_at", (card_pk,)
     ).fetchall()
+
+
+def delete_prices(conn: sqlite3.Connection, card_pks: list[int], site: str) -> int:
+    """指定サイト・カードの価格履歴を削除する(売り切れ確認時に古い記録を消すため)。
+
+    削除した行数を返す。
+    """
+    if not card_pks:
+        return 0
+    placeholders = ",".join("?" for _ in card_pks)
+    cur = conn.execute(
+        f"DELETE FROM price_history WHERE site = ? AND card_id IN ({placeholders})",
+        (site, *card_pks),
+    )
+    conn.commit()
+    return cur.rowcount
