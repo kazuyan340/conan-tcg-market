@@ -322,6 +322,25 @@ function openModal(card) {
   document.body.classList.add("modal-open");
 
   renderPriceSection(card.id, card.card_num, card.name, card.rarity, card.pack);
+
+  // モーダル右上のお気に入り星。カード一覧タイルの星と同じ登録先(localStorage)を使う。
+  // お気に入り一覧(compare.html)側では、モーダルから解除したら一覧にも反映したいので、
+  // ページ側が任意で window.onModalFavoriteToggle を定義していれば呼び出す。
+  const favBtn = document.getElementById("modal-favorite");
+  if (favBtn) {
+    const syncFavBtn = () => {
+      const fav = isFavorite(card.id);
+      favBtn.textContent = fav ? "★" : "☆";
+      favBtn.classList.toggle("active", fav);
+    };
+    syncFavBtn();
+    favBtn.onclick = (e) => {
+      e.stopPropagation();
+      toggleFavorite(card.id);
+      syncFavBtn();
+      if (typeof window.onModalFavoriteToggle === "function") window.onModalFavoriteToggle(card);
+    };
+  }
 }
 
 function closeModal() {

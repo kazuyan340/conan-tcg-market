@@ -500,6 +500,13 @@ body.modal-open {
   cursor: pointer;
 }
 
+/* .favorite-starの既定位置(top:4px/right:4px)はカードタイル用の小さい寄せなので、
+   モーダル内では閉じるボタンと重ならないよう左にずらす。 */
+.modal-favorite-star {
+  top: 10px;
+  right: 52px;
+}
+
 .modal-body {
   display: flex;
   gap: 20px;

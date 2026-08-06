@@ -1,4 +1,5 @@
 let checkedCards = [];
+let allCards = [];
 
 // カードごとのしきい値(円)。{ cardId: { over: 数値, under: 数値 }, ... } の形でlocalStorageに保存する。
 // over = この金額を超えたら強調、under = この金額を下回ったら強調。
@@ -30,7 +31,7 @@ function saveThreshold(cardId, key, value) {
 }
 
 async function init() {
-  const allCards = await loadCardData();
+  allCards = await loadCardData();
   const ids = loadFavorites();
   checkedCards = allCards.filter((c) => ids.has(c.id));
 
@@ -41,6 +42,13 @@ async function init() {
     checkedCards = [];
     render();
   });
+
+  // カード詳細モーダルの☆から解除された場合も、このページの一覧にすぐ反映する。
+  window.onModalFavoriteToggle = () => {
+    const currentIds = loadFavorites();
+    checkedCards = allCards.filter((c) => currentIds.has(c.id));
+    render();
+  };
 
   bindModalEvents();
   render();
