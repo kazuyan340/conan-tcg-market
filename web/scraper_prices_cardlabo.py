@@ -117,7 +117,6 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     logger.info("価格取得対象: %d件 (レアリティ: %s)", len(target_by_num), ", ".join(target_rarities))
 
     all_prices: dict[str, list[int]] = defaultdict(list)
-    soldout_card_nums: set[str] = set()
     first_request = True
 
     try:
@@ -139,12 +138,9 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
             for card_num, rarity, price in parse_items(html):
-                if card_num not in target_by_num:
+                if card_num not in target_by_num or price is None:
                     continue
-                if price is None:
-                    soldout_card_nums.add(card_num)
-                else:
-                    all_prices[card_num].append(price)
+                all_prices[card_num].append(price)
 
             if progress_callback:
                 progress_callback(page, last_page, len(all_prices))
@@ -157,14 +153,6 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             count = len(prices)
             min_price = min(prices)
             db.insert_price(conn, card_id, "カードラボ", min_price, recorded_at=run_recorded_at, sample_count=count)
-
-        # 在庫切れと確認できたカードは、次に再入荷して確認できるまで最安値を出せないため、
-        # フロント側の「何日か経ったら-にする」猶予を待たずその場で古い記録を消す。
-        confirmed_soldout = soldout_card_nums - set(all_prices)
-        if confirmed_soldout:
-            soldout_ids = [target_by_num[num] for num in confirmed_soldout if num in target_by_num]
-            deleted = db.delete_prices(conn, soldout_ids, "カードラボ")
-            logger.info("在庫切れ確認: %d件の古い価格記録を削除", deleted)
 
         unmatched = sorted(set(target_by_num) - set(all_prices))
         summary = {

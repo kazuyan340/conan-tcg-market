@@ -234,7 +234,6 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
-    soldout_pks: set[int] = set()
     first_request = True
 
     try:
@@ -260,12 +259,9 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     card_pk = resolve_candidate(
                         model_number, rarity, pack, annotation, lookup_with_pack, lookup, pack_text_by_id
                     )
-                    if card_pk is None:
+                    if card_pk is None or price is None:
                         continue
-                    if price is None:
-                        soldout_pks.add(card_pk)
-                    else:
-                        all_prices[card_pk].append(price)
+                    all_prices[card_pk].append(price)
 
                 if progress_callback:
                     progress_callback(category, page, len(all_prices))
@@ -277,13 +273,6 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             count = len(prices)
             min_price = min(prices)
             db.insert_price(conn, card_pk, "メルカード", min_price, recorded_at=run_recorded_at, sample_count=count)
-
-        # 在庫切れと確認できたカードは、次に再入荷して確認できるまで最安値を出せないため、
-        # フロント側の「何日か経ったら-にする」猶予を待たずその場で古い記録を消す。
-        confirmed_soldout = soldout_pks - set(all_prices)
-        if confirmed_soldout:
-            deleted = db.delete_prices(conn, list(confirmed_soldout), "メルカード")
-            logger.info("在庫切れ確認: %d件の古い価格記録を削除", deleted)
 
         summary = {
             "target": len(lookup),

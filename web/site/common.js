@@ -278,27 +278,25 @@ function bindModalEvents() {
   });
 }
 
-// 売り切れなどでそのサイトの巡回対象から外れ続けると、何日経っても最後に
-// 記録された価格が「最新の最安値」として表示され続けてしまう(実際には
-// もう買えない値段のことがある)。あまりに古い記録は「データなし(-)」と
-// 同じ扱いにして、誤解を招く古い価格を表に出さないようにする。
-// 自動更新が1〜2日止まることもあるため、それくらいの遅れは許容する日数にしてある。
-const STALE_PRICE_DAYS = 4;
-const STALE_PRICE_MS = STALE_PRICE_DAYS * 24 * 60 * 60 * 1000;
-
 // サイトごとの最新の最安値を返す。{ site: {price, recorded_at, sample_count}|null }
+// このカードの直近の巡回日(全サイト中で一番新しいrecorded_atの日付)に記録が無い
+// サイトは、売り切れ等でその日は対象から外れたとみなし、結果から除く(-表示になる)。
+// 巡回自体が数日止まっていても、比較基準はこのカード自身の最新日なので
+// 誤って全サイトが-になることはない。
 function latestPriceBySite(history) {
+  if (history.length === 0) return {};
+
+  const latestDay = history.reduce((max, h) => {
+    const day = dayKey(h.recorded_at);
+    return day > max ? day : max;
+  }, "");
+
   const bySite = {};
   for (const h of history) {
+    if (dayKey(h.recorded_at) !== latestDay) continue;
     const base = baseSiteName(h.site);
     if (!bySite[base] || h.recorded_at > bySite[base].recorded_at) {
       bySite[base] = { price: h.price, recorded_at: h.recorded_at, sample_count: h.sample_count };
-    }
-  }
-  const now = Date.now();
-  for (const base of Object.keys(bySite)) {
-    if (now - new Date(bySite[base].recorded_at).getTime() > STALE_PRICE_MS) {
-      delete bySite[base];
     }
   }
   return bySite;
