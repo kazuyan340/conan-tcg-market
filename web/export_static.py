@@ -15,10 +15,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 
-SPIKE_MIN_PCT = 5     # 急上昇/急下降とみなす最小変化率(直近2時点間、絶対値)
-GRADUAL_MIN_PCT = 3   # じわじわ上昇/下降とみなす最小変化率(最初と最新の間、絶対値)
-SPIKE_LIMIT = 50
-GRADUAL_LIMIT = 50
+SPIKE_MIN_PCT = 5     # 急な変化とみなす最小変化率(直近2時点間、絶対値)
+GRADUAL_MIN_PCT = 3   # じわじわ変化とみなす最小変化率(最初と最新の間、絶対値)
+TREND_LIMIT = 50
 MOVERS_LIMIT = 100
 
 OUTPUT_DIR = Path(__file__).parent / "site" / "data"
@@ -141,12 +140,14 @@ def _all_price_series(conn) -> dict[tuple[int, str], list[tuple[str, int]]]:
 
 
 def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
-    """価格が急上昇/じわじわ上昇/急下降/じわじわ下降しているカードを判定する。
+    """価格が上昇傾向/下降傾向にあるカードを判定する。
 
-    - 急上昇/急下降: 直近2時点の変化率の絶対値が SPIKE_MIN_PCT 以上
-    - じわじわ上昇/下降: 3時点以上あり、逆方向への動きがほぼ無く、最初→最新の
-      変化率の絶対値が GRADUAL_MIN_PCT 以上。かつ、1回のジャンプだけで説明できる
-      変化(=急上昇/急下降と同じもの)は除外する。
+    以下のいずれかに当てはまれば「上昇傾向」(下落なら「下降傾向」)に含める:
+    - 直近2時点の変化率の絶対値が SPIKE_MIN_PCT 以上(急な変化)
+    - 3時点以上あり、逆方向への動きがほぼ無く、最初→最新の変化率の絶対値が
+      GRADUAL_MIN_PCT 以上(じわじわ変化)。ただし1回のジャンプだけで説明できる
+      変化(=上の急な変化と同じもの)は上のほうを優先し、じわじわ側からは除外する。
+    - 直近2回の変化が両方とも同じ向き(二連続上昇/二連続下降)。変化率の大小は問わない。
 
     サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する
     (詳細は _price_points_by_card_site のdocstring参照)。「全体」(相場)も1つの
@@ -219,17 +220,45 @@ def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
                     gradual_down.append(item)
 
     # じわじわ上昇/下降と判定された(カード,サイト)組は、その特徴づけの方が正確なので
-    # 急上昇/急下降からは除く
+    # 急な変化からは除く
     gradual_up_keys = {(item["card_id"], item["site"]) for item in gradual_up}
     gradual_down_keys = {(item["card_id"], item["site"]) for item in gradual_down}
     spikes = [item for item in spikes if (item["card_id"], item["site"]) not in gradual_up_keys]
     crashes = [item for item in crashes if (item["card_id"], item["site"]) not in gradual_down_keys]
 
+    # 二連続上昇/下降: 直近2回の変化が両方とも同じ向きなら、変化率が小さくても
+    # 傾向として拾う。既に急な変化/じわじわ変化で拾われている(カード,サイト)組は除く。
+    already_up_keys = {(item["card_id"], item["site"]) for item in spikes} | gradual_up_keys
+    already_down_keys = {(item["card_id"], item["site"]) for item in crashes} | gradual_down_keys
+    two_step_up = []
+    two_step_down = []
+    for (card_id, site), points in by_card_site.items():
+        if (card_id, site) in already_up_keys or (card_id, site) in already_down_keys:
+            continue
+        if len(points) < 3:
+            continue
+        mid_date, mid_price = points[-2]
+        last_date, last_price = points[-1]
+        prev_price = points[-3][1]
+        if prev_price <= 0 or mid_price <= 0:
+            continue
+        item = {
+            "card_id": card_id,
+            "site": site,
+            "change_pct": round((last_price - mid_price) / mid_price * 100, 1),
+            "previous_price": mid_price,
+            "previous_date": mid_date,
+            "latest_price": last_price,
+            "latest_date": last_date,
+        }
+        if mid_price > prev_price and last_price > mid_price:
+            two_step_up.append(item)
+        elif mid_price < prev_price and last_price < mid_price:
+            two_step_down.append(item)
+
     return {
-        "spike": _sort_limit_per_site(spikes, SPIKE_LIMIT, reverse=True),
-        "gradual": _sort_limit_per_site(gradual_up, GRADUAL_LIMIT, reverse=True),
-        "crash": _sort_limit_per_site(crashes, SPIKE_LIMIT, reverse=False),
-        "gradual_down": _sort_limit_per_site(gradual_down, GRADUAL_LIMIT, reverse=False),
+        "up": _sort_limit_per_site(spikes + gradual_up + two_step_up, TREND_LIMIT, reverse=True),
+        "down": _sort_limit_per_site(crashes + gradual_down + two_step_down, TREND_LIMIT, reverse=False),
     }
 
 
@@ -319,10 +348,7 @@ def main():
 
     print(f"cards.json: {len(cards)}件")
     print(f"prices.json: {len(prices)}カード分の価格履歴")
-    print(
-        f"trends.json: 急上昇{len(trends['spike'])}件 / じわじわ上昇{len(trends['gradual'])}件 / "
-        f"急下降{len(trends['crash'])}件 / じわじわ下降{len(trends['gradual_down'])}件"
-    )
+    print(f"trends.json: 上昇傾向{len(trends['up'])}件 / 下降傾向{len(trends['down'])}件")
     print(f"movers.json: 値上がり{len(movers['up'])}件/値下がり{len(movers['down'])}件")
     print(f"meta.json: generated_at={meta['generated_at']}")
 

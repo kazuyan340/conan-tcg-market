@@ -75,23 +75,20 @@ function bySite(items, site) {
   return (items || []).filter((item) => item.site === site);
 }
 
+// 上昇/下降傾向の判定には「直近2点の急な変化」「複数点にわたるじわじわ変化」
+// 「変化率を問わない二連続の同方向の動き」の3種類が混ざっているため、
+// アイテムの形([first_price,points] か [previous_price] か)を見て表示を出し分ける。
+function trendBadgeLines(item) {
+  const sign = item.change_pct > 0 ? "+" : "";
+  if (item.points) {
+    return [`${sign}${item.change_pct}%`, `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`];
+  }
+  return [`${sign}${item.change_pct}%`, `${item.previous_price}円 → ${item.latest_price}円`];
+}
+
 function renderAll() {
-  renderTrendGrid("spike-grid", "spike-empty", bySite(trendsRes.spike, selectedSite), (item) => [
-    `+${item.change_pct}%`,
-    `${item.previous_price}円 → ${item.latest_price}円`,
-  ], "up");
-  renderTrendGrid("gradual-grid", "gradual-empty", bySite(trendsRes.gradual, selectedSite), (item) => [
-    `+${item.change_pct}%`,
-    `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`,
-  ], "up");
-  renderTrendGrid("crash-grid", "crash-empty", bySite(trendsRes.crash, selectedSite), (item) => [
-    `${item.change_pct}%`,
-    `${item.previous_price}円 → ${item.latest_price}円`,
-  ], "down");
-  renderTrendGrid("gradual-down-grid", "gradual-down-empty", bySite(trendsRes.gradual_down, selectedSite), (item) => [
-    `${item.change_pct}%`,
-    `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`,
-  ], "down");
+  renderTrendGrid("trend-grid-up", "trend-empty-up", bySite(trendsRes.up, selectedSite), trendBadgeLines, "up");
+  renderTrendGrid("trend-grid-down", "trend-empty-down", bySite(trendsRes.down, selectedSite), trendBadgeLines, "down");
 
   renderMoverGrid("mover-grid-up", "mover-empty-up", bySite(moversRes.up, selectedSite), "up");
   renderMoverGrid("mover-grid-down", "mover-empty-down", bySite(moversRes.down, selectedSite), "down");
