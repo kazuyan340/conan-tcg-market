@@ -140,14 +140,14 @@ def _all_price_series(conn) -> dict[tuple[int, str], list[tuple[str, int]]]:
 
 
 def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
-    """価格が上昇傾向/下降傾向にあるカードを判定する。
+    """価格が急上昇/上昇傾向/急下降/下降傾向にあるカードを判定する。
 
-    以下のいずれかに当てはまれば「上昇傾向」(下落なら「下降傾向」)に含める:
-    - 直近2時点の変化率の絶対値が SPIKE_MIN_PCT 以上(急な変化)
-    - 3時点以上あり、逆方向への動きがほぼ無く、最初→最新の変化率の絶対値が
-      GRADUAL_MIN_PCT 以上(じわじわ変化)。ただし1回のジャンプだけで説明できる
-      変化(=上の急な変化と同じもの)は上のほうを優先し、じわじわ側からは除外する。
-    - 直近2回の変化が両方とも同じ向き(二連続上昇/二連続下降)。変化率の大小は問わない。
+    - 急上昇/急下降: 直近2時点の変化率の絶対値が SPIKE_MIN_PCT 以上(急な変化)
+    - 上昇傾向/下降傾向: 急上昇/急下降ほど急ではないが、値動きが続いているもの。
+      以下のいずれかに当てはまれば含める:
+      - 3時点以上あり、逆方向への動きがほぼ無く、最初→最新の変化率の絶対値が
+        GRADUAL_MIN_PCT 以上(じわじわ変化)
+      - 直近2回の変化が両方とも同じ向き(二連続上昇/二連続下降)。変化率の大小は問わない。
 
     サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する
     (詳細は _price_points_by_card_site のdocstring参照)。「全体」(相場)も1つの
@@ -257,8 +257,10 @@ def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
             two_step_down.append(item)
 
     return {
-        "up": _sort_limit_per_site(spikes + gradual_up + two_step_up, TREND_LIMIT, reverse=True),
-        "down": _sort_limit_per_site(crashes + gradual_down + two_step_down, TREND_LIMIT, reverse=False),
+        "spike": _sort_limit_per_site(spikes, TREND_LIMIT, reverse=True),
+        "trend_up": _sort_limit_per_site(gradual_up + two_step_up, TREND_LIMIT, reverse=True),
+        "crash": _sort_limit_per_site(crashes, TREND_LIMIT, reverse=False),
+        "trend_down": _sort_limit_per_site(gradual_down + two_step_down, TREND_LIMIT, reverse=False),
     }
 
 
@@ -348,7 +350,10 @@ def main():
 
     print(f"cards.json: {len(cards)}件")
     print(f"prices.json: {len(prices)}カード分の価格履歴")
-    print(f"trends.json: 上昇傾向{len(trends['up'])}件 / 下降傾向{len(trends['down'])}件")
+    print(
+        f"trends.json: 急上昇{len(trends['spike'])}件 / 上昇傾向{len(trends['trend_up'])}件 / "
+        f"急下降{len(trends['crash'])}件 / 下降傾向{len(trends['trend_down'])}件"
+    )
     print(f"movers.json: 値上がり{len(movers['up'])}件/値下がり{len(movers['down'])}件")
     print(f"meta.json: generated_at={meta['generated_at']}")
 

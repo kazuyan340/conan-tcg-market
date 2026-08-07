@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="名探偵コナンTCGカードの値上がり・値下がり・上昇傾向・下降傾向をサイト別にチェックできるページ。">
+<meta name="description" content="名探偵コナンTCGカードの値上がり・値下がり・急上昇・上昇傾向・急下降・下降傾向をサイト別にチェックできるページ。">
 <title>価格情報 | 名探偵コナンTCG カード図鑑</title>
 <link rel="stylesheet" href="style.css">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080305842487680" crossorigin="anonymous"></script>
@@ -26,17 +26,31 @@
 
 <div id="view-trends">
   <section class="trend-section">
-    <h2>🔺 上昇傾向のカード</h2>
-    <p class="trend-desc">前回より大きく値上がりした、または複数回の取得を通して値上がりが続いているカードです。</p>
-    <div id="trend-grid-up" class="card-grid"></div>
-    <p id="trend-empty-up" class="empty-message hidden">まだ上昇傾向と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+    <h2>🔺 急上昇中のカード</h2>
+    <p class="trend-desc">直近の取得で前回より大きく値上がりしたカードです。</p>
+    <div id="spike-grid" class="card-grid"></div>
+    <p id="spike-empty" class="empty-message hidden">まだ急上昇と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
   </section>
 
   <section class="trend-section">
-    <h2>🔻 下降傾向のカード</h2>
-    <p class="trend-desc">前回より大きく値下がりした、または複数回の取得を通して値下がりが続いているカードです。</p>
-    <div id="trend-grid-down" class="card-grid"></div>
-    <p id="trend-empty-down" class="empty-message hidden">まだ下降傾向と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+    <h2>📈 上昇傾向のカード</h2>
+    <p class="trend-desc">急激にではなく、複数回の取得を通して値上がりが続いているカードです。</p>
+    <div id="trend-up-grid" class="card-grid"></div>
+    <p id="trend-up-empty" class="empty-message hidden">まだ上昇傾向と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+
+  <section class="trend-section">
+    <h2>🔻 急下降中のカード</h2>
+    <p class="trend-desc">直近の取得で前回より大きく値下がりしたカードです。</p>
+    <div id="crash-grid" class="card-grid"></div>
+    <p id="crash-empty" class="empty-message hidden">まだ急下降と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+  </section>
+
+  <section class="trend-section">
+    <h2>📉 下降傾向のカード</h2>
+    <p class="trend-desc">急激にではなく、複数回の取得を通して値下がりが続いているカードです。</p>
+    <div id="trend-down-grid" class="card-grid"></div>
+    <p id="trend-down-empty" class="empty-message hidden">まだ下降傾向と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
   </section>
 </div>
 

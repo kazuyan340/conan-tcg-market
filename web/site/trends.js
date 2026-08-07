@@ -75,9 +75,9 @@ function bySite(items, site) {
   return (items || []).filter((item) => item.site === site);
 }
 
-// 上昇/下降傾向の判定には「直近2点の急な変化」「複数点にわたるじわじわ変化」
-// 「変化率を問わない二連続の同方向の動き」の3種類が混ざっているため、
-// アイテムの形([first_price,points] か [previous_price] か)を見て表示を出し分ける。
+// 急上昇/急下降は直近2点([previous_price])、上昇傾向/下降傾向は「じわじわ変化」
+// ([first_price,points]あり)と「変化率を問わない二連続の同方向の動き」
+// ([previous_price]のみ)が混ざっているため、アイテムの形を見て表示を出し分ける。
 function trendBadgeLines(item) {
   const sign = item.change_pct > 0 ? "+" : "";
   if (item.points) {
@@ -87,8 +87,10 @@ function trendBadgeLines(item) {
 }
 
 function renderAll() {
-  renderTrendGrid("trend-grid-up", "trend-empty-up", bySite(trendsRes.up, selectedSite), trendBadgeLines, "up");
-  renderTrendGrid("trend-grid-down", "trend-empty-down", bySite(trendsRes.down, selectedSite), trendBadgeLines, "down");
+  renderTrendGrid("spike-grid", "spike-empty", bySite(trendsRes.spike, selectedSite), trendBadgeLines, "up");
+  renderTrendGrid("trend-up-grid", "trend-up-empty", bySite(trendsRes.trend_up, selectedSite), trendBadgeLines, "up");
+  renderTrendGrid("crash-grid", "crash-empty", bySite(trendsRes.crash, selectedSite), trendBadgeLines, "down");
+  renderTrendGrid("trend-down-grid", "trend-down-empty", bySite(trendsRes.trend_down, selectedSite), trendBadgeLines, "down");
 
   renderMoverGrid("mover-grid-up", "mover-empty-up", bySite(moversRes.up, selectedSite), "up");
   renderMoverGrid("mover-grid-down", "mover-empty-down", bySite(moversRes.down, selectedSite), "down");
