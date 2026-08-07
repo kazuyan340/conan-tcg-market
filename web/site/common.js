@@ -173,6 +173,7 @@ function colorForSite(site) {
 }
 
 let commonPrices = {};
+let siteLatestDay = {};
 
 function loadFavorites() {
   try {
@@ -222,7 +223,25 @@ async function loadCardData() {
   ]);
   const cards = await cardsRes.json();
   commonPrices = await pricesRes.json();
+  siteLatestDay = computeSiteLatestDay(commonPrices);
   return cards;
+}
+
+// サイトごとに「直近正常に巡回できたのはいつか」を、全カード横断で集計する。
+// カード単位ではなくサイト単位の基準にすることで、他サイトに一度もデータが無い
+// カードでも「このサイトの最新巡回でこのカードが見つからなかった(売り切れ等)」を
+// 正しく判定できる(以前はカード自身の履歴だけを見ていたため、他サイトの比較対象が
+// 無いカードで古いデータがそのまま「最新」扱いされてしまっていた)。
+function computeSiteLatestDay(prices) {
+  const result = {};
+  for (const points of Object.values(prices)) {
+    for (const p of points) {
+      const base = baseSiteName(p.site);
+      const day = dayKey(p.recorded_at);
+      if (!result[base] || day > result[base]) result[base] = day;
+    }
+  }
+  return result;
 }
 
 // ヘッダーに「最終更新: 2026/7/29 3:05」を表示する(自動更新がいつ効いたか一目で分かるように)。
@@ -359,24 +378,22 @@ function bindModalEvents() {
 }
 
 // サイトごとの最新の最安値を返す。{ site: {price, recorded_at, sample_count}|null }
-// このカードの直近の巡回日(全サイト中で一番新しいrecorded_atの日付)に記録が無い
-// サイトは、売り切れ等でその日は対象から外れたとみなし、結果から除く(-表示になる)。
-// 巡回自体が数日止まっていても、比較基準はこのカード自身の最新日なので
-// 誤って全サイトが-になることはない。
+// そのサイト自身の直近の巡回日(siteLatestDay、全カード横断で集計済み)に、この
+// カードの記録が無ければ、売り切れ等でその回は対象から外れたとみなし結果から除く
+// (-表示になる)。サイト単位の基準なので、他サイトに一度もデータが無いカードでも
+// 正しく判定できる(cf. computeSiteLatestDay)。
 function latestPriceBySite(history) {
-  if (history.length === 0) return {};
-
-  const latestDay = history.reduce((max, h) => {
-    const day = dayKey(h.recorded_at);
-    return day > max ? day : max;
-  }, "");
-
   const bySite = {};
   for (const h of history) {
-    if (dayKey(h.recorded_at) !== latestDay) continue;
     const base = baseSiteName(h.site);
     if (!bySite[base] || h.recorded_at > bySite[base].recorded_at) {
       bySite[base] = { price: h.price, recorded_at: h.recorded_at, sample_count: h.sample_count };
+    }
+  }
+  for (const base of Object.keys(bySite)) {
+    const latestDay = siteLatestDay[base];
+    if (latestDay && dayKey(bySite[base].recorded_at) !== latestDay) {
+      delete bySite[base];
     }
   }
   return bySite;
