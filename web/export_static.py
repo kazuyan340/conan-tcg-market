@@ -62,6 +62,21 @@ def _goods_search_keyword(category: str, title: str) -> str:
     return title
 
 
+# 拡張パックはバラ売りではなくBOX単位で売られていることが多いため、Amazonでは
+# 型番+名前+"BOX"で検索する(例: "CT-P01「探偵たちの切札」BOX")方が実物の商品に
+# 辿り着きやすい。
+GOODS_MODEL_CODE_PATTERN = re.compile(r"CT-[A-Z]?\d+")
+
+
+def _amazon_goods_keyword(category: str, title: str) -> str:
+    if category == "pack":
+        model_match = GOODS_MODEL_CODE_PATTERN.search(title)
+        name_match = GOODS_BRACKET_NAME_PATTERN.search(title)
+        if model_match and name_match:
+            return f"{model_match.group(0)}「{name_match.group(1)}」BOX"
+    return _goods_search_keyword(category, title)
+
+
 def _takaratomy_mall_search_url(keyword: str) -> str:
     """タカラトミーモールの検索URL。ASP.NET製のこのサイトは検索キーワードを
     UTF-8ではなくShift-JIS(cp932)でパーセントエンコードする。実際にブラウザで
@@ -91,7 +106,7 @@ def export_goods(conn) -> list[dict]:
         item = {field: row[field] for field in GOODS_FIELDS}
         keyword = _goods_search_keyword(row["category"], row["title"])
         item["ttmall_url"] = _takaratomy_mall_search_url(keyword)
-        item["amazon_url"] = _amazon_search_url(keyword)
+        item["amazon_url"] = _amazon_search_url(_amazon_goods_keyword(row["category"], row["title"]))
         item["rakuten_url"] = _rakuten_search_url(keyword)
         result.append(item)
     return result
