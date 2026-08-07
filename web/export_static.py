@@ -250,10 +250,8 @@ def _sort_limit_per_site(items: list[dict], limit: int, reverse: bool) -> list[d
 
 
 def compute_movers(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
-    """これまでの平均価格と比べて、値上がりしたカード/値下がりしたカードを(閾値なしで)全て挙げる。
+    """前日と比べて、値上がりしたカード/値下がりしたカードを(閾値なしで)全て挙げる。
 
-    直近2時点だけの比較だと「最安値の出品が入れ替わっただけ」のような1点のノイズに
-    引っ張られやすいため、最新値点を除いた過去の平均価格を基準にする。
     「急上昇」と違って何%以上という足切りをせず、上がった/下がった を単純に分けるだけ。
     変化が無い(0%)カードはどちらにも含めない。サイトをまたいだ価格差を値動きと
     誤認しないよう、サイトごとに独立して判定する。
@@ -266,19 +264,18 @@ def compute_movers(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
     for (card_id, site), points in by_card_site.items():
         if len(points) < 2:
             continue
-        prior_prices = [price for _, price in points[:-1]]
-        avg_price = sum(prior_prices) / len(prior_prices)
+        prev_date, prev_price = points[-2]
         last_date, last_price = points[-1]
-        if avg_price <= 0 or avg_price == last_price:
+        if prev_price <= 0 or prev_price == last_price:
             continue
 
-        pct = (last_price - avg_price) / avg_price * 100
+        pct = (last_price - prev_price) / prev_price * 100
         item = {
             "card_id": card_id,
             "site": site,
             "change_pct": round(pct, 1),
-            "average_price": round(avg_price, 1),
-            "points": len(prior_prices),
+            "previous_price": prev_price,
+            "previous_date": prev_date,
             "latest_price": last_price,
             "latest_date": last_date,
         }

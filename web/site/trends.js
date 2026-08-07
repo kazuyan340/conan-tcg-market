@@ -143,7 +143,7 @@ function renderMoverGrid(gridId, emptyId, items, direction) {
 
   const badgeLinesFn = (item) => [
     `${item.change_pct > 0 ? "+" : ""}${item.change_pct}%`,
-    `平均${item.average_price}円 → ${item.latest_price}円`,
+    `${item.previous_price}円 → ${item.latest_price}円`,
   ];
 
   for (const item of items) {
