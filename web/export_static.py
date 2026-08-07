@@ -3,11 +3,13 @@
 web/site/data/cards.json  … カード一覧全件
 web/site/data/prices.json … card_id をキーにした価格履歴(データがあるカードのみ)
 web/site/data/trends.json … 価格が直近上昇/上昇傾向しているカードのランキング
+web/site/data/goods.json  … 拡張パック/構築済みデッキ/周辺グッズの商品一覧
 
 画像はタカラトミーの image_url をそのまま参照する(自前ホストしない=ホットリンク)。
 """
 import json
 import sys
+import urllib.parse
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +34,52 @@ def export_cards(conn) -> list[dict]:
     rows = db.search_cards(conn)
     cards = [{field: row[field] for field in CARD_FIELDS} for row in rows]
     return cards
+
+
+GOODS_FIELDS = [
+    "title", "category", "category_label", "price_text", "price_yen",
+    "release_date", "image_url", "detail_url",
+]
+
+# Amazonアソシエイト/楽天アフィリエイトのトラッキングID。登録が済んでIDが分かったら
+# ここに入れる。未設定の間は素の検索リンク(アフィリエイトなし)になる。
+AMAZON_ASSOCIATE_TAG = None  # 例: "yourname-22"
+RAKUTEN_AFFILIATE_ID = None  # 例: "1234567.abcdefgh"(承認後、実際のリンク形式を確認して組み込む)
+
+
+def _takaratomy_mall_search_url(keyword: str) -> str:
+    """タカラトミーモールの検索URL。ASP.NET製のこのサイトは検索キーワードを
+    UTF-8ではなくShift-JIS(cp932)でパーセントエンコードする。実際にブラウザで
+    検索して確認した形式(例: 「コナン」で検索 -> keyword=%83R%83i%83%93)。
+    """
+    encoded = urllib.parse.quote(keyword.encode("cp932", errors="ignore"))
+    return f"https://takaratomymall.jp/shop/goods/search.aspx?search=x&keyword={encoded}&wovn=ja"
+
+
+def _amazon_search_url(keyword: str) -> str:
+    url = f"https://www.amazon.co.jp/s?k={urllib.parse.quote(keyword)}"
+    if AMAZON_ASSOCIATE_TAG:
+        url += f"&tag={AMAZON_ASSOCIATE_TAG}"
+    return url
+
+
+def _rakuten_search_url(keyword: str) -> str:
+    # RAKUTEN_AFFILIATE_ID が分かったら、楽天アフィリエイトツールで実際のリンク
+    # 形式(hb.afl.rakuten.co.jp 経由のリダイレクト等)を確認した上でここに組み込む。
+    return f"https://search.rakuten.co.jp/search/mall/{urllib.parse.quote(keyword)}/"
+
+
+def export_goods(conn) -> list[dict]:
+    rows = conn.execute("SELECT * FROM goods ORDER BY release_date DESC, id DESC").fetchall()
+    result = []
+    for row in rows:
+        item = {field: row[field] for field in GOODS_FIELDS}
+        keyword = row["title"]
+        item["ttmall_url"] = _takaratomy_mall_search_url(keyword)
+        item["amazon_url"] = _amazon_search_url(keyword)
+        item["rakuten_url"] = _rakuten_search_url(keyword)
+        result.append(item)
+    return result
 
 
 def export_prices(conn) -> dict[str, list[dict]]:
@@ -273,6 +321,10 @@ def main():
     with open(OUTPUT_DIR / "movers.json", "w", encoding="utf-8") as f:
         json.dump(movers, f, ensure_ascii=False, separators=(",", ":"))
 
+    goods = export_goods(conn)
+    with open(OUTPUT_DIR / "goods.json", "w", encoding="utf-8") as f:
+        json.dump(goods, f, ensure_ascii=False, separators=(",", ":"))
+
     meta = {"generated_at": datetime.now(timezone.utc).isoformat()}
     with open(OUTPUT_DIR / "meta.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, separators=(",", ":"))
@@ -284,6 +336,7 @@ def main():
         f"直近下降{len(trends['recent_down'])}件 / 下降傾向{len(trends['trend_down'])}件"
     )
     print(f"movers.json: 値上がり{len(movers['up'])}件/値下がり{len(movers['down'])}件")
+    print(f"goods.json: {len(goods)}件")
     print(f"meta.json: generated_at={meta['generated_at']}")
 
     conn.close()

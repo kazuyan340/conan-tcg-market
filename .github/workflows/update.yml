@@ -124,6 +124,9 @@ jobs:
       - name: Fetch prices from Full Ahead
         run: python web/scraper_prices_fullahead.py
 
+      - name: Fetch official goods/products list
+        run: python web/scraper_goods.py
+
       - name: Export static JSON for the site
         run: python web/export_static.py
 

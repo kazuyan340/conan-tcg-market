@@ -660,6 +660,90 @@ body.modal-open {
   border-color: rgba(255, 255, 255, 0.6);
 }
 
+/* --- グッズページ --- */
+.goods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  padding: 0;
+}
+
+.goods-tile {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.goods-tile img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.goods-title {
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin: 8px 0 2px;
+}
+
+.goods-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.goods-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goods-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #fff;
+}
+
+.goods-link.ttmall {
+  background: #0a5eb3;
+}
+
+.goods-link.ttmall:hover {
+  background: #084a8c;
+}
+
+.goods-link.amazon {
+  background: #ff9900;
+}
+
+.goods-link.amazon:hover {
+  background: #e08600;
+}
+
+.goods-link.rakuten {
+  background: #bf0000;
+}
+
+.goods-link.rakuten:hover {
+  background: #990000;
+}
+
+.goods-link .pr-label {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
 .chart-tooltip {
   position: fixed;
   z-index: 1000;
