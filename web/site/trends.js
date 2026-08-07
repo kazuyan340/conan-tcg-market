@@ -75,14 +75,8 @@ function bySite(items, site) {
   return (items || []).filter((item) => item.site === site);
 }
 
-// 急上昇/急下降は直近2点([previous_price])、上昇傾向/下降傾向は「じわじわ変化」
-// ([first_price,points]あり)と「変化率を問わない二連続の同方向の動き」
-// ([previous_price]のみ)が混ざっているため、アイテムの形を見て表示を出し分ける。
 function trendBadgeLines(item) {
   const sign = item.change_pct > 0 ? "+" : "";
-  if (item.points) {
-    return [`${sign}${item.change_pct}%`, `${item.first_price}円 → ${item.latest_price}円 (${item.points}回分)`];
-  }
   return [`${sign}${item.change_pct}%`, `${item.previous_price}円 → ${item.latest_price}円`];
 }
 

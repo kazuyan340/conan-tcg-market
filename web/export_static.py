@@ -16,7 +16,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 
 SPIKE_MIN_PCT = 5     # 急な変化とみなす最小変化率(直近2時点間、絶対値)
-GRADUAL_MIN_PCT = 3   # じわじわ変化とみなす最小変化率(最初と最新の間、絶対値)
 TREND_LIMIT = 50
 MOVERS_LIMIT = 100
 
@@ -143,11 +142,8 @@ def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
     """価格が急上昇/上昇傾向/急下降/下降傾向にあるカードを判定する。
 
     - 急上昇/急下降: 直近2時点の変化率の絶対値が SPIKE_MIN_PCT 以上(急な変化)
-    - 上昇傾向/下降傾向: 急上昇/急下降ほど急ではないが、値動きが続いているもの。
-      以下のいずれかに当てはまれば含める:
-      - 3時点以上あり、逆方向への動きがほぼ無く、最初→最新の変化率の絶対値が
-        GRADUAL_MIN_PCT 以上(じわじわ変化)
-      - 直近2回の変化が両方とも同じ向き(二連続上昇/二連続下降)。変化率の大小は問わない。
+    - 上昇傾向/下降傾向: 急上昇/急下降には該当しないが、直近2回の変化が両方とも
+      同じ向き(二連続上昇/二連続下降)のもの。変化率の大小は問わない。
 
     サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する
     (詳細は _price_points_by_card_site のdocstring参照)。「全体」(相場)も1つの
@@ -157,81 +153,35 @@ def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
     """
     spikes = []
     crashes = []
-    gradual_up = []
-    gradual_down = []
 
     for (card_id, site), points in by_card_site.items():
-        if len(points) >= 2:
-            prev_date, prev_price = points[-2]
-            last_date, last_price = points[-1]
-            if prev_price > 0:
-                pct = (last_price - prev_price) / prev_price * 100
-                item = {
-                    "card_id": card_id,
-                    "site": site,
-                    "change_pct": round(pct, 1),
-                    "previous_price": prev_price,
-                    "previous_date": prev_date,
-                    "latest_price": last_price,
-                    "latest_date": last_date,
-                }
-                if pct >= SPIKE_MIN_PCT:
-                    spikes.append(item)
-                elif pct <= -SPIKE_MIN_PCT:
-                    crashes.append(item)
-
-        if len(points) >= 3:
-            step_pcts = []
-            valid = True
-            for i in range(1, len(points)):
-                p0 = points[i - 1][1]
-                p1 = points[i][1]
-                if p0 <= 0:
-                    valid = False
-                    break
-                step_pcts.append((p1 - p0) / p0 * 100)
-            if not valid:
-                continue
-
-            first_price = points[0][1]
-            last_price = points[-1][1]
-            if first_price <= 0:
-                continue
-            overall_pct = (last_price - first_price) / first_price * 100
-
-            item = {
-                "card_id": card_id,
-                "site": site,
-                "change_pct": round(overall_pct, 1),
-                "first_price": first_price,
-                "first_date": points[0][0],
-                "latest_price": last_price,
-                "latest_date": points[-1][0],
-                "points": len(points),
-            }
-
-            if all(sp > -1 for sp in step_pcts):
-                max_step = max(step_pcts)
-                if overall_pct >= GRADUAL_MIN_PCT and max_step <= overall_pct * 0.7:
-                    gradual_up.append(item)
-            elif all(sp < 1 for sp in step_pcts):
-                min_step = min(step_pcts)
-                if overall_pct <= -GRADUAL_MIN_PCT and min_step >= overall_pct * 0.7:
-                    gradual_down.append(item)
-
-    # じわじわ上昇/下降と判定された(カード,サイト)組は、その特徴づけの方が正確なので
-    # 急な変化からは除く
-    gradual_up_keys = {(item["card_id"], item["site"]) for item in gradual_up}
-    gradual_down_keys = {(item["card_id"], item["site"]) for item in gradual_down}
-    spikes = [item for item in spikes if (item["card_id"], item["site"]) not in gradual_up_keys]
-    crashes = [item for item in crashes if (item["card_id"], item["site"]) not in gradual_down_keys]
+        if len(points) < 2:
+            continue
+        prev_date, prev_price = points[-2]
+        last_date, last_price = points[-1]
+        if prev_price <= 0:
+            continue
+        pct = (last_price - prev_price) / prev_price * 100
+        item = {
+            "card_id": card_id,
+            "site": site,
+            "change_pct": round(pct, 1),
+            "previous_price": prev_price,
+            "previous_date": prev_date,
+            "latest_price": last_price,
+            "latest_date": last_date,
+        }
+        if pct >= SPIKE_MIN_PCT:
+            spikes.append(item)
+        elif pct <= -SPIKE_MIN_PCT:
+            crashes.append(item)
 
     # 二連続上昇/下降: 直近2回の変化が両方とも同じ向きなら、変化率が小さくても
-    # 傾向として拾う。既に急な変化/じわじわ変化で拾われている(カード,サイト)組は除く。
-    already_up_keys = {(item["card_id"], item["site"]) for item in spikes} | gradual_up_keys
-    already_down_keys = {(item["card_id"], item["site"]) for item in crashes} | gradual_down_keys
-    two_step_up = []
-    two_step_down = []
+    # 傾向として拾う。既に急上昇/急下降で拾われている(カード,サイト)組は除く。
+    already_up_keys = {(item["card_id"], item["site"]) for item in spikes}
+    already_down_keys = {(item["card_id"], item["site"]) for item in crashes}
+    trend_up = []
+    trend_down = []
     for (card_id, site), points in by_card_site.items():
         if (card_id, site) in already_up_keys or (card_id, site) in already_down_keys:
             continue
@@ -252,15 +202,15 @@ def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
             "latest_date": last_date,
         }
         if mid_price > prev_price and last_price > mid_price:
-            two_step_up.append(item)
+            trend_up.append(item)
         elif mid_price < prev_price and last_price < mid_price:
-            two_step_down.append(item)
+            trend_down.append(item)
 
     return {
         "spike": _sort_limit_per_site(spikes, TREND_LIMIT, reverse=True),
-        "trend_up": _sort_limit_per_site(gradual_up + two_step_up, TREND_LIMIT, reverse=True),
+        "trend_up": _sort_limit_per_site(trend_up, TREND_LIMIT, reverse=True),
         "crash": _sort_limit_per_site(crashes, TREND_LIMIT, reverse=False),
-        "trend_down": _sort_limit_per_site(gradual_down + two_step_down, TREND_LIMIT, reverse=False),
+        "trend_down": _sort_limit_per_site(trend_down, TREND_LIMIT, reverse=False),
     }
 
 
