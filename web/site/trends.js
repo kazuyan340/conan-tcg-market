@@ -81,9 +81,9 @@ function trendBadgeLines(item) {
 }
 
 function renderAll() {
-  renderTrendGrid("spike-grid", "spike-empty", bySite(trendsRes.spike, selectedSite), trendBadgeLines, "up");
+  renderTrendGrid("recent-up-grid", "recent-up-empty", bySite(trendsRes.recent_up, selectedSite), trendBadgeLines, "up");
   renderTrendGrid("trend-up-grid", "trend-up-empty", bySite(trendsRes.trend_up, selectedSite), trendBadgeLines, "up");
-  renderTrendGrid("crash-grid", "crash-empty", bySite(trendsRes.crash, selectedSite), trendBadgeLines, "down");
+  renderTrendGrid("recent-down-grid", "recent-down-empty", bySite(trendsRes.recent_down, selectedSite), trendBadgeLines, "down");
   renderTrendGrid("trend-down-grid", "trend-down-empty", bySite(trendsRes.trend_down, selectedSite), trendBadgeLines, "down");
 
   renderMoverGrid("mover-grid-up", "mover-empty-up", bySite(moversRes.up, selectedSite), "up");

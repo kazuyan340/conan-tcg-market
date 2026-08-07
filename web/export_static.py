@@ -2,7 +2,7 @@
 
 web/site/data/cards.json  … カード一覧全件
 web/site/data/prices.json … card_id をキーにした価格履歴(データがあるカードのみ)
-web/site/data/trends.json … 価格が急上昇/じわじわ上昇しているカードのランキング
+web/site/data/trends.json … 価格が直近上昇/上昇傾向しているカードのランキング
 
 画像はタカラトミーの image_url をそのまま参照する(自前ホストしない=ホットリンク)。
 """
@@ -15,7 +15,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 
-SPIKE_MIN_PCT = 5     # 急な変化とみなす最小変化率(直近2時点間、絶対値)
 TREND_LIMIT = 50
 MOVERS_LIMIT = 100
 
@@ -138,29 +137,25 @@ def _all_price_series(conn) -> dict[tuple[int, str], list[tuple[str, int]]]:
     return combined
 
 
-def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
-    """価格が急上昇/上昇傾向/急下降/下降傾向にあるカードを判定する。
+def _previous_day_moves(
+    by_card_site: dict[tuple[int, str], list[tuple[str, int]]],
+) -> tuple[list[dict], list[dict]]:
+    """(card_id, site)ごとに、前回の記録と比べて値上がり/値下がりしたものを返す(閾値なし)。
 
-    - 急上昇/急下降: 直近2時点の変化率の絶対値が SPIKE_MIN_PCT 以上(急な変化)
-    - 上昇傾向/下降傾向: 急上昇/急下降には該当しないが、直近2回の変化が両方とも
-      同じ向き(二連続上昇/二連続下降)のもの。変化率の大小は問わない。
-
-    サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する
-    (詳細は _price_points_by_card_site のdocstring参照)。「全体」(相場)も1つの
-    仮想サイトとして同じ扱いで含まれる。
-
-    by_card_site は _all_price_series() の結果を渡す。
+    compute_movers・compute_trends の両方から使う共通ロジック。変化が無い(0%)
+    カードはどちらにも含めない。「-」の日(記録が無い日)はそもそも points に
+    存在しないので、比較には実際に記録がある直近2点が自動的に使われる。
     """
-    spikes = []
-    crashes = []
-
+    up = []
+    down = []
     for (card_id, site), points in by_card_site.items():
         if len(points) < 2:
             continue
         prev_date, prev_price = points[-2]
         last_date, last_price = points[-1]
-        if prev_price <= 0:
+        if prev_price <= 0 or prev_price == last_price:
             continue
+
         pct = (last_price - prev_price) / prev_price * 100
         item = {
             "card_id": card_id,
@@ -171,20 +166,32 @@ def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
             "latest_price": last_price,
             "latest_date": last_date,
         }
-        if pct >= SPIKE_MIN_PCT:
-            spikes.append(item)
-        elif pct <= -SPIKE_MIN_PCT:
-            crashes.append(item)
+        if pct > 0:
+            up.append(item)
+        else:
+            down.append(item)
+    return up, down
 
-    # 二連続上昇/下降: 直近2回の変化が両方とも同じ向きなら、変化率が小さくても
-    # 傾向として拾う。既に急上昇/急下降で拾われている(カード,サイト)組は除く。
-    already_up_keys = {(item["card_id"], item["site"]) for item in spikes}
-    already_down_keys = {(item["card_id"], item["site"]) for item in crashes}
+
+def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
+    """価格が直近上昇/上昇傾向/直近下降/下降傾向にあるカードを判定する。
+
+    - 直近上昇/直近下降: 前回の記録と比べて上がった/下がった(閾値なし)。
+      compute_movers の値上がり/値下がりと同じ条件。
+    - 上昇傾向/下降傾向: 直近2回の変化が両方とも同じ向き(二連続上昇/二連続下降)の
+      もの。変化率の大小は問わない。直近上昇/直近下降と重複しても構わない(除外しない)。
+
+    サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する
+    (詳細は _price_points_by_card_site のdocstring参照)。「全体」(相場)も1つの
+    仮想サイトとして同じ扱いで含まれる。
+
+    by_card_site は _all_price_series() の結果を渡す。
+    """
+    recent_up, recent_down = _previous_day_moves(by_card_site)
+
     trend_up = []
     trend_down = []
     for (card_id, site), points in by_card_site.items():
-        if (card_id, site) in already_up_keys or (card_id, site) in already_down_keys:
-            continue
         if len(points) < 3:
             continue
         mid_date, mid_price = points[-2]
@@ -207,9 +214,9 @@ def compute_trends(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -
             trend_down.append(item)
 
     return {
-        "spike": _sort_limit_per_site(spikes, TREND_LIMIT, reverse=True),
+        "recent_up": _sort_limit_per_site(recent_up, TREND_LIMIT, reverse=True),
         "trend_up": _sort_limit_per_site(trend_up, TREND_LIMIT, reverse=True),
-        "crash": _sort_limit_per_site(crashes, TREND_LIMIT, reverse=False),
+        "recent_down": _sort_limit_per_site(recent_down, TREND_LIMIT, reverse=False),
         "trend_down": _sort_limit_per_site(trend_down, TREND_LIMIT, reverse=False),
     }
 
@@ -233,38 +240,10 @@ def _sort_limit_per_site(items: list[dict], limit: int, reverse: bool) -> list[d
 def compute_movers(by_card_site: dict[tuple[int, str], list[tuple[str, int]]]) -> dict[str, list[dict]]:
     """前日と比べて、値上がりしたカード/値下がりしたカードを(閾値なしで)全て挙げる。
 
-    「急上昇」と違って何%以上という足切りをせず、上がった/下がった を単純に分けるだけ。
-    変化が無い(0%)カードはどちらにも含めない。サイトをまたいだ価格差を値動きと
-    誤認しないよう、サイトごとに独立して判定する。
-
+    サイトをまたいだ価格差を値動きと誤認しないよう、サイトごとに独立して判定する。
     by_card_site は _all_price_series() の結果を渡す(「全体」含む)。
     """
-    up = []
-    down = []
-
-    for (card_id, site), points in by_card_site.items():
-        if len(points) < 2:
-            continue
-        prev_date, prev_price = points[-2]
-        last_date, last_price = points[-1]
-        if prev_price <= 0 or prev_price == last_price:
-            continue
-
-        pct = (last_price - prev_price) / prev_price * 100
-        item = {
-            "card_id": card_id,
-            "site": site,
-            "change_pct": round(pct, 1),
-            "previous_price": prev_price,
-            "previous_date": prev_date,
-            "latest_price": last_price,
-            "latest_date": last_date,
-        }
-        if pct > 0:
-            up.append(item)
-        else:
-            down.append(item)
-
+    up, down = _previous_day_moves(by_card_site)
     return {
         "up": _sort_limit_per_site(up, MOVERS_LIMIT, reverse=True),
         "down": _sort_limit_per_site(down, MOVERS_LIMIT, reverse=False),
@@ -301,8 +280,8 @@ def main():
     print(f"cards.json: {len(cards)}件")
     print(f"prices.json: {len(prices)}カード分の価格履歴")
     print(
-        f"trends.json: 急上昇{len(trends['spike'])}件 / 上昇傾向{len(trends['trend_up'])}件 / "
-        f"急下降{len(trends['crash'])}件 / 下降傾向{len(trends['trend_down'])}件"
+        f"trends.json: 直近上昇{len(trends['recent_up'])}件 / 上昇傾向{len(trends['trend_up'])}件 / "
+        f"直近下降{len(trends['recent_down'])}件 / 下降傾向{len(trends['trend_down'])}件"
     )
     print(f"movers.json: 値上がり{len(movers['up'])}件/値下がり{len(movers['down'])}件")
     print(f"meta.json: generated_at={meta['generated_at']}")
