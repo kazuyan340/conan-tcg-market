@@ -98,17 +98,34 @@ def _pooled_points_by_card(
     1点にまとめた上で、その日に値がある全サイトを単純平均する(サイトの重み付けはしない)。
     サイト単位ではなく「全体」という1つの仮想サイトとして扱い、trends/moversの
     判定・表示ロジックにそのまま乗せられるようにする。
+
+    新規サイトの参入(または取り扱い終了)でその日の集計対象サイトの顔ぶれが
+    変わると、どのサイトの実売価格も動いていないのに平均値だけ動いてしまう
+    (例: 元々1サイトだけが扱っていたカードに別サイトが安値で新規参入し、
+    平均が急落したように誤検出される)。これを避けるため、最新日のサイト
+    構成と一致する連続区間(末尾から遡って同じ顔ぶれが続く範囲)だけを対象にし、
+    構成が変わった境目より前の日は切り捨てる。
     """
     by_card_day: dict[int, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
-    for (card_id, _site), points in by_card_site.items():
+    site_set_by_card_day: dict[int, dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    for (card_id, site), points in by_card_site.items():
         for recorded_at, price in points:
             day = recorded_at[:10]
             by_card_day[card_id][day].append(price)
+            site_set_by_card_day[card_id][day].add(site)
 
     result: dict[int, list[tuple[str, int]]] = {}
     for card_id, days in by_card_day.items():
+        sorted_days = sorted(days)
+        latest_set = frozenset(site_set_by_card_day[card_id][sorted_days[-1]])
+        cutoff = len(sorted_days) - 1
+        for i in range(len(sorted_days) - 2, -1, -1):
+            if frozenset(site_set_by_card_day[card_id][sorted_days[i]]) != latest_set:
+                break
+            cutoff = i
+        stable_days = sorted_days[cutoff:]
         result[card_id] = [
-            (day, round(sum(days[day]) / len(days[day]))) for day in sorted(days)
+            (day, round(sum(days[day]) / len(days[day]))) for day in stable_days
         ]
     return result
 
