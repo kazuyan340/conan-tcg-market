@@ -70,7 +70,7 @@ def _rakuten_search_url(keyword: str) -> str:
 
 
 def export_goods(conn) -> list[dict]:
-    rows = conn.execute("SELECT * FROM goods ORDER BY release_date DESC, id DESC").fetchall()
+    rows = conn.execute("SELECT * FROM goods ORDER BY release_date ASC, id ASC").fetchall()
     result = []
     for row in rows:
         item = {field: row[field] for field in GOODS_FIELDS}
