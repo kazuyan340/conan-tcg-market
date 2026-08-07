@@ -58,8 +58,9 @@ CREATE TABLE IF NOT EXISTS goods (
     price_yen INTEGER,
     release_date TEXT,
     image_url TEXT,
-    detail_url TEXT UNIQUE,
-    fetched_at TEXT
+    detail_url TEXT,
+    fetched_at TEXT,
+    UNIQUE(title, detail_url)
 );
 
 CREATE INDEX IF NOT EXISTS idx_cards_name ON cards(name);
@@ -88,6 +89,19 @@ def init_db(conn: sqlite3.Connection) -> None:
     columns = [row["name"] for row in conn.execute("PRAGMA table_info(price_history)")]
     if "sample_count" not in columns:
         conn.execute("ALTER TABLE price_history ADD COLUMN sample_count INTEGER")
+
+    # goods: 旧スキーマは detail_url 単体がUNIQUEだったため、同じ詳細ページを複数の
+    # タイトルが共有する商品(例: DXカードスリーブの色違い違いが1つの商品ページに
+    # まとまっている)で、後からupsertされた1件しか残らないバグがあった。
+    # (title, detail_url)の複合UNIQUEに直すため、旧スキーマのテーブルが残っていたら
+    # 作り直す(グッズ一覧は毎回スクレイピングで再取得できるデータなので実害は無い)。
+    goods_table = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='goods'"
+    ).fetchone()
+    if goods_table and "detail_url TEXT UNIQUE" in goods_table["sql"]:
+        conn.execute("DROP TABLE goods")
+        conn.executescript(SCHEMA)
+
     conn.commit()
 
 
@@ -127,33 +141,36 @@ GOODS_COLUMNS = [
 
 
 def upsert_goods(conn: sqlite3.Connection, items: list[dict]) -> dict:
-    """BOX/デッキ/周辺グッズを一括 upsert する。detail_url をキーに重複排除する。新規/更新件数を返す。"""
+    """BOX/デッキ/周辺グッズを一括 upsert する。(title, detail_url) をキーに重複排除する
+    (detail_url単体だと、色違いなど複数商品が同じ詳細ページを共有するケースで
+    別商品を取りこぼす)。新規/更新件数を返す。
+    """
     new_count = 0
     updated_count = 0
     now = datetime.now(timezone.utc).isoformat()
 
     placeholders = ", ".join(f":{c}" for c in GOODS_COLUMNS)
-    assignments = ", ".join(f"{c}=excluded.{c}" for c in GOODS_COLUMNS if c != "detail_url")
+    assignments = ", ".join(f"{c}=excluded.{c}" for c in GOODS_COLUMNS if c not in ("title", "detail_url"))
 
     sql = f"""
         INSERT INTO goods ({", ".join(GOODS_COLUMNS)}, fetched_at)
         VALUES ({placeholders}, :fetched_at)
-        ON CONFLICT(detail_url) DO UPDATE SET {assignments}, fetched_at=excluded.fetched_at
+        ON CONFLICT(title, detail_url) DO UPDATE SET {assignments}, fetched_at=excluded.fetched_at
         WHERE excluded.price_text IS NOT goods.price_text
-           OR excluded.title IS NOT goods.title
     """
 
     for item in items:
         if not item.get("detail_url"):
             continue
         existing = conn.execute(
-            "SELECT title, price_text FROM goods WHERE detail_url = ?", (item["detail_url"],)
+            "SELECT price_text FROM goods WHERE title = ? AND detail_url = ?",
+            (item["title"], item["detail_url"]),
         ).fetchone()
         row = {**item, "fetched_at": now}
         conn.execute(sql, row)
         if existing is None:
             new_count += 1
-        elif existing["title"] != item.get("title") or existing["price_text"] != item.get("price_text"):
+        elif existing["price_text"] != item.get("price_text"):
             updated_count += 1
 
     conn.commit()

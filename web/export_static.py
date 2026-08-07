@@ -8,6 +8,7 @@ web/site/data/goods.json  … 拡張パック/構築済みデッキ/周辺グッ
 画像はタカラトミーの image_url をそのまま参照する(自前ホストしない=ホットリンク)。
 """
 import json
+import re
 import sys
 import urllib.parse
 from collections import defaultdict
@@ -46,6 +47,20 @@ GOODS_FIELDS = [
 AMAZON_ASSOCIATE_TAG = None  # 例: "yourname-22"
 RAKUTEN_AFFILIATE_ID = None  # 例: "1234567.abcdefgh"(承認後、実際のリンク形式を確認して組み込む)
 
+# 「拡張パック CT-P10「追憶の盟友」」のように型番や"拡張パック"などの語が付いた
+# フルタイトルのままだと、タカラトミーモールの検索で該当なしになることがある。
+# パック/デッキは「」(または半角｢｣)の中の名前部分だけの方がヒットしやすいので、
+# それを検索キーワードに使う(見つからないタイトルはそのままフルタイトルを使う)。
+GOODS_BRACKET_NAME_PATTERN = re.compile(r"[「｢]([^」｢]+)[」｣]")
+
+
+def _goods_search_keyword(category: str, title: str) -> str:
+    if category in ("pack", "deck"):
+        m = GOODS_BRACKET_NAME_PATTERN.search(title)
+        if m:
+            return m.group(1)
+    return title
+
 
 def _takaratomy_mall_search_url(keyword: str) -> str:
     """タカラトミーモールの検索URL。ASP.NET製のこのサイトは検索キーワードを
@@ -74,7 +89,7 @@ def export_goods(conn) -> list[dict]:
     result = []
     for row in rows:
         item = {field: row[field] for field in GOODS_FIELDS}
-        keyword = row["title"]
+        keyword = _goods_search_keyword(row["category"], row["title"])
         item["ttmall_url"] = _takaratomy_mall_search_url(keyword)
         item["amazon_url"] = _amazon_search_url(keyword)
         item["rakuten_url"] = _rakuten_search_url(keyword)
