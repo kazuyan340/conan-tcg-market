@@ -982,6 +982,12 @@ body.modal-open {
   font-weight: bold;
 }
 
+#view-deck-view {
+  padding: 0 20px 24px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
 .deck-list-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1097,7 +1103,8 @@ body.modal-open {
   padding: 10px 20px 24px;
 }
 
-.deck-main h3 {
+.deck-main h3,
+#view-deck-view h3 {
   font-size: 0.78rem;
   color: var(--muted);
   margin: 10px 0 4px;
@@ -1191,14 +1198,16 @@ body.modal-open {
 
 /* 事件カードは縦向き/横向きが混在するため、高さはパートナー枠と揃えたまま、
    横向きのカードは幅を切らずにそのまま横長で表示する。 */
-#deck-case {
+#deck-case,
+#deck-view-case {
   width: fit-content;
   min-width: 48px;
   height: 67.2px; /* パートナー枠(幅48px, aspect-ratio 5/7)と同じ高さに揃える */
   aspect-ratio: auto;
 }
 
-#deck-case img {
+#deck-case img,
+#deck-view-case img {
   width: auto;
   height: 100%;
   object-fit: contain;

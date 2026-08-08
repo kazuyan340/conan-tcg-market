@@ -29,6 +29,35 @@
   <div id="deck-list-bar" class="deck-list-bar"></div>
 </div>
 
+<!-- デッキ参照画面: 一覧からクリックした直後に開く、閲覧専用の画面。
+     カードをクリックすると価格の詳細モーダルが開く(編集画面のような追加/削除は無い)。 -->
+<div id="view-deck-view" class="hidden">
+  <div class="deck-edit-header">
+    <button type="button" id="back-to-deck-select-from-view" class="reset-btn">← デッキ一覧に戻る</button>
+    <span id="deck-view-title" class="deck-edit-title"></span>
+    <button type="button" id="edit-deck-btn" class="reset-btn">✏️ 編集する</button>
+  </div>
+
+  <div class="deck-summary">
+    <div class="deck-count" id="deck-view-count">メインデッキ 0/40枚</div>
+    <div class="deck-total" id="deck-view-total">合計 0円</div>
+  </div>
+
+  <div class="deck-top-slots">
+    <div class="deck-slot-section">
+      <h3>パートナー</h3>
+      <div id="deck-view-partner" class="deck-slot-box empty"></div>
+    </div>
+    <div class="deck-slot-section">
+      <h3>事件</h3>
+      <div id="deck-view-case" class="deck-slot-box empty"></div>
+    </div>
+  </div>
+
+  <h3>メインデッキ(キャラ・イベント) <span class="deck-hint">カードをクリックすると相場の詳細が見られます</span></h3>
+  <div id="deck-view-main-grid" class="deck-main-grid"></div>
+</div>
+
 <!-- デッキ調整画面: 選んだデッキの中身を編集する画面。 -->
 <div id="view-deck-edit" class="hidden">
   <div class="deck-edit-header">

@@ -46,23 +46,34 @@ async function init() {
   renderDeckList();
   renderDeckPanel();
   renderLastUpdated();
-  // URL経由で共有デッキを開いた場合は、選択画面を経由せずそのまま調整画面を開く。
+  // URL経由で共有デッキを開いた場合は、選択画面を経由せずそのまま参照画面を開く。
   if (openedSharedDeckFromUrl) {
-    showDeckEdit();
+    showDeckView();
   } else {
     showDeckSelect();
   }
 }
 
-// デッキ選択画面⇔調整画面の切り替え。
+// デッキ選択画面⇔参照画面⇔編集画面の切り替え。
 function showDeckSelect() {
   document.getElementById("view-deck-select").classList.remove("hidden");
+  document.getElementById("view-deck-view").classList.add("hidden");
   document.getElementById("view-deck-edit").classList.add("hidden");
   renderDeckList();
 }
 
+// デッキ一覧から開いた直後の閲覧専用画面。ここから「編集する」で編集画面に進む。
+function showDeckView() {
+  document.getElementById("view-deck-select").classList.add("hidden");
+  document.getElementById("view-deck-view").classList.remove("hidden");
+  document.getElementById("view-deck-edit").classList.add("hidden");
+  document.getElementById("deck-view-title").textContent = deck.name || "";
+  renderDeckViewPanel();
+}
+
 function showDeckEdit() {
   document.getElementById("view-deck-select").classList.add("hidden");
+  document.getElementById("view-deck-view").classList.add("hidden");
   document.getElementById("view-deck-edit").classList.remove("hidden");
   document.getElementById("deck-edit-title").textContent = deck.name || "";
   renderDeckPanel();
@@ -210,6 +221,8 @@ function bindEvents() {
   document.getElementById("max-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(true));
   document.getElementById("min-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(false));
   document.getElementById("back-to-deck-select").addEventListener("click", showDeckSelect);
+  document.getElementById("back-to-deck-select-from-view").addEventListener("click", showDeckSelect);
+  document.getElementById("edit-deck-btn").addEventListener("click", showDeckEdit);
   document.getElementById("rename-deck-btn").addEventListener("click", renameDeck);
 
   document.addEventListener("click", (e) => {
@@ -271,7 +284,7 @@ function switchToDeck(id) {
   currentDeckId = id;
   deck = found;
   saveDeck();
-  showDeckEdit();
+  showDeckView();
 }
 
 function deleteDeck(id) {
@@ -670,6 +683,53 @@ function renderDeckPanel() {
   countEl.classList.toggle("deck-count-ok", count === MAIN_DECK_SIZE);
 
   document.getElementById("deck-total").textContent = `合計 ${total.toLocaleString()}円`;
+}
+
+// 参照画面のパートナー/事件の枠。編集画面のrenderSlotBoxと違い、クリックしても
+// 絞り込みは開かず、カードが入っていればモーダルを開くだけ(閲覧専用)。
+function renderViewSlotBox(elId, cardId) {
+  const el = document.getElementById(elId);
+  el.classList.toggle("empty", !cardId || !cardById.has(cardId));
+
+  if (!cardId || !cardById.has(cardId)) {
+    el.innerHTML = "";
+    el.onclick = null;
+    return;
+  }
+  const card = cardById.get(cardId);
+  el.innerHTML = `<img src="${card.image_url || ""}" alt="${escapeHtml(card.name)}">`;
+  el.onclick = () => openModal(card);
+}
+
+// 参照画面の描画。編集画面のrenderDeckPanelと違い、カードクリックは全部モーダルを
+// 開くだけで、追加/削除や絞り込みは行わない。
+function renderDeckViewPanel() {
+  renderViewSlotBox("deck-view-partner", deck.partner);
+  renderViewSlotBox("deck-view-case", deck.case);
+
+  const mainGrid = document.getElementById("deck-view-main-grid");
+  mainGrid.innerHTML = "";
+
+  const entries = Object.entries(deck.main)
+    .map(([id, count]) => ({ card: cardById.get(Number(id)), count }))
+    .filter((e) => e.card)
+    .sort((a, b) => a.card.name.localeCompare(b.card.name, "ja"));
+
+  for (const { card, count } of entries) {
+    for (let i = 0; i < count; i++) {
+      const slot = document.createElement("div");
+      slot.className = "deck-slot-box";
+      slot.title = card.name;
+      slot.innerHTML = `<img src="${card.image_url || ""}" alt="${escapeHtml(card.name)}">`;
+      slot.addEventListener("click", () => openModal(card));
+      mainGrid.appendChild(slot);
+    }
+  }
+
+  const count = mainDeckCount();
+  document.getElementById("deck-view-count").textContent = `メインデッキ ${count}/${MAIN_DECK_SIZE}枚`;
+  const total = computeDeckTotal(deck);
+  document.getElementById("deck-view-total").textContent = `合計 ${total.toLocaleString()}円`;
 }
 
 // メインデッキの空き枠クリック用: キャラ+イベント両方に絞り込む(1種類固定のfocusPickerOnとは別扱い)。
