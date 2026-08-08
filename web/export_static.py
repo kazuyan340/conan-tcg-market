@@ -55,7 +55,7 @@ GOODS_BRACKET_NAME_PATTERN = re.compile(r"[「｢]([^」｢]+)[」｣]")
 
 
 def _goods_search_keyword(category: str, title: str) -> str:
-    if category in ("pack", "deck"):
+    if category == "pack":
         m = GOODS_BRACKET_NAME_PATTERN.search(title)
         if m:
             return m.group(1)
