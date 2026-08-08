@@ -152,6 +152,28 @@ function mercariButtonHtml(cardName, cardRarity, cardPack) {
   return `<a class="mercari-check-btn" href="${mercariAffiliateUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 メルカリで価格を確認する <span class="pr-label">PR</span></a>`;
 }
 
+// Amazonアソシエイトのトラッキングタグ。登録が済んでタグが分かったらここに入れる
+// (未設定の間は素の検索リンク=アフィリエイトなし)。
+const AMAZON_ASSOCIATE_TAG = null; // 例: "yourname-22"
+
+function amazonCardSearchUrl(query) {
+  const url = `https://www.amazon.co.jp/s?k=${encodeURIComponent(query)}`;
+  return AMAZON_ASSOCIATE_TAG ? `${url}&tag=${AMAZON_ASSOCIATE_TAG}` : url;
+}
+
+// Amazonの「🔍価格を確認する」ボタン(HTML文字列)。メルカリと違い検索ワードは
+// カード名+レアリティのみ(収録パックは含めない)。
+function amazonButtonHtml(cardName, cardRarity) {
+  if (!cardName) return "";
+  const query = `${cardName} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
+  return `<a class="amazon-check-btn" href="${amazonCardSearchUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 Amazonで価格を確認する <span class="pr-label">PR</span></a>`;
+}
+
+// メルカリ・Amazonの確認ボタンをまとめて返す(呼び出し側は1箇所差し込むだけで済む)。
+function purchaseButtonsHtml(cardName, cardRarity, cardPack) {
+  return `<div class="purchase-buttons">${mercariButtonHtml(cardName, cardRarity, cardPack)}${amazonButtonHtml(cardName, cardRarity)}</div>`;
+}
+
 // サイト名 -> (cardNum, cardName) => 検索/アフィリエイトURL、の対応表。
 // 駿河屋のみアフィリエイトリンク+「PR」表記、他はアフィリエイト無しの素の検索リンク。
 const SITE_LINK_BUILDERS = {
@@ -475,8 +497,8 @@ function latestDateHtml(history) {
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
 function buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack) {
   const table = siteSummaryTableHtml(history, cardNum, cardName);
-  const mercariBtn = mercariButtonHtml(cardName, cardRarity, cardPack);
-  return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}${mercariBtn}`;
+  const buttons = purchaseButtonsHtml(cardName, cardRarity, cardPack);
+  return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}${buttons}`;
 }
 
 function renderPriceSection(cardId, cardNum, cardName, cardRarity, cardPack) {
@@ -501,7 +523,7 @@ function renderPriceSection(cardId, cardNum, cardName, cardRarity, cardPack) {
 
   if (tableEl) {
     statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
-    tableEl.innerHTML = `${siteSummaryTableHtml(history, cardNum, cardName)}${mercariButtonHtml(cardName, cardRarity, cardPack)}`;
+    tableEl.innerHTML = `${siteSummaryTableHtml(history, cardNum, cardName)}${purchaseButtonsHtml(cardName, cardRarity, cardPack)}`;
   } else {
     statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack);
   }

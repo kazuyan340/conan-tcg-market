@@ -637,25 +637,44 @@ body.modal-open {
 
 /* サイト別最安値の表とは別枠であることが分かるように、表からは少し離し、
    単独のボタンらしい見た目(角丸のピル+ブランドカラー)にする。 */
-.mercari-check-btn {
+.purchase-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.mercari-check-btn,
+.amazon-check-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 6px;
   padding: 6px 12px;
   border-radius: 20px;
-  background: #ff5b6d;
   color: #fff;
   font-size: 0.82rem;
   font-weight: bold;
   text-decoration: none;
 }
 
+.mercari-check-btn {
+  background: #ff5b6d;
+}
+
 .mercari-check-btn:hover {
   background: #e64d5e;
 }
 
-.mercari-check-btn .pr-label {
+.amazon-check-btn {
+  background: #ff9900;
+}
+
+.amazon-check-btn:hover {
+  background: #e08600;
+}
+
+.mercari-check-btn .pr-label,
+.amazon-check-btn .pr-label {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.6);
 }
