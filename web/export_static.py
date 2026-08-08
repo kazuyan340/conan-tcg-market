@@ -62,10 +62,10 @@ def _goods_search_keyword(category: str, title: str) -> str:
     return title
 
 
-# 拡張パックはバラ売りではなくBOX単位で売られていることが多いため、Amazonでは
+# 拡張パックはバラ売りではなくBOX単位で売られていることが多いため、Amazon・楽天では
 # 名前+"BOX"で検索する(例: "探偵たちの切札 BOX")方が実物の商品に辿り着きやすい。
 # 型番(CT-P01等)や「」は付けない。
-def _amazon_goods_keyword(category: str, title: str) -> str:
+def _box_search_keyword(category: str, title: str) -> str:
     if category == "pack":
         name_match = GOODS_BRACKET_NAME_PATTERN.search(title)
         if name_match:
@@ -100,10 +100,11 @@ def export_goods(conn) -> list[dict]:
     result = []
     for row in rows:
         item = {field: row[field] for field in GOODS_FIELDS}
-        keyword = _goods_search_keyword(row["category"], row["title"])
-        item["ttmall_url"] = _takaratomy_mall_search_url(keyword)
-        item["amazon_url"] = _amazon_search_url(_amazon_goods_keyword(row["category"], row["title"]))
-        item["rakuten_url"] = _rakuten_search_url(keyword)
+        ttmall_keyword = _goods_search_keyword(row["category"], row["title"])
+        box_keyword = _box_search_keyword(row["category"], row["title"])
+        item["ttmall_url"] = _takaratomy_mall_search_url(ttmall_keyword)
+        item["amazon_url"] = _amazon_search_url(box_keyword)
+        item["rakuten_url"] = _rakuten_search_url(box_keyword)
         result.append(item)
     return result
 
