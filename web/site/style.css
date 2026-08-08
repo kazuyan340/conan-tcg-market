@@ -645,7 +645,8 @@ body.modal-open {
 }
 
 .mercari-check-btn,
-.amazon-check-btn {
+.amazon-check-btn,
+.rakuten-check-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -673,8 +674,17 @@ body.modal-open {
   background: #e08600;
 }
 
+.rakuten-check-btn {
+  background: #bf0000;
+}
+
+.rakuten-check-btn:hover {
+  background: #990000;
+}
+
 .mercari-check-btn .pr-label,
-.amazon-check-btn .pr-label {
+.amazon-check-btn .pr-label,
+.rakuten-check-btn .pr-label {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.6);
 }
