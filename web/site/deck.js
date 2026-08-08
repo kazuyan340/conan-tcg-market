@@ -207,6 +207,8 @@ function bindEvents() {
   });
 
   document.getElementById("share-deck").addEventListener("click", shareDeckUrl);
+  document.getElementById("max-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(true));
+  document.getElementById("min-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(false));
   document.getElementById("back-to-deck-select").addEventListener("click", showDeckSelect);
   document.getElementById("rename-deck-btn").addEventListener("click", renameDeck);
 
@@ -496,6 +498,40 @@ function copiesInGroup(card) {
     if (other && copyGroupKey(other) === key) total += count;
   }
   return total;
+}
+
+// デッキ内の各カードを、同じカード(copyGroupKey基準、レアリティ違い/再録含む)の中で
+// 相場が一番高い/安いバリアントに一括で入れ替える。価格データが無いカードや、
+// バリアントが1種類しか無いカードはそのまま(変えようが無い)。
+function bestVariantId(cardId, wantMax) {
+  const currentCard = cardById.get(cardId);
+  if (!currentCard) return cardId;
+  const key = copyGroupKey(currentCard);
+  const priced = allCards
+    .filter((c) => copyGroupKey(c) === key)
+    .map((c) => ({ id: c.id, price: cardPrice(c) }))
+    .filter((v) => v.price !== null);
+  if (priced.length === 0) return cardId;
+  const best = priced.reduce((acc, cur) => {
+    if (wantMax) return cur.price > acc.price ? cur : acc;
+    return cur.price < acc.price ? cur : acc;
+  });
+  return best.id;
+}
+
+function swapDeckToExtremeRarity(wantMax) {
+  const newMain = {};
+  for (const [idStr, count] of Object.entries(deck.main)) {
+    const newId = bestVariantId(Number(idStr), wantMax);
+    newMain[newId] = (newMain[newId] || 0) + count;
+  }
+  deck.main = newMain;
+
+  if (deck.partner) deck.partner = bestVariantId(deck.partner, wantMax);
+  if (deck.case) deck.case = bestVariantId(deck.case, wantMax);
+
+  saveDeck();
+  renderDeckPanel();
 }
 
 function removeOneFromMainDeck(cardId) {
