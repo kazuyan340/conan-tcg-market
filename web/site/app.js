@@ -1,4 +1,3 @@
-const PAGE_SIZE = 50;
 const FILTER_FIELDS = {
   color: { listId: "filter-color-list", groupId: "filter-color-group" },
   card_type: { listId: "filter-type-list", groupId: "filter-type-group" },
@@ -9,11 +8,9 @@ const FILTER_FIELDS = {
 
 let allCards = [];
 let filteredCards = [];
-let currentPage = 0;
 
 const grid = document.getElementById("card-grid");
 const resultCount = document.getElementById("result-count");
-const pageLabel = document.getElementById("page-label");
 const keywordInput = document.getElementById("keyword");
 
 async function init() {
@@ -80,19 +77,6 @@ function updateCountBadge(field) {
 function bindEvents() {
   keywordInput.addEventListener("input", debounce(applyFilters, 200));
 
-  document.getElementById("prev-page").addEventListener("click", () => {
-    if (currentPage > 0) {
-      currentPage--;
-      renderPage();
-    }
-  });
-  document.getElementById("next-page").addEventListener("click", () => {
-    if (currentPage < totalPages() - 1) {
-      currentPage++;
-      renderPage();
-    }
-  });
-
   document.getElementById("reset-filters").addEventListener("click", () => {
     keywordInput.value = "";
     for (const checkbox of document.querySelectorAll(".checkbox-list input")) {
@@ -141,28 +125,15 @@ function applyFilters() {
     return true;
   });
 
-  currentPage = 0;
   resultCount.textContent = `${filteredCards.length} 件ヒット`;
-  renderPage();
+  renderResults();
 }
 
-function totalPages() {
-  return Math.max(1, Math.ceil(filteredCards.length / PAGE_SIZE));
-}
-
-function renderPage() {
+function renderResults() {
   grid.innerHTML = "";
-  const start = currentPage * PAGE_SIZE;
-  const pageCards = filteredCards.slice(start, start + PAGE_SIZE);
-
-  for (const card of pageCards) {
+  for (const card of filteredCards) {
     grid.appendChild(createCardTile(card));
   }
-
-  pageLabel.textContent = `ページ ${currentPage + 1} / ${totalPages()}`;
-  document.getElementById("prev-page").disabled = currentPage === 0;
-  document.getElementById("next-page").disabled = currentPage >= totalPages() - 1;
-  window.scrollTo({ top: 0 });
 }
 
 init();
