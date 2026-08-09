@@ -39,12 +39,20 @@ function valuesForField(card, field) {
     .filter(Boolean);
 }
 
+// 色・種類フィルタは五十音順だと並びがバラバラで見づらいため、固定の表示順にする。
+const COLOR_ORDER = ["青", "緑", "白", "赤", "黄", "黒"];
+const CARD_TYPE_ORDER = ["パートナー", "キャラ", "イベント", "事件"];
+
 function populateFilterOptions() {
   for (const [field, { listId }] of Object.entries(FILTER_FIELDS)) {
     const listEl = document.getElementById(listId);
     const values = [...new Set(allCards.flatMap((c) => valuesForField(c, field)))];
     if (field === "level") {
       values.sort((a, b) => Number(a) - Number(b));
+    } else if (field === "color") {
+      values.sort((a, b) => COLOR_ORDER.indexOf(a) - COLOR_ORDER.indexOf(b));
+    } else if (field === "card_type") {
+      values.sort((a, b) => CARD_TYPE_ORDER.indexOf(a) - CARD_TYPE_ORDER.indexOf(b));
     } else {
       values.sort((a, b) => a.localeCompare(b, "ja"));
     }

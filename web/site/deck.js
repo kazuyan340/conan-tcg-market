@@ -4,7 +4,7 @@
 const MAIN_DECK_SIZE = 40;
 const MAX_COPIES = 3;
 const DECK_LIST_KEY = "conanTcgDeckBuilderList";
-const CARD_TYPES = ["キャラ", "イベント", "パートナー", "事件"];
+const CARD_TYPES = ["パートナー", "キャラ", "イベント", "事件"];
 
 const FILTER_FIELDS = {
   color: { listId: "filter-color-list", groupId: "filter-color-group" },
@@ -166,12 +166,17 @@ function focusPickerOn(type) {
   keywordInput.focus();
 }
 
+// 色フィルタは五十音順だと並びがバラバラで見づらいため、固定の表示順にする。
+const COLOR_ORDER = ["青", "緑", "白", "赤", "黄", "黒"];
+
 function populateFilterOptions() {
   for (const [field, { listId }] of Object.entries(FILTER_FIELDS)) {
     const listEl = document.getElementById(listId);
     const values = [...new Set(allCards.flatMap((c) => valuesForField(c, field)))];
     if (field === "level") {
       values.sort((a, b) => Number(a) - Number(b));
+    } else if (field === "color") {
+      values.sort((a, b) => COLOR_ORDER.indexOf(a) - COLOR_ORDER.indexOf(b));
     } else {
       values.sort((a, b) => a.localeCompare(b, "ja"));
     }
