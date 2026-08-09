@@ -13,9 +13,11 @@ function bindFiltersToggle() {
   const panel = document.getElementById("filters-panel");
   if (!btn || !panel) return;
 
+  // 開いている間はシェブロンを上向き(クリックでたたむ)、閉じている間は
+  // 下向き(クリックで開く)にする、一般的なアコーディオンの向きに合わせる。
   function applyState(collapsed) {
     panel.classList.toggle("hidden", collapsed);
-    btn.classList.toggle("active", !collapsed);
+    btn.classList.toggle("open", !collapsed);
   }
 
   let collapsed = false;

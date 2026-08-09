@@ -21,7 +21,6 @@
 <header class="toolbar">
   <div class="title-row">
     <h1>名探偵コナンTCG カード図鑑</h1>
-    <button type="button" id="toggle-filters" class="reset-btn filters-toggle-btn">🔍 絞り込み条件</button>
     <p id="last-updated" class="last-updated"></p>
     <div class="nav-links">
       <a href="trends.html?view=up" class="reset-btn nav-btn">🔺 値上がりを見る</a>
@@ -33,32 +32,35 @@
       <a href="goods.html" class="reset-btn nav-btn">🛍️ グッズ</a>
     </div>
   </div>
-  <div class="filters" id="filters-panel">
-    <div class="filter-item">
-      <label for="keyword">キーワード</label>
-      <input type="text" id="keyword" placeholder="カード名・能力テキストで検索">
+  <div class="filters-row">
+    <div class="filters" id="filters-panel">
+      <div class="filter-item">
+        <label for="keyword">キーワード</label>
+        <input type="text" id="keyword" placeholder="カード名・能力テキストで検索">
+      </div>
+      <details class="filter-group" id="filter-color-group">
+        <summary>色<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-color-list"></div>
+      </details>
+      <details class="filter-group" id="filter-type-group">
+        <summary>種類<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-type-list"></div>
+      </details>
+      <details class="filter-group" id="filter-rarity-group">
+        <summary>レアリティ<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-rarity-list"></div>
+      </details>
+      <details class="filter-group" id="filter-level-group">
+        <summary>レベル<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-level-list"></div>
+      </details>
+      <details class="filter-group" id="filter-pack-group">
+        <summary>収録パック<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-pack-list"></div>
+      </details>
+      <button type="button" id="reset-filters" class="filter-reset-btn">↺ 条件をリセット</button>
     </div>
-    <details class="filter-group" id="filter-color-group">
-      <summary>色<span class="count-badge hidden"></span></summary>
-      <div class="checkbox-list" id="filter-color-list"></div>
-    </details>
-    <details class="filter-group" id="filter-type-group">
-      <summary>種類<span class="count-badge hidden"></span></summary>
-      <div class="checkbox-list" id="filter-type-list"></div>
-    </details>
-    <details class="filter-group" id="filter-rarity-group">
-      <summary>レアリティ<span class="count-badge hidden"></span></summary>
-      <div class="checkbox-list" id="filter-rarity-list"></div>
-    </details>
-    <details class="filter-group" id="filter-level-group">
-      <summary>レベル<span class="count-badge hidden"></span></summary>
-      <div class="checkbox-list" id="filter-level-list"></div>
-    </details>
-    <details class="filter-group" id="filter-pack-group">
-      <summary>収録パック<span class="count-badge hidden"></span></summary>
-      <div class="checkbox-list" id="filter-pack-list"></div>
-    </details>
-    <button type="button" id="reset-filters" class="filter-reset-btn">↺ 条件をリセット</button>
+    <button type="button" id="toggle-filters" class="filters-chevron-btn" title="絞り込み条件を開閉">▾</button>
   </div>
   <p id="result-count" class="result-count"></p>
 </header>

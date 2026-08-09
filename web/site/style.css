@@ -206,11 +206,43 @@ body {
   color: var(--text);
 }
 
-/* 絞り込みバー(.filters)の開閉トグル。開いている間はアクセントカラーで
-   強調し、今どちらの状態か分かるようにする。 */
-.filters-toggle-btn.active {
-  border-color: var(--accent);
+/* 絞り込みバー(.filters)全体の行。中身(.filters)は開閉できるが、右端の
+   シェブロンボタン自体は常に見えたままにするため、開閉対象の外に置く。 */
+.filters-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.filters-row .filters {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 開いている間は上向き(クリックでたたむ)、閉じている間は下向き(クリックで
+   開く)の一般的なアコーディオンの向きに合わせて回転させる。 */
+.filters-chevron-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.filters-chevron-btn:hover {
+  color: var(--text);
+}
+
+.filters-chevron-btn.open {
+  transform: rotate(180deg);
   color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* 隣に並ぶ.filter-group summary(色/レアリティ等のプルダウン)と枠線・背景が
