@@ -39,9 +39,12 @@ function valuesForField(card, field) {
     .filter(Boolean);
 }
 
-// 色・種類フィルタは五十音順だと並びがバラバラで見づらいため、固定の表示順にする。
+// 色・種類・レアリティフィルタは五十音順だと並びがバラバラで見づらいため、固定の表示順にする。
 const COLOR_ORDER = ["青", "緑", "白", "赤", "黄", "黒"];
 const CARD_TYPE_ORDER = ["パートナー", "キャラ", "イベント", "事件"];
+const RARITY_ORDER = [
+  "C", "CP", "CP2", "R", "RP", "SR", "SRP", "SRCP", "MR", "MRP", "MRCP", "D", "PR", "SEC",
+];
 
 function populateFilterOptions() {
   for (const [field, { listId }] of Object.entries(FILTER_FIELDS)) {
@@ -53,6 +56,8 @@ function populateFilterOptions() {
       values.sort((a, b) => COLOR_ORDER.indexOf(a) - COLOR_ORDER.indexOf(b));
     } else if (field === "card_type") {
       values.sort((a, b) => CARD_TYPE_ORDER.indexOf(a) - CARD_TYPE_ORDER.indexOf(b));
+    } else if (field === "rarity") {
+      values.sort((a, b) => RARITY_ORDER.indexOf(a) - RARITY_ORDER.indexOf(b));
     } else {
       values.sort((a, b) => a.localeCompare(b, "ja"));
     }
