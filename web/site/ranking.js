@@ -23,6 +23,7 @@ async function init() {
   populateFilterOptions();
   bindEvents();
   bindModalEvents();
+  bindFiltersToggle();
   applyFilters();
   renderLastUpdated();
 }

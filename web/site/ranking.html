@@ -12,6 +12,7 @@
 <header class="toolbar">
   <div class="title-row">
     <h1>💰 相場ランキング</h1>
+    <button type="button" id="toggle-filters" class="reset-btn filters-toggle-btn">🔍 絞り込み条件</button>
     <p id="last-updated" class="last-updated"></p>
     <div class="nav-links">
       <a href="trends.html?view=trends" class="reset-btn nav-btn">📊 価格の動きを見る</a>
@@ -21,7 +22,7 @@
       <a href="index.html" class="reset-btn nav-btn">← 一覧へ戻る</a>
     </div>
   </div>
-  <div class="filters">
+  <div class="filters" id="filters-panel">
     <div class="filter-item">
       <label for="keyword">キーワード</label>
       <input type="text" id="keyword" placeholder="カード名・能力テキストで検索">

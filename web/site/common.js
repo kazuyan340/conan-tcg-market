@@ -2,6 +2,41 @@
 // お気に入り=価格チェック対象。星をつけたカードがそのまま「お気に入り一覧」にも「価格チェック」にも並ぶ。
 const FAVORITES_KEY = "conanTcgFavorites";
 
+// 絞り込みバー(#filters-panel)の開閉。index.html/ranking.htmlで共有する。
+// ヘッダーがposition:stickyで常に画面上部に残るため、絞り込みを使わない間は
+// たたんで表示領域を空けられるようにする。開閉状態はlocalStorageに保存し、
+// 次回訪問時も引き継ぐ。
+const FILTERS_COLLAPSED_KEY = "conanTcgFiltersCollapsed";
+
+function bindFiltersToggle() {
+  const btn = document.getElementById("toggle-filters");
+  const panel = document.getElementById("filters-panel");
+  if (!btn || !panel) return;
+
+  function applyState(collapsed) {
+    panel.classList.toggle("hidden", collapsed);
+    btn.classList.toggle("active", !collapsed);
+  }
+
+  let collapsed = false;
+  try {
+    collapsed = localStorage.getItem(FILTERS_COLLAPSED_KEY) === "true";
+  } catch {
+    // localStorageが使えない環境では既定(開いた状態)のまま
+  }
+  applyState(collapsed);
+
+  btn.addEventListener("click", () => {
+    const nowCollapsed = !panel.classList.contains("hidden");
+    applyState(nowCollapsed);
+    try {
+      localStorage.setItem(FILTERS_COLLAPSED_KEY, String(nowCollapsed));
+    } catch {
+      // localStorageが使えない環境では保存をあきらめる
+    }
+  });
+}
+
 // 一覧・相場ランキング・デッキ作成の3画面で共有する、絞り込みチェックボックスの
 // 3状態切り替え(未選択→含める→除外→未選択)。除外中は checkbox.dataset.exclude="1"
 // を立て、見た目(チェックボックスの色・ラベルの赤字取り消し線)はCSS側で表現する。

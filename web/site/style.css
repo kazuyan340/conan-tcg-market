@@ -206,6 +206,13 @@ body {
   color: var(--text);
 }
 
+/* 絞り込みバー(.filters)の開閉トグル。開いている間はアクセントカラーで
+   強調し、今どちらの状態か分かるようにする。 */
+.filters-toggle-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* 隣に並ぶ.filter-group summary(色/レアリティ等のプルダウン)と枠線・背景が
    同じだと、プルダウンだと思ってクリックされてしまう(展開されず即リセットされて
    戸惑う)ため、あえて枠なしのテキストリンク調にして動きの違いを見た目でも示す。 */
