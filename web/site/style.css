@@ -206,25 +206,9 @@ body {
   color: var(--text);
 }
 
-/* 絞り込みバー(.filters)全体の行。中身(.filters)は開閉できるが、右端の
-   シェブロンボタン自体は常に見えたままにするため、開閉対象の外に置く。
-   閉じると.filtersがdisplay:noneになって行の高さが失われるため、
-   min-heightで展開時の高さに固定し、ボタンの位置が開閉で動かないようにする。 */
-.filters-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 50px;
-  width: 100%;
-}
-
-.filters-row .filters {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 枠やボックス感を出さず、矢印の文字だけのシンプルな見た目にする。
-   開閉時は回転させず、▾(閉→開)/▴(開→閉)の文字そのものを差し替える。 */
+/* キーワード欄はチェックボックス側(色/レアリティ等)と違って常に見えたままに
+   し、開閉トグルもその行の右端に置く。開閉対象は別行の.filters-extraだけなので、
+   閉じたときにキーワード行の高さには一切影響せず、位置がズレる心配が無い。 */
 .filters-chevron-btn {
   flex-shrink: 0;
   margin-left: auto;
@@ -235,6 +219,12 @@ body {
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
+}
+
+/* 開閉対象。閉じるとdisplay:noneで実際に高さが無くなる(キーワード行とは
+   別行なので、閉じてもキーワード行やチェブロンの位置には影響しない)。 */
+.filters-extra {
+  margin-top: 8px;
 }
 
 .filters-chevron-btn:hover {
