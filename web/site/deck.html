@@ -14,6 +14,7 @@
     <h1>🃏 デッキ作成</h1>
     <p id="last-updated" class="last-updated"></p>
     <div class="nav-links">
+      <button type="button" id="back-to-deck-list-nav" class="reset-btn nav-btn hidden">📋 デッキ一覧に戻る</button>
       <a href="trends.html?view=trends" class="reset-btn nav-btn">📊 価格の動きを見る</a>
       <a href="ranking.html" class="reset-btn nav-btn">💰 相場ランキング</a>
       <a href="compare.html" class="reset-btn nav-btn">★ お気に入り</a>
@@ -33,7 +34,6 @@
      カードをクリックすると価格の詳細モーダルが開く(編集画面のような追加/削除は無い)。 -->
 <div id="view-deck-view" class="hidden">
   <div class="deck-edit-header">
-    <button type="button" id="back-to-deck-select-from-view" class="reset-btn">← デッキ一覧に戻る</button>
     <span id="deck-view-title" class="deck-edit-title"></span>
     <button type="button" id="edit-deck-btn" class="reset-btn">✏️ 編集する</button>
   </div>
@@ -61,7 +61,6 @@
 <!-- デッキ調整画面: 選んだデッキの中身を編集する画面。 -->
 <div id="view-deck-edit" class="hidden">
   <div class="deck-edit-header">
-    <button type="button" id="back-to-deck-select" class="reset-btn">← デッキ一覧に戻る</button>
     <span id="deck-edit-title" class="deck-edit-title"></span>
     <button type="button" id="rename-deck-btn" class="reset-btn" title="デッキ名を変更">✏️ 名前を変更</button>
   </div>

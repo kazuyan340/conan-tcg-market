@@ -54,11 +54,14 @@ async function init() {
   }
 }
 
-// デッキ選択画面⇔参照画面⇔編集画面の切り替え。
+// デッキ選択画面⇔参照画面⇔編集画面の切り替え。「デッキ一覧に戻る」ボタンは
+// ページ上部のナビ内(他ページの一覧リンクと同じ場所)にあり、選択画面自体に
+// いるときだけ非表示にする。
 function showDeckSelect() {
   document.getElementById("view-deck-select").classList.remove("hidden");
   document.getElementById("view-deck-view").classList.add("hidden");
   document.getElementById("view-deck-edit").classList.add("hidden");
+  document.getElementById("back-to-deck-list-nav").classList.add("hidden");
   renderDeckList();
 }
 
@@ -67,6 +70,7 @@ function showDeckView() {
   document.getElementById("view-deck-select").classList.add("hidden");
   document.getElementById("view-deck-view").classList.remove("hidden");
   document.getElementById("view-deck-edit").classList.add("hidden");
+  document.getElementById("back-to-deck-list-nav").classList.remove("hidden");
   document.getElementById("deck-view-title").textContent = deck.name || "";
   renderDeckViewPanel();
 }
@@ -75,6 +79,7 @@ function showDeckEdit() {
   document.getElementById("view-deck-select").classList.add("hidden");
   document.getElementById("view-deck-view").classList.add("hidden");
   document.getElementById("view-deck-edit").classList.remove("hidden");
+  document.getElementById("back-to-deck-list-nav").classList.remove("hidden");
   document.getElementById("deck-edit-title").textContent = deck.name || "";
   renderDeckPanel();
 }
@@ -220,8 +225,7 @@ function bindEvents() {
   document.getElementById("share-deck").addEventListener("click", shareDeckUrl);
   document.getElementById("max-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(true));
   document.getElementById("min-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(false));
-  document.getElementById("back-to-deck-select").addEventListener("click", showDeckSelect);
-  document.getElementById("back-to-deck-select-from-view").addEventListener("click", showDeckSelect);
+  document.getElementById("back-to-deck-list-nav").addEventListener("click", showDeckSelect);
   document.getElementById("edit-deck-btn").addEventListener("click", showDeckEdit);
   document.getElementById("rename-deck-btn").addEventListener("click", renameDeck);
 
