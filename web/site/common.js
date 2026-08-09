@@ -66,6 +66,38 @@ function resetTriStateCheckbox(checkbox) {
   if (label) label.classList.remove("filter-exclude");
 }
 
+// 収録パックフィルタ: 「パック」(CT-P、拡張パック本体)→「デッキ」(CT-D、構築済み
+// デッキ)→「プロモーション」(それ以外、PRカードや誌上付録など)の3グループに分ける。
+// パック/デッキは名前に埋め込まれたCT番号(CT-P01, CT-D02 等)の順で確実に並べられる。
+// プロモーションはそのような通し番号が無く、公式データにも発売日がほとんど入って
+// いない(128パック中115件がnull)ため、素直に五十音順にする。
+const PACK_GROUP_ORDER = ["pack", "deck", "promo"];
+const PACK_GROUP_LABELS = { pack: "パック", deck: "デッキ", promo: "プロモーション" };
+const CT_NUMBER_PATTERN = /^CT-[A-Z](\d+)/;
+
+function packGroupFor(packValue) {
+  if (/^CT-D/.test(packValue)) return "deck";
+  if (/^CT-P/.test(packValue)) return "pack";
+  return "promo";
+}
+
+function ctNumber(packValue) {
+  const m = packValue.match(CT_NUMBER_PATTERN);
+  return m ? Number(m[1]) : Infinity;
+}
+
+function sortPackValues(values) {
+  values.sort((a, b) => {
+    const ga = packGroupFor(a);
+    const gb = packGroupFor(b);
+    if (ga !== gb) return PACK_GROUP_ORDER.indexOf(ga) - PACK_GROUP_ORDER.indexOf(gb);
+    if (ga === "promo") return a.localeCompare(b, "ja");
+    const na = ctNumber(a);
+    const nb = ctNumber(b);
+    return na !== nb ? na - nb : a.localeCompare(b, "ja");
+  });
+}
+
 // サイト名(平均系列を除いた素の名前)ごとに色を固定する。
 // 以前はカード内での出現順で色を割り当てていたため、同じサイトでもカードによって
 // 別の色になってしまい見分けにくかった。既知のサイトは固定色、未知のサイトが

@@ -182,11 +182,24 @@ function populateFilterOptions() {
       values.sort((a, b) => COLOR_ORDER.indexOf(a) - COLOR_ORDER.indexOf(b));
     } else if (field === "rarity") {
       values.sort((a, b) => RARITY_ORDER.indexOf(a) - RARITY_ORDER.indexOf(b));
+    } else if (field === "pack") {
+      sortPackValues(values);
     } else {
       values.sort((a, b) => a.localeCompare(b, "ja"));
     }
 
+    let lastPackGroup = null;
     for (const v of values) {
+      if (field === "pack") {
+        const g = packGroupFor(v);
+        if (g !== lastPackGroup) {
+          const heading = document.createElement("div");
+          heading.className = "checkbox-list-heading";
+          heading.textContent = PACK_GROUP_LABELS[g];
+          listEl.appendChild(heading);
+          lastPackGroup = g;
+        }
+      }
       const label = document.createElement("label");
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";

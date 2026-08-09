@@ -164,6 +164,22 @@ body {
   cursor: pointer;
 }
 
+/* 収録パックフィルタ内の「パック/デッキ/プロモーション」グループ見出し。 */
+.checkbox-list-heading {
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: var(--muted);
+  margin: 6px 0 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.checkbox-list-heading:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 /* フィルタのチェックボックスは 未選択→含める→除外→未選択 の3状態をクリックで
    循環する。除外中はチェックボックス自体を赤く塗り、ラベルも赤字+取り消し線にして
    「含める」との違いを一目で分かるようにする。 */
