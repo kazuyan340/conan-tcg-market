@@ -5,21 +5,26 @@ const FAVORITES_KEY = "conanTcgFavorites";
 // 一覧・相場ランキング・デッキ作成の3画面で共有する、絞り込みチェックボックスの
 // 3状態切り替え(未選択→含める→除外→未選択)。除外中は checkbox.dataset.exclude="1"
 // を立て、見た目(チェックボックスの色・ラベルの赤字取り消し線)はCSS側で表現する。
-// クリックの既定動作(2状態トグル)は打ち消し、代わりに3状態を手動で管理する。
+//
+// 注意: チェックボックスは"click"イベントが発火する前に既にネイティブの
+// checked切り替えが適用済み(pre-click activation)なので、ハンドラ内で読む
+// checkbox.checkedは「クリック後の新しい値」。preventDefault()でこれを打ち消すと、
+// click後に"canceled activation steps"が走ってJS側でcheckedに入れた値ごと
+// クリック前の値へ巻き戻されてしまい、含める(チェック)状態に一切到達できなくなる
+// バグがあった(実際に発生していたのはこれ)。そのためpreventDefaultは使わず、
+// ネイティブのcheckedトグルをそのまま3状態の一部として利用する形に直している。
 function bindTriStateFilterCheckbox(checkbox, onChange) {
-  checkbox.addEventListener("click", (e) => {
-    e.preventDefault();
+  checkbox.addEventListener("click", () => {
     if (checkbox.dataset.exclude === "1") {
-      // 除外 -> 未選択
-      checkbox.checked = false;
+      // 除外 -> 未選択(ネイティブ側で既にchecked=falseになっている)
       checkbox.dataset.exclude = "";
     } else if (checkbox.checked) {
-      // 含める -> 除外
-      checkbox.dataset.exclude = "1";
-    } else {
-      // 未選択 -> 含める
-      checkbox.checked = true;
+      // 未選択 -> 含める(ネイティブ側で既にchecked=trueになっている)
       checkbox.dataset.exclude = "";
+    } else {
+      // 含める -> 除外(ネイティブ側でchecked=falseに戻ってしまうため、trueに戻す)
+      checkbox.checked = true;
+      checkbox.dataset.exclude = "1";
     }
     const label = checkbox.closest("label");
     if (label) label.classList.toggle("filter-exclude", checkbox.dataset.exclude === "1");
