@@ -13,11 +13,12 @@ function bindFiltersToggle() {
   const panel = document.getElementById("filters-panel");
   if (!btn || !panel) return;
 
-  // 開いている間はシェブロンを上向き(クリックでたたむ)、閉じている間は
-  // 下向き(クリックで開く)にする、一般的なアコーディオンの向きに合わせる。
+  // 開いている間はシェブロンを上向き(▴、クリックでたたむ)、閉じている間は
+  // 下向き(▾、クリックで開く)にする、一般的なアコーディオンの向きに合わせる。
+  // 回転アニメーションは使わず、文字自体を差し替える。
   function applyState(collapsed) {
     panel.classList.toggle("hidden", collapsed);
-    btn.classList.toggle("open", !collapsed);
+    btn.textContent = collapsed ? "▾" : "▴";
   }
 
   let collapsed = false;
