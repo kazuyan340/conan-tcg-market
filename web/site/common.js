@@ -75,23 +75,51 @@ function createSiteTabController(containerId, onChange) {
 }
 
 // スマホ幅でヘッダーのナビリンク(値上がりを見る~グッズ等)を三本線ボタン1つに
-// まとめる。デスクトップでは.nav-menu-toggleがdisplay:noneでそもそも押せない
-// ため、ここは常にバインドしておいて問題ない(全6ページで共有)。
+// まとめ、押すと右から重なるドロワー(引き出しメニュー)で開く。裏に半透明の
+// 暗幕(.nav-backdrop)を敷いて、開いている間は他の部分が少し暗く見えるようにする。
+// 閉じるボタン・暗幕・8ページ分のHTMLへの追記を避けるため、要素はJS側で組み立てる。
+// デスクトップでは.nav-menu-toggleがdisplay:noneでそもそも押せないため、ここは
+// 常にバインドしておいて問題ない(全8ページで共有)。
 function bindNavMenuToggle() {
   const btn = document.querySelector(".nav-menu-toggle");
   const nav = document.querySelector(".nav-links");
   if (!btn || !nav) return;
 
+  // .toolbarはposition:sticky+z-indexでスタッキングコンテキストを作ってしまうため、
+  // 暗幕をbody直下に置くとnav-links(.toolbarの中、position:fixed)より上に
+  // 埋もれてしまい、z-indexをいくら上げても中の閉じるボタンが押せなくなる
+  // (実際に発生したバグ)。暗幕もnav-linksと同じ.toolbar内に置き、同じ
+  // スタッキングコンテキストの中でz-indexを比較させることで解決する。
+  const backdrop = document.createElement("div");
+  backdrop.className = "nav-backdrop";
+  nav.parentNode.insertBefore(backdrop, nav);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "nav-drawer-close";
+  closeBtn.setAttribute("aria-label", "閉じる");
+  closeBtn.textContent = "✕";
+  nav.insertBefore(closeBtn, nav.firstChild);
+
+  function setOpen(isOpen) {
+    nav.classList.toggle("open", isOpen);
+    backdrop.classList.toggle("open", isOpen);
+    btn.setAttribute("aria-expanded", String(isOpen));
+    // ドロワーが開いている間は背後のページが一緒にスクロールしないようにする。
+    document.body.style.overflow = isOpen ? "hidden" : "";
+  }
+
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
-    const isOpen = nav.classList.toggle("open");
-    btn.setAttribute("aria-expanded", String(isOpen));
+    setOpen(!nav.classList.contains("open"));
   });
+
+  closeBtn.addEventListener("click", () => setOpen(false));
+  backdrop.addEventListener("click", () => setOpen(false));
 
   document.addEventListener("click", (e) => {
     if (nav.classList.contains("open") && !nav.contains(e.target) && e.target !== btn) {
-      nav.classList.remove("open");
-      btn.setAttribute("aria-expanded", "false");
+      setOpen(false);
     }
   });
 }
