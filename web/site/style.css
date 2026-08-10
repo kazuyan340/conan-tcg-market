@@ -207,11 +207,11 @@ body {
 }
 
 /* キーワード欄はチェックボックス側(色/レアリティ等)と違って常に見えたままに
-   し、開閉トグルもその行の右端に置く。開閉対象は別行の.filters-extraだけなので、
-   閉じたときにキーワード行の高さには一切影響せず、位置がズレる心配が無い。 */
+   し、開閉トグルもキーワード欄のすぐ隣に置く(margin-leftで画面右端に離さない)。
+   開閉対象は別行の.filters-extraだけなので、閉じたときにキーワード行の高さには
+   一切影響せず、位置がズレる心配が無い。 */
 .filters-chevron-btn {
   flex-shrink: 0;
-  margin-left: auto;
   border: none;
   background: none;
   padding: 4px 6px;
