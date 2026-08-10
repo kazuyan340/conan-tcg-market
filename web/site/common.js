@@ -2,6 +2,78 @@
 // お気に入り=価格チェック対象。星をつけたカードがそのまま「お気に入り一覧」にも「価格チェック」にも並ぶ。
 const FAVORITES_KEY = "conanTcgFavorites";
 
+// trends.html/movers-up.html/movers-down.htmlで共有する、値動き系ページの
+// サイトタブ・カードグリッド描画ロジック。「全体」は各サイト最安値を単純平均した
+// 「相場」の日次推移が基準。
+const TREND_SITES = ["全体", "駿河屋", "カードラボ", "竜のしっぽ", "メルカード", "フルアヘッド"];
+
+function bySite(items, site) {
+  return (items || []).filter((item) => item.site === site);
+}
+
+function trendBadgeLines(item) {
+  const sign = item.change_pct > 0 ? "+" : "";
+  return [`${sign}${item.change_pct}%`, `${item.previous_price}円 → ${item.latest_price}円`];
+}
+
+function appendTrendCardTile(grid, item, card, badgeLinesFn, badgeClass) {
+  const badgeHtml = badgeLinesFn(item).map((line) => escapeHtml(line)).join("<br>");
+  const tile = document.createElement("div");
+  tile.className = "card-tile";
+  tile.innerHTML = `
+    <div class="trend-badge ${badgeClass}">${badgeHtml}</div>
+    <img src="${card.image_url || ""}" alt="${escapeHtml(card.name)}" loading="lazy">
+    <div class="name">${escapeHtml(card.name)}</div>
+    <div class="sub">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")}</div>
+  `;
+  tile.addEventListener("click", () => openModal(card));
+  grid.appendChild(tile);
+}
+
+function renderTrendCardGrid(gridId, emptyId, items, cardById, badgeLinesFn, badgeClass = "") {
+  const grid = document.getElementById(gridId);
+  const emptyMessage = document.getElementById(emptyId);
+  grid.innerHTML = "";
+
+  if (!items || items.length === 0) {
+    emptyMessage.classList.remove("hidden");
+    return;
+  }
+  emptyMessage.classList.add("hidden");
+
+  for (const item of items) {
+    const card = cardById.get(item.card_id);
+    if (!card) continue;
+    appendTrendCardTile(grid, item, card, badgeLinesFn, badgeClass);
+  }
+}
+
+// サイトタブ(#site-tabs)を描画し、切り替わるたびonChange(selectedSite)を呼ぶ。
+// 選択状態はページごとに独立して持つ(呼び出し側はcontrollerを保持するだけでよい)。
+function createSiteTabController(containerId, onChange) {
+  let selectedSite = TREND_SITES[0];
+
+  function render() {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    for (const site of TREND_SITES) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "site-tab" + (site === selectedSite ? " active" : "");
+      btn.textContent = site;
+      btn.addEventListener("click", () => {
+        selectedSite = site;
+        render();
+        onChange(selectedSite);
+      });
+      container.appendChild(btn);
+    }
+  }
+
+  render();
+  return { getSite: () => selectedSite };
+}
+
 // スマホ幅でヘッダーのナビリンク(値上がりを見る~グッズ等)を三本線ボタン1つに
 // まとめる。デスクトップでは.nav-menu-toggleがdisplay:noneでそもそも押せない
 // ため、ここは常にバインドしておいて問題ない(全6ページで共有)。
