@@ -477,6 +477,10 @@ body {
   right: 4px;
   width: 28px;
   height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.85);
