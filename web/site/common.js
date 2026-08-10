@@ -351,7 +351,7 @@ function mercariButtonHtml(cardName, cardRarity, cardPack) {
 
 // Amazonアソシエイトのトラッキングタグ。登録が済んでタグが分かったらここに入れる
 // (未設定の間は素の検索リンク=アフィリエイトなし)。
-const AMAZON_ASSOCIATE_TAG = null; // 例: "yourname-22"
+const AMAZON_ASSOCIATE_TAG = "conantcgmarke-22";
 
 function amazonCardSearchUrl(query) {
   const url = `https://www.amazon.co.jp/s?k=${encodeURIComponent(query)}`;

@@ -44,7 +44,7 @@ GOODS_FIELDS = [
 
 # Amazonアソシエイト/楽天アフィリエイトのトラッキングID。登録が済んでIDが分かったら
 # ここに入れる。未設定の間は素の検索リンク(アフィリエイトなし)になる。
-AMAZON_ASSOCIATE_TAG = None  # 例: "yourname-22"
+AMAZON_ASSOCIATE_TAG = "conantcgmarke-22"
 RAKUTEN_AFFILIATE_ID = None  # 例: "1234567.abcdefgh"(承認後、実際のリンク形式を確認して組み込む)
 
 # 「拡張パック CT-P10「追憶の盟友」」のように型番や"拡張パック"などの語が付いた
