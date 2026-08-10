@@ -540,7 +540,10 @@ body {
     font-size: 0.6rem;
   }
 
-  .favorite-star {
+  /* .favorite-starはカード一覧タイルとモーダルの★ボタンで共有しているクラスの
+     ため、ここを無条件に上書きするとモーダル側(.modal-favorite-star)の★まで
+     18pxに縮んでしまう(実際に発生した不具合)。カードタイルのものだけに絞る。 */
+  .card-tile .favorite-star {
     top: 2px;
     right: 2px;
     width: 18px;
