@@ -754,7 +754,7 @@ body.modal-open {
    モーダル内では閉じるボタンと重ならないよう左にずらす。 */
 .modal-favorite-star {
   top: 10px;
-  right: 52px;
+  right: 64px;
 }
 
 .modal-body {
