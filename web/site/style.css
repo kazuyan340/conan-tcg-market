@@ -39,12 +39,20 @@ body {
   margin-bottom: 8px;
 }
 
-/* タイトルと最終更新表示を縦に並べる(以前はh1と同じ行にinline表示していたが、
-   横に長くなりすぎるため次の行に移した)。 */
+/* タイトルと最終更新表示を縦に並べる(スマホは横に長くなりすぎるため)。 */
 .title-block {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* PCは横幅に余裕があるので、最終更新をタイトルの右側に並べる。 */
+@media (min-width: 481px) {
+  .title-block {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+  }
 }
 
 /* ナビ本体は右から重なるドロワーにする(PC・スマホとも共通)。display:noneでは
@@ -140,36 +148,35 @@ body {
   cursor: pointer;
 }
 
-@media (max-width: 480px) {
-  /* タイトル行を画面幅いっぱいのアクセントカラーの帯にする(.toolbarのpaddingを
-     打ち消す負マージンで両端までbleedさせる)。三本線ボタンはこの帯の右端に置く。 */
-  .title-row {
-    position: relative;
-    background: var(--accent);
-    color: #fff;
-    margin: -12px -20px 10px;
-    padding: 12px 16px;
-    gap: 2px;
-  }
+/* [PREVIEW] タイトル行を画面幅いっぱいのアクセントカラーの帯にする(.toolbarの
+   paddingを打ち消す負マージンで両端までbleedさせる)。三本線ボタンはこの帯の
+   右端に置く。 */
+.title-row {
+  position: relative;
+  background: var(--accent);
+  color: #fff;
+  margin: -12px -20px 10px;
+  padding: 12px 16px;
+  gap: 2px;
+}
 
-  .title-row .last-updated {
-    color: rgba(255, 255, 255, 0.85);
-  }
+.title-row .last-updated {
+  color: rgba(255, 255, 255, 0.85);
+}
 
-  /* タイトル帯がアクセントカラーになるため、三本線ボタンもそれに合わせて
-     白基調に切り替える(PC側は白いツールバーのままなので枠付きの通常配色)。 */
-  .nav-menu-toggle {
-    border: none;
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    font-size: 1.25rem;
-    padding: 4px 12px;
-    border-radius: 6px;
-  }
+/* タイトル帯がアクセントカラーになるため、三本線ボタンもそれに合わせて
+   白基調に切り替える。 */
+.nav-menu-toggle {
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.25rem;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
 
-  .nav-menu-toggle:active {
-    background: rgba(255, 255, 255, 0.3);
-  }
+.nav-menu-toggle:active {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .last-updated {
