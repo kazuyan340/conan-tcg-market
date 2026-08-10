@@ -186,13 +186,27 @@ function totalPages() {
 
 function createRankingTile(card, rank, price) {
   const tile = document.createElement("div");
-  tile.className = "card-tile";
+  tile.className = "card-tile has-badge";
   tile.innerHTML = `
     <div class="trend-badge">#${rank}　${price.toLocaleString()}円</div>
     <img src="${card.image_url || ""}" alt="${escapeHtml(card.name)}" loading="lazy">
     <div class="name">${escapeHtml(card.name)}</div>
     <div class="sub">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")}</div>
   `;
+
+  const star = document.createElement("button");
+  star.type = "button";
+  star.className = "favorite-star" + (isFavorite(card.id) ? " active" : "");
+  star.textContent = isFavorite(card.id) ? "★" : "☆";
+  star.title = "お気に入り(価格チェック対象)に登録/解除";
+  star.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const nowFav = toggleFavorite(card.id);
+    star.textContent = nowFav ? "★" : "☆";
+    star.classList.toggle("active", nowFav);
+  });
+  tile.prepend(star);
+
   tile.addEventListener("click", () => openModal(card));
   return tile;
 }

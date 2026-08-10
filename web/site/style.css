@@ -496,6 +496,13 @@ body {
   color: #f0a500;
 }
 
+/* 相場ランキングのカードタイルは左上に順位・価格バッジ(.trend-badge)が乗るため、
+   既定位置(top:4px)だと星と重なってバッジの文字が隠れてしまう。星をバッジの下に
+   ずらす。 */
+.card-tile.has-badge .favorite-star {
+  top: 34px;
+}
+
 .favorite-star:hover {
   color: #f0a500;
 }
@@ -553,6 +560,10 @@ body {
     width: 18px;
     height: 18px;
     font-size: 0.7rem;
+  }
+
+  .card-tile.has-badge .favorite-star {
+    top: 18px;
   }
 
   .trend-badge {
