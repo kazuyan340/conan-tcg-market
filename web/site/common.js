@@ -366,13 +366,12 @@ function amazonButtonHtml(cardName, cardRarity) {
   return `<a class="amazon-check-btn" href="${amazonCardSearchUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 Amazonで価格を確認する <span class="pr-label">PR</span></a>`;
 }
 
-// 楽天アフィリエイトのID。登録が済んで分かったら、楽天アフィリエイトツールで
-// 実際のリンク形式(hb.afl.rakuten.co.jp経由のリダイレクト等)を確認した上で
-// rakutenCardSearchUrlに組み込む(未設定の間は素の検索リンク=アフィリエイトなし)。
-const RAKUTEN_AFFILIATE_ID = null; // 例: "1234567.abcdefgh"
+const RAKUTEN_AFFILIATE_ID = "567cd13f.6d49fb3a.567cd140.e6111d23";
 
 function rakutenCardSearchUrl(query) {
-  return `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(query)}/`;
+  const url = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(query)}/`;
+  if (!RAKUTEN_AFFILIATE_ID) return url;
+  return `https://hb.afl.rakuten.co.jp/ichiba/${RAKUTEN_AFFILIATE_ID}/?pc=${encodeURIComponent(url)}`;
 }
 
 // 楽天市場の「🔍価格を確認する」ボタン(HTML文字列)。Amazonと同じくカード名+

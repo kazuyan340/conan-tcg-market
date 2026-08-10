@@ -45,7 +45,7 @@ GOODS_FIELDS = [
 # Amazonアソシエイト/楽天アフィリエイトのトラッキングID。登録が済んでIDが分かったら
 # ここに入れる。未設定の間は素の検索リンク(アフィリエイトなし)になる。
 AMAZON_ASSOCIATE_TAG = "conantcgmarke-22"
-RAKUTEN_AFFILIATE_ID = None  # 例: "1234567.abcdefgh"(承認後、実際のリンク形式を確認して組み込む)
+RAKUTEN_AFFILIATE_ID = "567cd13f.6d49fb3a.567cd140.e6111d23"
 
 # 「拡張パック CT-P10「追憶の盟友」」のように型番や"拡張パック"などの語が付いた
 # フルタイトルのままだと、タカラトミーモールの検索で該当なしになることがある。
@@ -90,9 +90,10 @@ def _amazon_search_url(keyword: str) -> str:
 
 
 def _rakuten_search_url(keyword: str) -> str:
-    # RAKUTEN_AFFILIATE_ID が分かったら、楽天アフィリエイトツールで実際のリンク
-    # 形式(hb.afl.rakuten.co.jp 経由のリダイレクト等)を確認した上でここに組み込む。
-    return f"https://search.rakuten.co.jp/search/mall/{urllib.parse.quote(keyword)}/"
+    target = f"https://search.rakuten.co.jp/search/mall/{urllib.parse.quote(keyword)}/"
+    if RAKUTEN_AFFILIATE_ID:
+        return f"https://hb.afl.rakuten.co.jp/ichiba/{RAKUTEN_AFFILIATE_ID}/?pc={urllib.parse.quote(target, safe='')}"
+    return target
 
 
 def export_goods(conn) -> list[dict]:
