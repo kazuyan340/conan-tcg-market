@@ -317,6 +317,10 @@ body {
   text-align: center;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   position: relative;
+  /* グリッドアイテムは既定でmin-width:autoのため、.name(white-space:nowrap)の
+     文字幅がそのまま最小幅として効いてしまい、1frの列が縮みきれず横にはみ出す
+     (特にスマホの4列表示で顕著)。0にしてoverflow/ellipsis側に任せる。 */
+  min-width: 0;
 }
 
 .favorite-star {
@@ -357,6 +361,49 @@ body {
 @media (max-width: 700px) {
   .price-check-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* スマホ幅ではカード一覧を横4枚並びの小さいサムネイルにして、1画面あたりの
+   表示件数を増やす(.card-tileはindex/ranking/compare/trends/deckの検索結果で
+   共有しているクラスなので、ここを直せば全ページに効く)。 */
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .card-tile {
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .card-tile img {
+    border-radius: 4px;
+  }
+
+  .card-tile .name {
+    font-size: 0.68rem;
+    margin: 4px 0 1px;
+  }
+
+  .card-tile .sub {
+    font-size: 0.6rem;
+  }
+
+  .favorite-star {
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+
+  .trend-badge {
+    font-size: 0.58rem;
+    padding: 2px 4px;
+    margin-bottom: 2px;
   }
 }
 
