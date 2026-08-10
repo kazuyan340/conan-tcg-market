@@ -51,6 +51,7 @@ async function init() {
   };
 
   bindModalEvents();
+  bindNavMenuToggle();
   render();
   renderLastUpdated();
 }

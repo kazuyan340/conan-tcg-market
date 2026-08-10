@@ -2,6 +2,28 @@
 // お気に入り=価格チェック対象。星をつけたカードがそのまま「お気に入り一覧」にも「価格チェック」にも並ぶ。
 const FAVORITES_KEY = "conanTcgFavorites";
 
+// スマホ幅でヘッダーのナビリンク(値上がりを見る~グッズ等)を三本線ボタン1つに
+// まとめる。デスクトップでは.nav-menu-toggleがdisplay:noneでそもそも押せない
+// ため、ここは常にバインドしておいて問題ない(全6ページで共有)。
+function bindNavMenuToggle() {
+  const btn = document.querySelector(".nav-menu-toggle");
+  const nav = document.querySelector(".nav-links");
+  if (!btn || !nav) return;
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = nav.classList.toggle("open");
+    btn.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  document.addEventListener("click", (e) => {
+    if (nav.classList.contains("open") && !nav.contains(e.target) && e.target !== btn) {
+      nav.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
 // 絞り込みバー(#filters-panel)の開閉。index.html/ranking.htmlで共有する。
 // ヘッダーがposition:stickyで常に画面上部に残るため、絞り込みを使わない間は
 // たたんで表示領域を空けられるようにする。開閉状態はlocalStorageに保存し、

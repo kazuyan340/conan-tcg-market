@@ -40,6 +40,7 @@ async function init() {
   populateFilterOptions();
   bindEvents();
   bindModalEvents();
+  bindNavMenuToggle();
   bindFilterDropdownPositioning();
   loadDeckFromUrlOrStorage();
   applyFilters();

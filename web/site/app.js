@@ -19,6 +19,7 @@ async function init() {
   bindEvents();
   bindModalEvents();
   bindFiltersToggle();
+  bindNavMenuToggle();
   applyFilters();
   renderLastUpdated();
 }

@@ -51,6 +51,7 @@ async function init() {
   renderGoodsGrid("goods-grid-other", "goods-empty-other", byGrid["goods-grid-other"]);
 
   renderLastUpdated();
+  bindNavMenuToggle();
 }
 
 init();

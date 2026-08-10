@@ -61,6 +61,7 @@ async function init() {
   moversRes = moversData;
 
   bindModalEvents();
+  bindNavMenuToggle();
 
   document.getElementById("cycle-btn").addEventListener("click", () => {
     showView((currentView + 1) % VIEWS.length);

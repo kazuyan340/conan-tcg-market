@@ -46,6 +46,58 @@ body {
   margin-left: auto;
 }
 
+/* スマホ幅ではdisplay:noneでナビ本体を隠し、代わりに三本線ボタンを表示する
+   (.nav-menu-toggleのクリックでnav-linksに.openを付け外しする、common.jsの
+   bindNavMenuToggle参照)。デスクトップでは三本線ボタン自体を隠す。 */
+.nav-menu-toggle {
+  display: none;
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .title-row {
+    position: relative;
+  }
+
+  .nav-menu-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    z-index: 20;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-links .nav-btn {
+    text-align: center;
+  }
+}
+
 .last-updated {
   margin: 0;
   font-size: 0.78rem;
