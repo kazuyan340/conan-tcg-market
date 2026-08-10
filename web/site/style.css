@@ -316,7 +316,12 @@ body {
 
 /* trends.htmlの3つの表示切り替えボタン。今どのビューを見ているか分かるよう、
    選択中のものだけアクセントカラーで強調する。 */
-.view-select-btn.active {
+.view-select-btn.active,
+/* ナビ内の「今開いているページ」自身へのリンクも、同じ強調スタイルで示す
+   (以前は各ページが自分自身へのリンクを一覧から省いていたが、ハンバーガー
+   メニューでは全ページとも同じ項目一式を出した上で、今どこにいるかを
+   色で分かるようにする方針に変更した)。 */
+.nav-btn.current-page {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: bold;
