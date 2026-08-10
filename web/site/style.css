@@ -405,6 +405,17 @@ body {
     padding: 2px 4px;
     margin-bottom: 2px;
   }
+
+  /* キーワード入力欄を、隣の▾ボタンのところまで幅いっぱいに伸ばす
+     (min-width:220pxの固定幅だと画面幅によっては▾ボタンとの間に余白が空く)。 */
+  .filters .filter-item {
+    flex: 1;
+  }
+
+  .filters input[type="text"] {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .price-check-card {
