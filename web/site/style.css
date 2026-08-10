@@ -39,6 +39,14 @@ body {
   margin-bottom: 8px;
 }
 
+/* タイトルと最終更新表示を縦に並べる(以前はh1と同じ行にinline表示していたが、
+   横に長くなりすぎるため次の行に移した)。 */
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .nav-links {
   display: flex;
   gap: 14px;
@@ -304,6 +312,14 @@ body {
 .nav-btn {
   display: inline-block;
   text-decoration: none;
+}
+
+/* trends.htmlの3つの表示切り替えボタン。今どのビューを見ているか分かるよう、
+   選択中のものだけアクセントカラーで強調する。 */
+.view-select-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: bold;
 }
 
 .result-count {

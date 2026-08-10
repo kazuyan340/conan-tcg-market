@@ -1,11 +1,15 @@
-// 「価格の動き」「値上がり」「値下がり」の3ビューを1ページにまとめ、
-// ヘッダーのボタンを押すたびに 値上がり → 値下がり → 価格の動き → (繰り返し) と切り替える。
+// 「価格の動き」「値上がり」「値下がり」の3ビューを1ページにまとめ、ヘッダーの
+// 3つのボタン(view-select-btn、data-viewでどのビューか指定)で直接切り替える。
+// 以前は1つのボタンが次のビュー名を表示するだけの「次へ」ボタンだったが、
+// スマホのハンバーガーメニューに入れると選択中のビュー名だけメニューから
+// 消えて見えてしまう(残り2つのラベルしか表示されない)問題があったため、
+// 3つとも常に表示される固定ボタンに変更した。
 // さらに上部のサイトタブ(全体/駿河屋/カードラボ/竜のしっぽ/メルカード/フルアヘッド)で、どのサイト基準の
 // 値動きを見るかを選べる(「全体」は各サイト最安値を単純平均した「相場」の日次推移が基準)。
 const VIEWS = [
-  { id: "view-trends", title: "📊 価格の動き", nextLabel: "🔺 値上がりを見る" },
-  { id: "view-up", title: "🔺 値上がりしたカード", nextLabel: "🔻 値下がりを見る" },
-  { id: "view-down", title: "🔻 値下がりしたカード", nextLabel: "📊 価格の動きを見る" },
+  { id: "view-trends", view: "trends", title: "📊 価格の動き" },
+  { id: "view-up", view: "up", title: "🔺 値上がりしたカード" },
+  { id: "view-down", view: "down", title: "🔻 値下がりしたカード" },
 ];
 const SITES = ["全体", "駿河屋", "カードラボ", "竜のしっぽ", "メルカード", "フルアヘッド"];
 let currentView = 0;
@@ -28,7 +32,9 @@ function showView(index) {
   }
   document.getElementById(VIEWS[index].id).classList.remove("hidden");
   document.getElementById("page-title").textContent = VIEWS[index].title;
-  document.getElementById("cycle-btn").textContent = VIEWS[index].nextLabel;
+  for (const btn of document.querySelectorAll(".view-select-btn")) {
+    btn.classList.toggle("active", btn.dataset.view === VIEWS[index].view);
+  }
   currentView = index;
   window.scrollTo({ top: 0 });
 }
@@ -63,9 +69,11 @@ async function init() {
   bindModalEvents();
   bindNavMenuToggle();
 
-  document.getElementById("cycle-btn").addEventListener("click", () => {
-    showView((currentView + 1) % VIEWS.length);
-  });
+  for (const btn of document.querySelectorAll(".view-select-btn")) {
+    btn.addEventListener("click", () => {
+      showView(VIEWS.findIndex((v) => v.view === btn.dataset.view));
+    });
+  }
   showView(viewIndexFromUrl());
   renderSiteTabs();
   renderAll();

@@ -11,10 +11,14 @@
 <body>
 <header class="toolbar">
   <div class="title-row">
-    <h1 id="page-title">📊 価格の動き</h1>
-    <p id="last-updated" class="last-updated"></p>
+    <div class="title-block">
+      <h1 id="page-title">📊 価格の動き</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
     <div class="nav-links">
-      <button type="button" id="cycle-btn" class="reset-btn"></button>
+      <button type="button" class="reset-btn nav-btn view-select-btn" data-view="trends">📊 価格の動き</button>
+      <button type="button" class="reset-btn nav-btn view-select-btn" data-view="up">🔺 値上がり</button>
+      <button type="button" class="reset-btn nav-btn view-select-btn" data-view="down">🔻 値下がり</button>
       <a href="ranking.html" class="reset-btn nav-btn">💰 相場ランキング</a>
       <a href="compare.html" class="reset-btn nav-btn">★ お気に入り</a>
       <a href="deck.html" class="reset-btn nav-btn">🃏 デッキ作成</a>
