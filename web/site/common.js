@@ -443,6 +443,16 @@ function toggleFavorite(cardId) {
 // 色ごとにも絞り込めるよう「パートナー青」のような個別タグも別途残す。
 const PARTNER_KEYWORD_RE = /【パートナー(青|赤|黄|白|黒|緑)】/g;
 const KIZUNA_KEYWORD_RE = /【絆[^】]+】/;
+// 「【カットイン】を持つカードを選ぶ」のように他カードの性質を条件にしているだけの
+// カードが大半で、自分自身の効果として持つカードは「【カットイン】AP+2000」のように
+// 直後にAP+が続く形で書かれている。「「【カットイン】AP+2000」を持つ」という、他の
+// カードにカットインを付与するだけのカード(自身は持たない)を除外するため、直前に
+// 「(開き鉤括弧)が無いことも条件にする。
+const CUTIN_OWN_RE = /(?<!「)【カットイン】AP[＋+]\d/;
+// ヒラメキを自分自身の効果として持つカードは「【ヒラメキ】(証拠からリムーブされる
+// ときに発動する)」という説明書きが付く(2026-08-11時点のデータには該当カードが
+// 見当たらず未検証。今後のカード追加で実例が入り次第、動作を確認すること)。
+const HIRAMEKI_OWN_RE = /【ヒラメキ】[（(]証拠からリムーブされるときに発動する[）)]/;
 
 function abilityKeywordsForCard(card) {
   const text = card.ability_text || "";
@@ -451,8 +461,8 @@ function abilityKeywordsForCard(card) {
   if (partnerMatches.length > 0) keywords.push("パートナー指定");
   for (const m of partnerMatches) keywords.push(`パートナー${m[1]}`);
   if (KIZUNA_KEYWORD_RE.test(text)) keywords.push("絆");
-  if (text.includes("【カットイン】")) keywords.push("カットイン");
-  if (text.includes("【ヒラメキ】")) keywords.push("ヒラメキ");
+  if (CUTIN_OWN_RE.test(text)) keywords.push("カットイン");
+  if (HIRAMEKI_OWN_RE.test(text)) keywords.push("ヒラメキ");
   return keywords;
 }
 
