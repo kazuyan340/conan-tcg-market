@@ -287,6 +287,11 @@ body {
   max-width: 90vw;
 }
 
+/* 効果キーワードのラベルはパック名と違って短いので、折り返さず1行で表示する。 */
+#filter-keyword-list label {
+  white-space: nowrap;
+}
+
 .checkbox-list label {
   display: flex;
   align-items: center;

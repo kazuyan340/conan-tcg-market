@@ -49,7 +49,10 @@ const CARD_TYPE_ORDER = ["パートナー", "キャラ", "イベント", "事件
 const RARITY_ORDER = [
   "C", "CP", "CP2", "R", "RP", "SR", "SRP", "SRCP", "MR", "MRP", "MRCP", "D", "PR", "SEC",
 ];
-const KEYWORD_ORDER = ["パートナー指定", "絆"];
+const KEYWORD_ORDER = [
+  "パートナー指定", "パートナー青", "パートナー緑", "パートナー白", "パートナー赤", "パートナー黄", "パートナー黒",
+  "絆", "カットイン", "ヒラメキ",
+];
 
 function populateFilterOptions() {
   for (const [field, { listId }] of Object.entries(FILTER_FIELDS)) {

@@ -439,15 +439,20 @@ function toggleFavorite(cardId) {
 }
 
 // 効果テキストの【パートナー青】【絆工藤新一】のような色/キャラ名付きタグは、
-// 色やキャラを問わず横断的に絞り込めるよう「パートナー指定」「絆」に正規化する。
-const PARTNER_KEYWORD_RE = /【パートナー(青|赤|黄|白|黒|緑)】/;
+// 色やキャラを問わず横断的に絞り込めるよう「パートナー指定」「絆」に正規化しつつ、
+// 色ごとにも絞り込めるよう「パートナー青」のような個別タグも別途残す。
+const PARTNER_KEYWORD_RE = /【パートナー(青|赤|黄|白|黒|緑)】/g;
 const KIZUNA_KEYWORD_RE = /【絆[^】]+】/;
 
 function abilityKeywordsForCard(card) {
   const text = card.ability_text || "";
   const keywords = [];
-  if (PARTNER_KEYWORD_RE.test(text)) keywords.push("パートナー指定");
+  const partnerMatches = [...text.matchAll(PARTNER_KEYWORD_RE)];
+  if (partnerMatches.length > 0) keywords.push("パートナー指定");
+  for (const m of partnerMatches) keywords.push(`パートナー${m[1]}`);
   if (KIZUNA_KEYWORD_RE.test(text)) keywords.push("絆");
+  if (text.includes("【カットイン】")) keywords.push("カットイン");
+  if (text.includes("【ヒラメキ】")) keywords.push("ヒラメキ");
   return keywords;
 }
 
