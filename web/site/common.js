@@ -366,12 +366,12 @@ function amazonButtonHtml(cardName, cardRarity) {
   return `<a class="amazon-check-btn" href="${amazonCardSearchUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 Amazonで価格を確認する <span class="pr-label">PR</span></a>`;
 }
 
-const RAKUTEN_AFFILIATE_ID = "567cd13f.6d49fb3a.567cd140.e6111d23";
+const RAKUTEN_AFFILIATE_ID = "567cd45a.2625f6eb.567cd45b.7e49c506";
 
 function rakutenCardSearchUrl(query) {
   const url = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(query)}/`;
   if (!RAKUTEN_AFFILIATE_ID) return url;
-  return `https://hb.afl.rakuten.co.jp/ichiba/${RAKUTEN_AFFILIATE_ID}/?pc=${encodeURIComponent(url)}`;
+  return `https://hb.afl.rakuten.co.jp/hgc/${RAKUTEN_AFFILIATE_ID}/?pc=${encodeURIComponent(url)}`;
 }
 
 // 楽天市場の「🔍価格を確認する」ボタン(HTML文字列)。Amazonと同じくカード名+
