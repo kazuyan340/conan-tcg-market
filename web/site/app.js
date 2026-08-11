@@ -15,23 +15,6 @@ const resultCount = document.getElementById("result-count");
 const keywordInput = document.getElementById("keyword");
 const sortSelect = document.getElementById("sort-select");
 
-// 並び替え。level/ap/lpは値が無いカード(イベント等)があるため、無い方を常に末尾に回す。
-function sortCards(cards, sortOrder) {
-  const [field, direction] = sortOrder.split("_");
-  const sorted = [...cards];
-  sorted.sort((a, b) => {
-    const av = field === "id" ? a.id : a[field];
-    const bv = field === "id" ? b.id : b[field];
-    const aMissing = av === null || av === undefined;
-    const bMissing = bv === null || bv === undefined;
-    if (aMissing && bMissing) return 0;
-    if (aMissing) return 1;
-    if (bMissing) return -1;
-    return direction === "asc" ? av - bv : bv - av;
-  });
-  return sorted;
-}
-
 async function init() {
   allCards = await loadCardData();
   populateFilterOptions();

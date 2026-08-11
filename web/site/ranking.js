@@ -18,6 +18,7 @@ const grid = document.getElementById("card-grid");
 const resultCount = document.getElementById("result-count");
 const pageLabel = document.getElementById("page-label");
 const keywordInput = document.getElementById("keyword");
+const sortSelect = document.getElementById("sort-select");
 
 async function init() {
   allCards = await loadCardData();
@@ -112,6 +113,7 @@ function updateCountBadge(field) {
 
 function bindEvents() {
   keywordInput.addEventListener("input", debounce(applyFilters, 200));
+  sortSelect.addEventListener("change", applyFilters);
 
   document.getElementById("prev-page").addEventListener("click", () => {
     if (currentPage > 0) {
@@ -128,6 +130,7 @@ function bindEvents() {
 
   document.getElementById("reset-filters").addEventListener("click", () => {
     keywordInput.value = "";
+    sortSelect.value = "price_desc";
     for (const checkbox of document.querySelectorAll(".checkbox-list input")) {
       resetTriStateCheckbox(checkbox);
     }
@@ -183,8 +186,19 @@ function applyFilters() {
     .filter((entry) => entry.price !== null)
     .sort((a, b) => b.price - a.price);
 
+  // 表示順を選び直しても「#1」等の順位バッジは価格順のまま変わらないよう、
+  // 表示順を決める前に価格順で確定させたrankを振っておく。
+  filteredEntries.forEach((entry, i) => {
+    entry.rank = i + 1;
+  });
+
+  filteredEntries = sortByOrder(filteredEntries, sortSelect.value, (entry, field) => {
+    if (field === "price") return entry.price;
+    return field === "id" ? entry.card.id : entry.card[field];
+  });
+
   currentPage = 0;
-  resultCount.textContent = `${filteredEntries.length} 件(価格データがあるカードのみ、高い順)`;
+  resultCount.textContent = `${filteredEntries.length} 件(価格データがあるカードのみ)`;
   renderPage();
 }
 
@@ -224,8 +238,8 @@ function renderPage() {
   const start = currentPage * PAGE_SIZE;
   const pageEntries = filteredEntries.slice(start, start + PAGE_SIZE);
 
-  pageEntries.forEach(({ card, price }, i) => {
-    grid.appendChild(createRankingTile(card, start + i + 1, price));
+  pageEntries.forEach(({ card, price, rank }) => {
+    grid.appendChild(createRankingTile(card, rank, price));
   });
 
   pageLabel.textContent = `ページ ${currentPage + 1} / ${totalPages()}`;

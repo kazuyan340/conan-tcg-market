@@ -468,6 +468,30 @@ function abilityKeywordsForCard(card) {
   return keywords;
 }
 
+// 並び替えの共通ロジック(index/ranking/deckで共有)。sortOrderは"id_asc"のような
+// "フィールド名_asc|desc"形式。値が無いカード(イベント等でAP/LPが無い場合等)は、
+// 昇順/降順に関わらず常に末尾に回す。getValue(item, field)で並び替え対象を取り出す。
+function sortByOrder(items, sortOrder, getValue) {
+  const [field, direction] = sortOrder.split("_");
+  const sorted = [...items];
+  sorted.sort((a, b) => {
+    const av = getValue(a, field);
+    const bv = getValue(b, field);
+    const aMissing = av === null || av === undefined;
+    const bMissing = bv === null || bv === undefined;
+    if (aMissing && bMissing) return 0;
+    if (aMissing) return 1;
+    if (bMissing) return -1;
+    return direction === "asc" ? av - bv : bv - av;
+  });
+  return sorted;
+}
+
+// カード配列(id/level/ap/lp)向けのsortByOrderラッパー。
+function sortCards(cards, sortOrder) {
+  return sortByOrder(cards, sortOrder, (card, field) => (field === "id" ? card.id : card[field]));
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;

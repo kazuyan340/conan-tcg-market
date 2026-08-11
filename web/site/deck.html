@@ -18,7 +18,7 @@
 <meta name="twitter:description" content="名探偵コナンTCGのデッキ(パートナー1枚・事件1枚・メインデッキ40枚)をカードを選びながら組み立て、現在の相場での合計金額をリアルタイムに確認できるツール。">
 <meta name="twitter:image" content="https://kazuyan340.github.io/conan-tcg-market/ogp.png?v=1">
 <title>デッキ作成 | 名探偵コナンTCG カード図鑑</title>
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080305842487680" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -137,6 +137,19 @@
         <div class="checkbox-list" id="filter-pack-list"></div>
       </details>
     </div>
+    <div class="sort-row">
+      <label for="sort-select">並び替え</label>
+      <select id="sort-select">
+        <option value="id_asc">ID順</option>
+        <option value="id_desc">ID順(降順)</option>
+        <option value="level_asc">レベル順</option>
+        <option value="level_desc">レベル順(降順)</option>
+        <option value="ap_asc">AP順</option>
+        <option value="ap_desc">AP順(降順)</option>
+        <option value="lp_asc">LP順</option>
+        <option value="lp_desc">LP順(降順)</option>
+      </select>
+    </div>
     <p id="result-count" class="result-count"></p>
     <p class="deck-hint">カードをクリックでデッキに追加</p>
 
@@ -180,7 +193,7 @@
   <p><a href="about.html">運営者情報</a>　<a href="privacy.html">プライバシーポリシー・お問い合わせ</a></p>
 </footer>
 
-<script src="common.js?v=17"></script>
-<script src="deck.js?v=17"></script>
+<script src="common.js?v=18"></script>
+<script src="deck.js?v=18"></script>
 </body>
 </html>

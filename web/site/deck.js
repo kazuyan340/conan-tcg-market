@@ -32,6 +32,7 @@ let includePartnerCaseInTotal = localStorage.getItem(INCLUDE_PARTNER_CASE_KEY) !
 const grid = document.getElementById("card-grid");
 const resultCount = document.getElementById("result-count");
 const keywordInput = document.getElementById("keyword");
+const sortSelect = document.getElementById("sort-select");
 
 async function init() {
   allCards = await loadCardData();
@@ -227,6 +228,7 @@ function updateCountBadge(field) {
 
 function bindEvents() {
   keywordInput.addEventListener("input", debounce(applyFilters, 200));
+  sortSelect.addEventListener("change", applyFilters);
 
   const includeCheckbox = document.getElementById("include-partner-case");
   includeCheckbox.checked = includePartnerCaseInTotal;
@@ -628,6 +630,8 @@ function applyFilters() {
     }
     return true;
   });
+
+  filteredCards = sortCards(filteredCards, sortSelect.value);
 
   resultCount.textContent = `${filteredCards.length} 件`;
   renderResults();
