@@ -4,6 +4,7 @@ const FILTER_FIELDS = {
   rarity: { listId: "filter-rarity-list", groupId: "filter-rarity-group" },
   level: { listId: "filter-level-list", groupId: "filter-level-group" },
   pack: { listId: "filter-pack-list", groupId: "filter-pack-group" },
+  keyword: { listId: "filter-keyword-list", groupId: "filter-keyword-group" },
 };
 
 let allCards = [];
@@ -28,6 +29,7 @@ async function init() {
 // 「色」はAPI側がカンマ区切りではなく "青黄" のように1文字ずつ連結して返すため、
 // 1文字ずつに分解する(この game の色は青/赤/黄/白/黒/緑の単漢字のみ)。
 function valuesForField(card, field) {
+  if (field === "keyword") return abilityKeywordsForCard(card);
   const raw = card[field];
   if (raw === null || raw === undefined || raw === "") return [];
   if (field === "color") {
@@ -47,6 +49,7 @@ const CARD_TYPE_ORDER = ["パートナー", "キャラ", "イベント", "事件
 const RARITY_ORDER = [
   "C", "CP", "CP2", "R", "RP", "SR", "SRP", "SRCP", "MR", "MRP", "MRCP", "D", "PR", "SEC",
 ];
+const KEYWORD_ORDER = ["パートナー指定", "絆"];
 
 function populateFilterOptions() {
   for (const [field, { listId }] of Object.entries(FILTER_FIELDS)) {
@@ -62,6 +65,8 @@ function populateFilterOptions() {
       values.sort((a, b) => RARITY_ORDER.indexOf(a) - RARITY_ORDER.indexOf(b));
     } else if (field === "pack") {
       sortPackValues(values);
+    } else if (field === "keyword") {
+      values.sort((a, b) => KEYWORD_ORDER.indexOf(a) - KEYWORD_ORDER.indexOf(b));
     } else {
       values.sort((a, b) => a.localeCompare(b, "ja"));
     }

@@ -438,6 +438,19 @@ function toggleFavorite(cardId) {
   return favs.has(cardId);
 }
 
+// 効果テキストの【パートナー青】【絆工藤新一】のような色/キャラ名付きタグは、
+// 色やキャラを問わず横断的に絞り込めるよう「パートナー指定」「絆」に正規化する。
+const PARTNER_KEYWORD_RE = /【パートナー(青|赤|黄|白|黒|緑)】/;
+const KIZUNA_KEYWORD_RE = /【絆[^】]+】/;
+
+function abilityKeywordsForCard(card) {
+  const text = card.ability_text || "";
+  const keywords = [];
+  if (PARTNER_KEYWORD_RE.test(text)) keywords.push("パートナー指定");
+  if (KIZUNA_KEYWORD_RE.test(text)) keywords.push("絆");
+  return keywords;
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
