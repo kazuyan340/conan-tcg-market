@@ -578,7 +578,7 @@ function createCardTile(card, onFavoriteToggle) {
   sub.className = "sub";
   const price = pooledAveragePrice(commonPrices[String(card.id)] || []);
   const priceText = price !== null ? `${price.toLocaleString()}円` : "-";
-  sub.innerHTML = `<span class="sub-meta">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")}</span>　<span class="sub-price">${escapeHtml(priceText)}</span>`;
+  sub.innerHTML = `<span class="sub-meta">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")}</span><span class="sub-price">${escapeHtml(priceText)}</span>`;
 
   tile.append(star, img, name, sub);
   tile.addEventListener("click", () => openModal(card));
