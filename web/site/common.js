@@ -459,6 +459,12 @@ function abilityKeywordsForCard(card) {
   if (card.cut_in) keywords.push("カットイン");
   if (card.hirameki) keywords.push("ヒラメキ");
   if (card.henso) keywords.push("変装");
+  // カットイン/ヒラメキ以外の効果を持たないカードは、ability_text(通常の効果欄)が
+  // 空になっている(カットイン/ヒラメキの効果文はability_textとは別にcut_in/hirameki
+  // フィールドへ入るため)。
+  if (!card.ability_text && (card.cut_in || card.hirameki)) {
+    keywords.push("カットイン/ヒラメキ以外なし");
+  }
   return keywords;
 }
 
