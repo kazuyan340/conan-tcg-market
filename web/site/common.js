@@ -5,7 +5,7 @@ const FAVORITES_KEY = "conanTcgFavorites";
 // trends.html/movers-up.html/movers-down.htmlで共有する、値動き系ページの
 // サイトタブ・カードグリッド描画ロジック。「全体」は各サイト最安値を単純平均した
 // 「相場」の日次推移が基準。
-const TREND_SITES = ["全体", "駿河屋", "カードラボ", "竜のしっぽ", "メルカード", "フルアヘッド"];
+const TREND_SITES = ["全体", "駿河屋", "カードラボ", "竜のしっぽ", "メルカード", "フルアヘッド", "わいTV"];
 
 function bySite(items, site) {
   return (items || []).filter((item) => item.site === site);
@@ -268,6 +268,7 @@ const SITE_COLOR_MAP = {
   "竜のしっぽ": "#2fa84f",
   "メルカード": "#d6337a",
   "フルアヘッド": "#7a5cd6",
+  "わいTV": "#c9781f",
 };
 const FALLBACK_SITE_COLORS = ["#a83fd1", "#d4a72c", "#1d9e9e"];
 const fallbackSiteColorAssignments = {};
@@ -311,6 +312,11 @@ function mercardSearchUrl(cardName) {
 
 function fullaheadSearchUrl(cardNum) {
   return `https://www.full-conan.com/shop/shopbrand.html?search=${encodeURIComponent(cardNum)}`;
+}
+
+// わいTVも内部ID(カード名の後ろの「ID[xxxx]」表記)が独自体系のため、カード名で検索する。
+function waitvSearchUrl(cardName) {
+  return `https://www.cardshop-waitv.net/product-list?search_tmp=検索&keyword=${encodeURIComponent(cardName)}&Submit=検索`;
 }
 
 // メルカリアンバサダーのリンク生成。検索結果URLに afid= を足すだけで
@@ -395,6 +401,7 @@ const SITE_LINK_BUILDERS = {
   "竜のしっぽ": { url: (cardNum) => ryuunoshippoSearchUrl(cardNum), pr: false },
   "メルカード": { url: (cardNum, cardName) => mercardSearchUrl(cardName), pr: false, requiresName: true },
   "フルアヘッド": { url: (cardNum) => fullaheadSearchUrl(cardNum), pr: false },
+  "わいTV": { url: (cardNum, cardName) => waitvSearchUrl(cardName), pr: false, requiresName: true },
 };
 
 function colorForSite(site) {
