@@ -306,8 +306,9 @@ function ryuunoshippoSearchUrl(cardNum) {
   return `https://www.ryuunoshippo.com/product-list?keyword=${encodeURIComponent(cardNum)}`;
 }
 
-function mercardSearchUrl(cardName) {
-  return `https://www.mercardconan.jp/product-list?keyword=${encodeURIComponent(cardName)}`;
+function mercardSearchUrl(cardName, cardRarity) {
+  const query = `${cardName} ${cardRarity || ""}`.trim();
+  return `https://www.mercardconan.jp/product-list?keyword=${encodeURIComponent(query)}`;
 }
 
 function fullaheadSearchUrl(cardNum) {
@@ -315,8 +316,9 @@ function fullaheadSearchUrl(cardNum) {
 }
 
 // わいTVも内部ID(カード名の後ろの「ID[xxxx]」表記)が独自体系のため、カード名で検索する。
-function waitvSearchUrl(cardName) {
-  return `https://www.cardshop-waitv.net/product-list?search_tmp=検索&keyword=${encodeURIComponent(cardName)}&Submit=検索`;
+function waitvSearchUrl(cardName, cardRarity) {
+  const query = `${cardName} ${cardRarity || ""}`.trim();
+  return `https://www.cardshop-waitv.net/product-list?search_tmp=検索&keyword=${encodeURIComponent(query)}&Submit=検索`;
 }
 
 // メルカリアンバサダーのリンク生成。検索結果URLに afid= を足すだけで
@@ -399,9 +401,9 @@ const SITE_LINK_BUILDERS = {
   "駿河屋": { url: (cardNum) => surugaAffiliateUrl(cardNum), pr: true },
   "カードラボ": { url: (cardNum) => cardLaboSearchUrl(cardNum), pr: false },
   "竜のしっぽ": { url: (cardNum) => ryuunoshippoSearchUrl(cardNum), pr: false },
-  "メルカード": { url: (cardNum, cardName) => mercardSearchUrl(cardName), pr: false, requiresName: true },
+  "メルカード": { url: (cardNum, cardName, cardRarity) => mercardSearchUrl(cardName, cardRarity), pr: false, requiresName: true },
   "フルアヘッド": { url: (cardNum) => fullaheadSearchUrl(cardNum), pr: false },
-  "わいTV": { url: (cardNum, cardName) => waitvSearchUrl(cardName), pr: false, requiresName: true },
+  "わいTV": { url: (cardNum, cardName, cardRarity) => waitvSearchUrl(cardName, cardRarity), pr: false, requiresName: true },
 };
 
 function colorForSite(site) {
@@ -702,7 +704,7 @@ function latestPriceBySite(history) {
 // ページへのリンクにする。駿河屋のみアフィリエイトリンク+「PR」表記、他は素の
 // 検索リンク(アフィリエイト提携が無いサイトに「PR」を付けると景表法上不正確なため)。
 // メルカリは価格の自動取得ができないため、この表には含めない(mercariButtonHtml参照)。
-function siteSummaryTableHtml(history, cardNum, cardName) {
+function siteSummaryTableHtml(history, cardNum, cardName, cardRarity) {
   const bySite = latestPriceBySite(history);
   const allSites = new Set([...Object.keys(SITE_COLOR_MAP), ...Object.keys(bySite)]);
   const entries = [...allSites].map((site) => [site, bySite[site] || null]);
@@ -722,7 +724,7 @@ function siteSummaryTableHtml(history, cardNum, cardName) {
       const linkBuilder = SITE_LINK_BUILDERS[site];
       const canLink = linkBuilder && (linkBuilder.requiresName ? cardName : cardNum);
       const nameHtml = canLink
-        ? `<a href="${linkBuilder.url(cardNum, cardName)}" target="_blank" rel="nofollow noopener${linkBuilder.pr ? " sponsored" : ""}">${escapeHtml(site)}</a>${linkBuilder.pr ? ' <span class="pr-label">PR</span>' : ""}`
+        ? `<a href="${linkBuilder.url(cardNum, cardName, cardRarity)}" target="_blank" rel="nofollow noopener${linkBuilder.pr ? " sponsored" : ""}">${escapeHtml(site)}</a>${linkBuilder.pr ? ' <span class="pr-label">PR</span>' : ""}`
         : escapeHtml(site);
       return `<tr>
         <td><span class="site-swatch" style="background:${color}"></span>${nameHtml}${crown}</td>
@@ -770,7 +772,7 @@ function latestDateHtml(history) {
 // カード1件分の価格統計(相場の強調表示 + 最新取得日時 + サイト別最安値の表)を
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
 function buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack) {
-  const table = siteSummaryTableHtml(history, cardNum, cardName);
+  const table = siteSummaryTableHtml(history, cardNum, cardName, cardRarity);
   const buttons = purchaseButtonsHtml(cardName, cardRarity, cardPack);
   return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}${buttons}`;
 }
@@ -797,7 +799,7 @@ function renderPriceSection(cardId, cardNum, cardName, cardRarity, cardPack) {
 
   if (tableEl) {
     statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
-    tableEl.innerHTML = `${siteSummaryTableHtml(history, cardNum, cardName)}${purchaseButtonsHtml(cardName, cardRarity, cardPack)}`;
+    tableEl.innerHTML = `${siteSummaryTableHtml(history, cardNum, cardName, cardRarity)}${purchaseButtonsHtml(cardName, cardRarity, cardPack)}`;
   } else {
     statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack);
   }
