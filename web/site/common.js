@@ -796,12 +796,12 @@ function renderPriceSection(cardPk, cardNum, cardName, cardRarity, cardBusinessI
     statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardBusinessId);
   }
 
-  // モーダル内は既定で全期間表示。7日/30日タブでその場で絞り込める。
+  // モーダル内は既定で7日表示。全期間/30日タブでその場で切り替えられる。
   if (periodTabs) {
     periodTabs.classList.remove("hidden");
     const tabs = periodTabs.querySelectorAll(".period-tab");
     tabs.forEach((tab) => {
-      tab.classList.toggle("active", tab.dataset.days === "0");
+      tab.classList.toggle("active", tab.dataset.days === "7");
       tab.onclick = () => {
         tabs.forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
@@ -810,7 +810,7 @@ function renderPriceSection(cardPk, cardNum, cardName, cardRarity, cardBusinessI
     });
   }
 
-  drawPriceChart(canvas, history);
+  drawPriceChart(canvas, history, 7);
 }
 
 // ISO日時文字列を "7/21" のような日付のみの表示に変換する(グラフの軸ラベル用。
