@@ -870,7 +870,24 @@ function pooledAverageSeries(history) {
     const avg = points.reduce((sum, p) => sum + p.price, 0) / points.length;
     series.push({ recorded_at: points[0].recorded_at, price: Math.round(avg) });
   }
-  return series.sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
+  series.sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
+
+  // サイトごとにクロール時刻がずれるため、直近の日はまだ一部のサイトしか取得できて
+  // いないことがある。その日に取得できたサイトだけで単純平均すると、相場欄・表の
+  // 最新値(latestPriceBySite=各サイトの直近有効価格を使う。売り切れ判定込み)と
+  //食い違って、最後の1点だけ実態と関係なく急落/急騰して見えてしまう
+  // (実際にわいTVを追加した直後、8/12はわいTVしか取得できておらず、その日だけの
+  // 単純平均が120円になって相場欄の195円と食い違っていた)。最後の点だけは
+  // pooledAveragePriceと同じ「現在有効な全サイトの直近価格」ベースに置き換える。
+  if (series.length > 0) {
+    const current = pooledAveragePrice(history);
+    if (current !== null) {
+      const latest = [...history].sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1)).at(-1);
+      series[series.length - 1] = { recorded_at: latest.recorded_at, price: current };
+    }
+  }
+
+  return series;
 }
 
 const MARKET_LINE_COLOR = "#222";
