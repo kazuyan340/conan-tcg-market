@@ -332,28 +332,12 @@ function mercariAffiliateUrl(query) {
   return `https://jp.mercari.com/search?afid=${MERCARI_AFFILIATE_ID}&keyword=${encodeURIComponent(query)}`;
 }
 
-// カードのpack列(例: "CT-P10 Case-Booster 10 追憶の盟友")から、収録弾名だけを
-// 抜き出す(例: "追憶の盟友")。先頭から英数字/ハイフンだけのトークン(型番・製品種別・
-// 通し番号)を読み飛ばし、日本語が混ざったトークンが出てきたらそこから最後まで採用する。
-// "探偵マスターズ2026"のようにそもそも型番が付かないパック名は、最初のトークンの
-// 時点で日本語混じりなので何も削られず、そのまま使われる。
-const ASCII_TOKEN_PATTERN = /^[A-Za-z0-9-]+$/;
-
-function packDisplayName(pack) {
-  if (!pack) return "";
-  const tokens = pack.split(/\s+/);
-  let start = 0;
-  while (start < tokens.length - 1 && ASCII_TOKEN_PATTERN.test(tokens[start])) {
-    start++;
-  }
-  return tokens.slice(start).join(" ");
-}
-
 // メルカリの「🔍価格を確認する」ボタン(HTML文字列)を返す。サイト別最安値の表とは
 // 別枠の要素として、呼び出し側で表のすぐ下などに追加してもらう想定。
-function mercariButtonHtml(cardName, cardRarity, cardPack) {
+// 検索ワードはカード名+レアリティ+card_id(例: "江戸川コナン SR 0001")。
+function mercariButtonHtml(cardName, cardId, cardRarity) {
   if (!cardName) return "";
-  const query = `${cardName} ${cardRarity || ""} ${packDisplayName(cardPack)}`.replace(/\s+/g, " ").trim();
+  const query = `${cardName} ${cardId || ""} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
   return `<a class="mercari-check-btn" href="${mercariAffiliateUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 メルカリで価格を確認する <span class="pr-label">PR</span></a>`;
 }
 
@@ -366,11 +350,11 @@ function amazonCardSearchUrl(query) {
   return AMAZON_ASSOCIATE_TAG ? `${url}&tag=${AMAZON_ASSOCIATE_TAG}` : url;
 }
 
-// Amazonの「🔍価格を確認する」ボタン(HTML文字列)。メルカリと違い検索ワードは
-// カード名+レアリティのみ(収録パックは含めない)。
-function amazonButtonHtml(cardName, cardRarity) {
+// Amazonの「🔍価格を確認する」ボタン(HTML文字列)。カード名+card_id+レアリティで
+// 検索する(例: "灰原哀 1067 R")。
+function amazonButtonHtml(cardName, cardId, cardRarity) {
   if (!cardName) return "";
-  const query = `${cardName} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
+  const query = `${cardName} ${cardId || ""} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
   return `<a class="amazon-check-btn" href="${amazonCardSearchUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 Amazonで価格を確認する <span class="pr-label">PR</span></a>`;
 }
 
@@ -382,17 +366,17 @@ function rakutenCardSearchUrl(query) {
   return `https://hb.afl.rakuten.co.jp/hgc/${RAKUTEN_AFFILIATE_ID}/?pc=${encodeURIComponent(url)}`;
 }
 
-// 楽天市場の「🔍価格を確認する」ボタン(HTML文字列)。Amazonと同じくカード名+
-// レアリティのみで検索する。
-function rakutenButtonHtml(cardName, cardRarity) {
+// 楽天市場の「🔍価格を確認する」ボタン(HTML文字列)。カード名+card_id+レアリティで
+// 検索する(例: "灰原哀 1067 RP")。
+function rakutenButtonHtml(cardName, cardId, cardRarity) {
   if (!cardName) return "";
-  const query = `${cardName} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
+  const query = `${cardName} ${cardId || ""} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
   return `<a class="rakuten-check-btn" href="${rakutenCardSearchUrl(query)}" target="_blank" rel="nofollow noopener sponsored">🔍 楽天市場で価格を確認する <span class="pr-label">PR</span></a>`;
 }
 
 // メルカリ・Amazon・楽天市場の確認ボタンをまとめて返す(呼び出し側は1箇所差し込むだけで済む)。
-function purchaseButtonsHtml(cardName, cardRarity, cardPack) {
-  return `<div class="purchase-buttons">${mercariButtonHtml(cardName, cardRarity, cardPack)}${amazonButtonHtml(cardName, cardRarity)}${rakutenButtonHtml(cardName, cardRarity)}</div>`;
+function purchaseButtonsHtml(cardName, cardId, cardRarity) {
+  return `<div class="purchase-buttons">${mercariButtonHtml(cardName, cardId, cardRarity)}${amazonButtonHtml(cardName, cardId, cardRarity)}${rakutenButtonHtml(cardName, cardId, cardRarity)}</div>`;
 }
 
 // サイト名 -> (cardNum, cardName) => 検索/アフィリエイトURL、の対応表。
@@ -638,7 +622,7 @@ function openModal(card) {
   document.getElementById("modal-overlay").classList.remove("hidden");
   document.body.classList.add("modal-open");
 
-  renderPriceSection(card.id, card.card_num, card.name, card.rarity, card.pack, card.card_id);
+  renderPriceSection(card.id, card.card_num, card.name, card.rarity, card.card_id);
 
   // モーダル右上のお気に入り星。カード一覧タイルの星と同じ登録先(localStorage)を使う。
   // お気に入り一覧(compare.html)側では、モーダルから解除したら一覧にも反映したいので、
@@ -771,13 +755,13 @@ function latestDateHtml(history) {
 
 // カード1件分の価格統計(相場の強調表示 + 最新取得日時 + サイト別最安値の表)を
 // まとめてHTML文字列で返す(表とグラフを分けて配置できないページ向け)。
-function buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack, cardBusinessId) {
+function buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardBusinessId) {
   const table = siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardBusinessId);
-  const buttons = purchaseButtonsHtml(cardName, cardRarity, cardPack);
+  const buttons = purchaseButtonsHtml(cardName, cardBusinessId, cardRarity);
   return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}${buttons}`;
 }
 
-function renderPriceSection(cardPk, cardNum, cardName, cardRarity, cardPack, cardBusinessId) {
+function renderPriceSection(cardPk, cardNum, cardName, cardRarity, cardBusinessId) {
   const history = commonPrices[String(cardPk)] || [];
   const statsEl = document.getElementById("modal-price-stats");
   const tableEl = document.getElementById("modal-price-table");
@@ -799,9 +783,9 @@ function renderPriceSection(cardPk, cardNum, cardName, cardRarity, cardPack, car
 
   if (tableEl) {
     statsEl.innerHTML = `${avgHighlightHtml(history)}${latestDateHtml(history)}`;
-    tableEl.innerHTML = `${siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardBusinessId)}${purchaseButtonsHtml(cardName, cardRarity, cardPack)}`;
+    tableEl.innerHTML = `${siteSummaryTableHtml(history, cardNum, cardName, cardRarity, cardBusinessId)}${purchaseButtonsHtml(cardName, cardBusinessId, cardRarity)}`;
   } else {
-    statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardPack, cardBusinessId);
+    statsEl.innerHTML = buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardBusinessId);
   }
 
   // モーダル内は既定で全期間表示。7日/30日タブでその場で絞り込める。

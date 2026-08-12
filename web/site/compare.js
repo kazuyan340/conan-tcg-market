@@ -202,7 +202,7 @@ function render() {
     tableCol.className = "price-table-col";
     const tableWrap = document.createElement("div");
     if (history.length > 0) {
-      tableWrap.innerHTML = `${siteSummaryTableHtml(history, card.card_num, card.name, card.rarity, card.card_id)}${mercariButtonHtml(card.name, card.rarity, card.pack)}`;
+      tableWrap.innerHTML = `${siteSummaryTableHtml(history, card.card_num, card.name, card.rarity, card.card_id)}${mercariButtonHtml(card.name, card.card_id, card.rarity)}`;
     }
     tableCol.append(overRow, underRow, tableWrap);
 
