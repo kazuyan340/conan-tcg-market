@@ -10,7 +10,7 @@ let siteTabs;
 async function init() {
   const [allCards, trendsData] = await Promise.all([
     loadCardData(),
-    fetch("data/trends.json").then((r) => r.json()),
+    fetchFresh("data/trends.json").then((r) => r.json()),
   ]);
   cardById = new Map(allCards.map((c) => [c.id, c]));
   trendsRes = trendsData;

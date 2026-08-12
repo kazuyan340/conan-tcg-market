@@ -498,10 +498,18 @@ function difficultyText(card) {
   return parts.join(" ");
 }
 
+// GitHub Pagesはdata/*.jsonにCache-Control: max-age=600を付けてくるため、更新直後
+// でも最大10分ブラウザに古いデータがキャッシュされ続けてしまう(実際に「データが
+// 最新にならない」問い合わせの原因になった)。ページ読み込みのたびに違うURLとして
+// 扱わせ、キャッシュを回避するため毎回タイムスタンプを付けて取得する。
+function fetchFresh(url) {
+  return fetch(`${url}?t=${Date.now()}`);
+}
+
 async function loadCardData() {
   const [cardsRes, pricesRes] = await Promise.all([
-    fetch("data/cards.json"),
-    fetch("data/prices.json"),
+    fetchFresh("data/cards.json"),
+    fetchFresh("data/prices.json"),
   ]);
   const cards = await cardsRes.json();
   commonPrices = await pricesRes.json();
@@ -532,7 +540,7 @@ async function renderLastUpdated() {
   const el = document.getElementById("last-updated");
   if (!el) return;
   try {
-    const res = await fetch("data/meta.json");
+    const res = await fetchFresh("data/meta.json");
     const meta = await res.json();
     el.textContent = `最終更新: ${formatDateTimeFull(meta.generated_at)}`;
   } catch {

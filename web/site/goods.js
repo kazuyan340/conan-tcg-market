@@ -38,7 +38,7 @@ function renderGoodsGrid(gridId, emptyId, items) {
 }
 
 async function init() {
-  const goods = await fetch("data/goods.json").then((r) => r.json());
+  const goods = await fetchFresh("data/goods.json").then((r) => r.json());
 
   const byGrid = { "goods-grid-pack": [], "goods-grid-deck": [], "goods-grid-other": [] };
   for (const item of goods) {

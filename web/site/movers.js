@@ -8,7 +8,7 @@ let siteTabs;
 async function init() {
   const [allCards, moversData] = await Promise.all([
     loadCardData(),
-    fetch("data/movers.json").then((r) => r.json()),
+    fetchFresh("data/movers.json").then((r) => r.json()),
   ]);
   cardById = new Map(allCards.map((c) => [c.id, c]));
   moversRes = moversData;
