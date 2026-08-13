@@ -632,7 +632,9 @@ function applyFilters() {
   }
 
   filteredCards = allCards.filter((c) => {
-    if (selectedTypes.size > 0 && !selectedTypes.has(c.card_type)) return false;
+    // selectedTypesが空(キャラ/イベントを両方オフにした等)の場合は「絞り込み無し」
+    // ではなく「該当なし」にする(空のときだけ他の種類まで出てきてしまう不具合だった)。
+    if (!selectedTypes.has(c.card_type)) return false;
     if (keyword && !String(c.name || "").toLowerCase().includes(keyword)) return false;
     for (const field of Object.keys(FILTER_FIELDS)) {
       const cardValues = valuesForField(c, field);
