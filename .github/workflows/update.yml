@@ -95,7 +95,10 @@ jobs:
   fetch_others_and_publish:
     needs: fetch_surugaya
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # わいTV追加後、カードラボ・竜のしっぽ・メルカード・フルアヘッド・わいTV・goods・
+    # exportまで含めると60分を超えることがあり、実際にわいTVの途中でタイムアウト
+    # 打ち切りになった(2026-08-13)。余裕を持って90分に延長する。
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
