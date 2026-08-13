@@ -17,11 +17,10 @@ let allCards = [];
 let cardById = new Map();
 let filteredCards = [];
 let selectedTypes = new Set(["キャラ", "イベント"]);
-// パートナー/事件枠をクリックして絞り込んでいる間は、その種類の1枚しか選べない
-// (パートナー枠にキャラを入れる、事件枠に別種類を入れる、といった誤操作を防ぐため)。
-// この間は種類ボタンを押しても切り替わらないようにする(押せることが伝わらないよう
-// 見た目も無効化する)。
-let typeLocked = false;
+// 種類ボタンのうち、今クリックできるもの。パートナー/事件枠にフォーカスしている間は
+// 空(その1種類に固定・押しても外せない)。メインデッキ枠ではキャラ/イベントだけ
+// 押せる(パートナー/事件はメインデッキに入れられないので常に灰色)。
+let allowedTypes = new Set(["キャラ", "イベント"]);
 
 // 複数デッキを保存できるようにする。deckListの各要素が1デッキ分で、
 // deck変数はdeckList内の該当要素への参照(同じオブジェクトなので、deck.main[...]の
@@ -123,7 +122,7 @@ function valuesForField(card, field) {
 }
 
 // カード種類のトグルボタン(複数選択可)。パートナー/事件枠をクリックしたときは
-// focusPickerOn()で強制的に1種類だけに絞り込み、typeLockedがtrueの間はボタン自体
+// focusPickerOn()で強制的に1種類だけに絞り込み、allowedTypesに無い種類のボタンは
 // 押せなくする(その枠に別種類のカードを入れてしまう誤操作を防ぐため)。
 function renderTypeToggles() {
   const container = document.getElementById("filter-type-list");
@@ -134,10 +133,10 @@ function renderTypeToggles() {
     btn.className = "type-toggle";
     btn.dataset.type = type;
     btn.classList.toggle("active", selectedTypes.has(type));
-    btn.disabled = typeLocked;
+    btn.disabled = !allowedTypes.has(type);
     btn.textContent = type;
     btn.addEventListener("click", () => {
-      if (typeLocked) return;
+      if (!allowedTypes.has(type)) return;
       if (selectedTypes.has(type)) selectedTypes.delete(type);
       else selectedTypes.add(type);
       syncTypeToggleButtons();
@@ -149,7 +148,7 @@ function renderTypeToggles() {
 
 function syncTypeToggleButtons() {
   for (const btn of document.querySelectorAll(".type-toggle")) {
-    btn.disabled = typeLocked;
+    btn.disabled = !allowedTypes.has(btn.dataset.type);
     btn.classList.toggle("active", selectedTypes.has(btn.dataset.type));
   }
 }
@@ -171,7 +170,7 @@ function resetCheckboxFilters() {
 
 function focusPickerOn(type) {
   selectedTypes = new Set([type]);
-  typeLocked = true;
+  allowedTypes = new Set();
   syncTypeToggleButtons();
   resetCheckboxFilters();
   applyFilters();
@@ -778,7 +777,7 @@ function renderDeckViewPanel() {
 // メインデッキの空き枠クリック用: キャラ+イベント両方に絞り込む(1種類固定のfocusPickerOnとは別扱い)。
 function focusPickerOnMain() {
   selectedTypes = new Set(["キャラ", "イベント"]);
-  typeLocked = false;
+  allowedTypes = new Set(["キャラ", "イベント"]);
   syncTypeToggleButtons();
   resetCheckboxFilters();
   applyFilters();

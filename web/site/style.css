@@ -1574,6 +1574,11 @@ body.modal-open {
 
 .type-toggle:disabled {
   cursor: not-allowed;
+}
+
+/* 選択中(青)のボタンが押せない状態でも、色まで薄くはしない
+   (例: 事件枠にフォーカス中は事件ボタンだけ青のまま・押せない)。 */
+.type-toggle:disabled:not(.active) {
   opacity: 0.5;
 }
 
