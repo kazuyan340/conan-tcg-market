@@ -132,6 +132,7 @@ function renderTypeToggles() {
     btn.addEventListener("click", () => {
       if (selectedTypes.has(type)) selectedTypes.delete(type);
       else selectedTypes.add(type);
+      syncTypeToggleButtons();
       applyFilters();
     });
     container.appendChild(btn);
