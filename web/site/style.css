@@ -1066,6 +1066,34 @@ body.modal-open {
   border-color: rgba(255, 255, 255, 0.6);
 }
 
+/* スマホ幅では自動折返し(auto-fill, minmax(180px,...))だと180pxを2列分
+   確保できず1列縦並びになってしまうため、2列固定にして余白も詰める。 */
+@media (max-width: 480px) {
+  .goods-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .goods-tile {
+    padding: 6px;
+  }
+
+  .goods-title {
+    font-size: 0.75rem;
+    margin: 6px 0 2px;
+  }
+
+  .goods-meta {
+    font-size: 0.68rem;
+    margin-bottom: 6px;
+  }
+
+  .goods-link {
+    padding: 5px 6px;
+    font-size: 0.7rem;
+  }
+}
+
 .chart-tooltip {
   position: fixed;
   z-index: 1000;
