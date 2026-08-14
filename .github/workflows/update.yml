@@ -97,8 +97,10 @@ jobs:
     runs-on: ubuntu-latest
     # わいTV追加後、カードラボ・竜のしっぽ・メルカード・フルアヘッド・わいTV・goods・
     # exportまで含めると60分を超えることがあり、実際にわいTVの途中でタイムアウト
-    # 打ち切りになった(2026-08-13)。余裕を持って90分に延長する。
-    timeout-minutes: 90
+    # 打ち切りになった(2026-08-13)ため90分に延長。さらにまんぞく屋・トレカバースを
+    # 追加すると(特にトレカバースは12カテゴリを30秒間隔で巡回するため約12〜13分)
+    # 90分でも心許ないため、余裕を持って120分に延長する。
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -129,6 +131,12 @@ jobs:
 
       - name: Fetch prices from Card Shop WaiTV
         run: python web/scraper_prices_waitv.py
+
+      - name: Fetch prices from Manzokuya
+        run: python web/scraper_prices_manzokuya.py
+
+      - name: Fetch prices from Torecabirth
+        run: python web/scraper_prices_torecabirth.py
 
       - name: Fetch official goods/products list
         run: python web/scraper_goods.py

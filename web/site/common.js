@@ -5,7 +5,7 @@ const FAVORITES_KEY = "conanTcgFavorites";
 // trends.html/movers-up.html/movers-down.htmlで共有する、値動き系ページの
 // サイトタブ・カードグリッド描画ロジック。「全体」は各サイト最安値を単純平均した
 // 「相場」の日次推移が基準。
-const TREND_SITES = ["全体", "駿河屋", "カードラボ", "竜のしっぽ", "メルカード", "フルアヘッド", "わいTV"];
+const TREND_SITES = ["全体", "駿河屋", "カードラボ", "竜のしっぽ", "メルカード", "フルアヘッド", "わいTV", "まんぞく屋", "トレカバース"];
 
 function bySite(items, site) {
   return (items || []).filter((item) => item.site === site);
@@ -269,6 +269,8 @@ const SITE_COLOR_MAP = {
   "メルカード": "#d6337a",
   "フルアヘッド": "#7a5cd6",
   "わいTV": "#c9781f",
+  "まんぞく屋": "#149c9c",
+  "トレカバース": "#c0392b",
 };
 const FALLBACK_SITE_COLORS = ["#a83fd1", "#d4a72c", "#1d9e9e"];
 const fallbackSiteColorAssignments = {};
@@ -298,6 +300,8 @@ function surugaAffiliateUrl(cardNum) {
 // メルカードは内部管理番号が独自体系のため、カード番号ではなくカード名で検索する。
 // フルアヘッド(MakeShop)はページ内の検索フォーム自体はPOST専用だが、隠しフィールド名
 // (name="search")と同じ名前でGETパラメータを渡せば同じ検索結果が得られることを確認済み。
+// まんぞく屋(EC-CUBE)もカード番号そのままでサイト内検索がヒットすることを確認済み。
+// トレカバースはわいTVと同じく内部の「型番」表記が独自体系のため、カード名で検索する。
 function cardLaboSearchUrl(cardNum) {
   return `https://www.c-labo-online.jp/product-list/?keyword=${encodeURIComponent(cardNum)}`;
 }
@@ -319,6 +323,17 @@ function fullaheadSearchUrl(cardNum) {
 function waitvSearchUrl(cardName, cardRarity, cardId) {
   const query = `${cardName} ${cardId || ""} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
   return `https://www.cardshop-waitv.net/product-list?search_tmp=検索&keyword=${encodeURIComponent(query)}&Submit=検索`;
+}
+
+// まんぞく屋(EC-CUBE)はカード番号(card_num)そのままでサイト内検索がヒットすることを確認済み。
+function manzokuyaSearchUrl(cardNum) {
+  return `https://shopmanzokuya.com/products/list?name=${encodeURIComponent(cardNum)}`;
+}
+
+// トレカバースもわいTVと同じOcnk系で、内部の「型番」表記がcard_id体系のため、カード名で検索する。
+function torecabirthSearchUrl(cardName, cardRarity, cardId) {
+  const query = `${cardName} ${cardId || ""} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
+  return `https://www.torecabirth.jp/product-list/?keyword=${encodeURIComponent(query)}`;
 }
 
 // メルカリアンバサダーのリンク生成。検索結果URLに afid= を足すだけで
@@ -388,6 +403,8 @@ const SITE_LINK_BUILDERS = {
   "メルカード": { url: (cardNum, cardName, cardRarity, cardId) => mercardSearchUrl(cardName, cardRarity, cardId), pr: false, requiresName: true },
   "フルアヘッド": { url: (cardNum) => fullaheadSearchUrl(cardNum), pr: false },
   "わいTV": { url: (cardNum, cardName, cardRarity, cardId) => waitvSearchUrl(cardName, cardRarity, cardId), pr: false, requiresName: true },
+  "まんぞく屋": { url: (cardNum) => manzokuyaSearchUrl(cardNum), pr: false },
+  "トレカバース": { url: (cardNum, cardName, cardRarity, cardId) => torecabirthSearchUrl(cardName, cardRarity, cardId), pr: false, requiresName: true },
 };
 
 function colorForSite(site) {
