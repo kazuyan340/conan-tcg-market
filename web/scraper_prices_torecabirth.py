@@ -59,6 +59,11 @@ BOOSTER_CATEGORY_PACKS = {
     111: "CT-P08",
     122: "CT-P09",
     134: "CT-P10",
+    # エグゼクティブコレクション(公式サイトのカード一覧には無く、scraper_executive_
+    # collection.pyでトレカバースの商品一覧から逆輸入したカード。pack列の先頭コードは
+    # そちらと合わせてEXC01/EXC02にしてある)。
+    141: "EXC01",
+    142: "EXC02",
 }
 PROMO_CATEGORIES = [48, 49]
 ALL_CATEGORIES = list(BOOSTER_CATEGORY_PACKS) + PROMO_CATEGORIES

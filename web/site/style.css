@@ -406,6 +406,30 @@ body {
   color: var(--muted);
 }
 
+.admin-note {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(217, 54, 79, 0.1);
+  border: 1px solid rgba(217, 54, 79, 0.3);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.admin-source-badge {
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #d9364f;
+  color: #fff;
+  font-size: 0.62rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sort-row {
   display: flex;
   align-items: center;

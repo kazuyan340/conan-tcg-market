@@ -37,6 +37,15 @@ def export_cards(conn) -> list[dict]:
     return cards
 
 
+# 公式サイトのカード一覧APIに載っていない(=ショップの商品一覧から逆輸入した)カードを
+# 運営者だけが確認できる管理ページ用に別出力する。data_sourceは通常のcards.jsonには
+# 含めない(利用者から見て公式カードと区別が付かなくて良いという前提のため)ので、
+# ここだけ別途フル出力する。
+def export_unofficial_cards(conn) -> list[dict]:
+    rows = conn.execute("SELECT * FROM cards WHERE data_source IS NOT NULL ORDER BY id").fetchall()
+    return [{field: row[field] for field in [*CARD_FIELDS, "data_source", "fetched_at"]} for row in rows]
+
+
 GOODS_FIELDS = [
     "title", "category", "category_label", "price_text", "price_yen",
     "release_date", "image_url", "detail_url",
@@ -353,6 +362,10 @@ def main():
     with open(OUTPUT_DIR / "goods.json", "w", encoding="utf-8") as f:
         json.dump(goods, f, ensure_ascii=False, separators=(",", ":"))
 
+    unofficial_cards = export_unofficial_cards(conn)
+    with open(OUTPUT_DIR / "unofficial-cards.json", "w", encoding="utf-8") as f:
+        json.dump(unofficial_cards, f, ensure_ascii=False, separators=(",", ":"))
+
     meta = {"generated_at": datetime.now(timezone.utc).isoformat()}
     with open(OUTPUT_DIR / "meta.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, separators=(",", ":"))
@@ -365,6 +378,7 @@ def main():
     )
     print(f"movers.json: 値上がり{len(movers['up'])}件/値下がり{len(movers['down'])}件")
     print(f"goods.json: {len(goods)}件")
+    print(f"unofficial-cards.json: {len(unofficial_cards)}件")
     print(f"meta.json: generated_at={meta['generated_at']}")
 
     conn.close()

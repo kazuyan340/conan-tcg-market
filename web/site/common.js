@@ -620,6 +620,10 @@ function openModal(card) {
     ["事件レベル", difficultyText(card)],
     ["収録パック", card.pack],
     ["イラストレーター", card.illustrator],
+    // data_sourceは公式サイトのカード一覧に載っていないカード(逆輸入カード)にしか
+    // 付かないフィールドのため、通常のcards.jsonのカードでは常にundefinedで
+    // 表示されない(下のfilterで弾かれる)。管理ページでのみ意味を持つ。
+    ["データ取得元(非公式)", card.data_source],
   ];
 
   const infoEl = document.getElementById("modal-info");

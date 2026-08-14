@@ -123,6 +123,9 @@ jobs:
       - name: Fetch high-rarity prices from Ryuu no Shippo
         run: python web/scraper_prices_ryuunoshippo.py
 
+      - name: Import cards not on the official card list (e.g. Executive Collection)
+        run: python web/scraper_executive_collection.py
+
       - name: Fetch prices from Mercard Akihabara
         run: python web/scraper_prices_mercard.py
 

@@ -90,6 +90,13 @@ def init_db(conn: sqlite3.Connection) -> None:
     if "sample_count" not in columns:
         conn.execute("ALTER TABLE price_history ADD COLUMN sample_count INTEGER")
 
+    # data_source: 公式サイトのカード一覧APIには載っていないカード(例: エグゼクティブ
+    # コレクションのSPパラレル)をショップの商品一覧から逆輸入して登録した場合に、
+    # その出どころを記録する列。NULL/空文字は「公式サイトAPI由来」を意味する。
+    card_columns = [row["name"] for row in conn.execute("PRAGMA table_info(cards)")]
+    if "data_source" not in card_columns:
+        conn.execute("ALTER TABLE cards ADD COLUMN data_source TEXT")
+
     # goods: 旧スキーマは detail_url 単体がUNIQUEだったため、同じ詳細ページを複数の
     # タイトルが共有する商品(例: DXカードスリーブの色違い違いが1つの商品ページに
     # まとまっている)で、後からupsertされた1件しか残らないバグがあった。

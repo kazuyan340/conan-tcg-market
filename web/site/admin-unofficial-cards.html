@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>非公式カード一覧(管理用)</title>
+<link rel="stylesheet" href="style.css?v=37">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <div class="title-block">
+      <h1>🔒 非公式カード一覧(管理用)</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="reset-btn nav-btn">📋 一覧に戻る</a>
+    </div>
+  </div>
+  <p class="admin-note">
+    公式サイトのカード一覧APIには載っておらず、ショップの商品一覧から名前・型番・レアリティを
+    読み取って登録したカードです。ゲームデータ(レベル/AP/LP/能力テキスト等)は同じ型番を持つ
+    既存カードから複製しているため基本的に正確ですが、画像は複製元のものを仮流用しており、
+    実際のパラレル絵とは異なります。
+  </p>
+  <p id="result-count" class="result-count"></p>
+</header>
+
+<main id="card-grid" class="card-grid"></main>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+    <div class="modal-price-section">
+      <h3>相場推移</h3>
+      <div id="modal-price-stats" class="price-stats"></div>
+      <div class="price-detail-row">
+        <div id="modal-price-table" class="price-table-col"></div>
+        <div class="price-chart-col">
+          <div class="period-tabs" id="period-tabs">
+            <button type="button" class="period-tab" data-days="0">全期間</button>
+            <button type="button" class="period-tab active" data-days="7">7日</button>
+            <button type="button" class="period-tab" data-days="30">30日</button>
+          </div>
+          <canvas id="price-chart" width="420" height="260"></canvas>
+        </div>
+      </div>
+      <p id="price-empty" class="price-empty hidden">価格データがありません。</p>
+    </div>
+  </div>
+</div>
+
+<script src="common.js?v=37"></script>
+<script src="admin-unofficial-cards.js?v=37"></script>
+</body>
+</html>
