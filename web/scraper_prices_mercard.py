@@ -25,7 +25,11 @@ card_idそのままの表記)の両方があるため、両方を吸収できる
    (例: "PRカード(セブン‐イレブンキャンペーン)")の文字列に重なりがあるかどうか。
    注釈が無い商品や、同じイベント内に複数種類のPRカードがある場合(探偵マスターズ等)
    は依然として絞り込めない。
-3. それでも複数候補が残る場合は、誤った値段を出すより記録しない方が安全なため諦める。
+3. SECレアリティは同じcard_id+rarityで2種類の実物カード(card_num末尾がSec1/Sec2)が
+   存在するが、内部ID欄の表記が「SEC版Pxxx」(無印, レンガ版=Sec1)か「書き下ろし
+   サイン入りSEC版Pxxx」(サイン入り版=Sec2)かで判別できる(トレカバースで判明した
+   レンガ=Sec1/サイン入り=Sec2の対応と同じ)。曖昧な候補をこれで絞り込む。
+4. それでも複数候補が残る場合は、誤った値段を出すより記録しない方が安全なため諦める。
 
 対象カテゴリは「パートナー」「キャラ」「イベント」「事件」の4つ(単品カードのみ。
 「サプライ・未開封」「セット販売」「デッキ販売」は除外)。
@@ -80,6 +84,17 @@ DECORATION_PATTERN = re.compile(r"[\s()（）\-‐‑‒–—−]+")
 logger = logging.getLogger(__name__)
 
 
+def detect_variant_suffix(raw_id_text: str) -> str | None:
+    """内部ID欄の生テキスト(例: "書き下ろしサイン入りSEC版P079", "SEC版P079", "P001")から、
+    SECの2種類(Sec1=レンガ/無印, Sec2=サイン入り)を判別する。どちらでもなければNone。
+    """
+    if "サイン" in raw_id_text:
+        return "Sec2"
+    if "SEC版" in raw_id_text:
+        return "Sec1"
+    return None
+
+
 def normalize_id(value: str) -> str:
     """card_idと内部IDの表記ゆれ(先頭ゼロの有無・余分な接頭辞)を吸収して比較できる形にする。"""
     value = value.strip()
@@ -111,10 +126,10 @@ def fetch_page(category: str, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int | None]]:
-    """(内部ID, レアリティ, 収録パック表記, 名前の注釈, 価格) のリストを返す。
+def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str | None, int | None]]:
+    """(内部ID, レアリティ, 収録パック表記, 名前の注釈, SEC判別用の注記, 価格) のリストを返す。
 
-    収録パック表記・注釈は無ければNone。在庫切れの場合は価格がNoneになる
+    収録パック表記・注釈・SEC判別用の注記は無ければNone。在庫切れの場合は価格がNoneになる
     (呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。
     未開封の非単品商品(プロモパック丸ごとの出品等)は除外する。
     """
@@ -138,12 +153,13 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int |
         if not m:
             continue
         rarity, model_number, pack = m.group(1), m.group(2), m.group(3)
+        variant = detect_variant_suffix(model_number)
 
         annotation_matches = ANNOTATION_PATTERN.findall(name_text[:m.start()])
         annotation = annotation_matches[-1] if annotation_matches else None
 
         if "list_item_soldout" in (li.get("class") or []):
-            results.append((model_number, rarity, pack, annotation, None))
+            results.append((model_number, rarity, pack, annotation, variant, None))
             continue
 
         price_el = li.select_one(".price .figure")
@@ -156,7 +172,7 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int |
         except ValueError:
             continue
 
-        results.append((model_number, rarity, pack, annotation, price))
+        results.append((model_number, rarity, pack, annotation, variant, price))
     return results
 
 
@@ -169,33 +185,37 @@ def parse_total_count(html: str) -> int:
 
 
 def build_lookup(conn):
-    """カード特定用の対応表を3種類作る。
+    """カード特定用の対応表を4種類作る。
 
     - (正規化card_id, レアリティ, 正規化パックコード) -> cards.idのリスト(先頭パックのみ)
     - (正規化card_id, レアリティ) -> cards.idのリスト
     - cards.id -> 正規化したpack列全文(注釈との突き合わせ用)
+    - cards.id -> card_num(SECのSec1/Sec2判別用)
     """
     lookup_with_pack: dict[tuple[str, str, str], list[int]] = defaultdict(list)
     lookup: dict[tuple[str, str], list[int]] = defaultdict(list)
     pack_text_by_id: dict[int, str] = {}
+    card_num_by_id: dict[int, str] = {}
     for row in db.search_cards(conn):
         base_key = (normalize_id(row["card_id"]), row["rarity"])
         lookup[base_key].append(row["id"])
         pack = row["pack"] or ""
         pack_text_by_id[row["id"]] = normalize_annotation_text(pack)
+        card_num_by_id[row["id"]] = row["card_num"]
         pack_code = pack.split()[0] if pack.split() else ""
         if pack_code:
             lookup_with_pack[(base_key[0], base_key[1], normalize_pack_code(pack_code))].append(row["id"])
-    return lookup_with_pack, lookup, pack_text_by_id
+    return lookup_with_pack, lookup, pack_text_by_id, card_num_by_id
 
 
-def resolve_candidate(model_number, rarity, pack, annotation, lookup_with_pack, lookup, pack_text_by_id):
-    """(内部ID, レアリティ, 収録パック表記, 注釈) から、1枚に絞り込めればそのcards.idを、
-    絞り込めなければNoneを返す。優先順位はparse_items/モジュールdocstring参照。
+def resolve_candidate(model_number, rarity, pack, annotation, variant, lookup_with_pack, lookup, pack_text_by_id, card_num_by_id):
+    """(内部ID, レアリティ, 収録パック表記, 注釈, SEC判別用の注記) から、1枚に絞り込めれば
+    そのcards.idを、絞り込めなければNoneを返す。優先順位はparse_items/モジュールdocstring参照。
     """
     norm_id = normalize_id(model_number)
     base_key = (norm_id, rarity)
 
+    pack_candidates = None
     if pack:
         pack_candidates = lookup_with_pack.get((norm_id, rarity, normalize_pack_code(pack)))
         if pack_candidates and len(pack_candidates) == 1:
@@ -210,6 +230,12 @@ def resolve_candidate(model_number, rarity, pack, annotation, lookup_with_pack, 
             ]
             if len(matches) == 1:
                 return matches[0]
+
+    if variant:
+        candidates_for_variant = pack_candidates if pack_candidates else lookup.get(base_key, [])
+        narrowed = [pk for pk in candidates_for_variant if card_num_by_id.get(pk, "").endswith(variant)]
+        if len(narrowed) == 1:
+            return narrowed[0]
 
     base_candidates = lookup.get(base_key, [])
     # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの絵違いが多数ある等)。
@@ -230,7 +256,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
         conn = db.get_connection()
         db.init_db(conn)
 
-    lookup_with_pack, lookup, pack_text_by_id = build_lookup(conn)
+    lookup_with_pack, lookup, pack_text_by_id, card_num_by_id = build_lookup(conn)
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
@@ -255,9 +281,10 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     total = parse_total_count(html)
                     last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-                for model_number, rarity, pack, annotation, price in parse_items(html):
+                for model_number, rarity, pack, annotation, variant, price in parse_items(html):
                     card_pk = resolve_candidate(
-                        model_number, rarity, pack, annotation, lookup_with_pack, lookup, pack_text_by_id
+                        model_number, rarity, pack, annotation, variant,
+                        lookup_with_pack, lookup, pack_text_by_id, card_num_by_id,
                     )
                     if card_pk is None or price is None:
                         continue
