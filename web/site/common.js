@@ -830,6 +830,22 @@ function dayKey(iso) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
 }
 
+// dayKeyの配列から、最初〜最後の日までを1日も欠かさず埋めた連続した日付配列を作る。
+// データが無い日を詰めて隣の日と同じ間隔で描画してしまうと、グラフのX軸上で
+// 「何日分の空白か」が分からなくなってしまうため、グラフのX軸には必ず全ての
+// 暦日を並べ、データが無い日はその日の位置に点が無いだけ、という形にする。
+function allDaysBetween(dayKeys) {
+  if (dayKeys.length === 0) return [];
+  const sorted = [...dayKeys].sort();
+  const start = new Date(sorted[0]);
+  const end = new Date(sorted[sorted.length - 1]);
+  const result = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    result.push(new Date(d).toISOString());
+  }
+  return result;
+}
+
 // ISO日時文字列を "2026/7/21 14:27" のような年まで含む表示に変換する(統計テキスト用)
 function formatDateTimeFull(iso) {
   const d = new Date(iso);
@@ -929,7 +945,7 @@ function drawPriceChart(canvas, history, days) {
     bySite[base].push(point);
   }
 
-  const dates = [...new Set([...shown, ...pooledSeries].map((p) => dayKey(p.recorded_at)))].sort();
+  const dates = allDaysBetween([...shown, ...pooledSeries].map((p) => dayKey(p.recorded_at)));
   const prices = [...shown, ...pooledSeries].map((p) => p.price);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
