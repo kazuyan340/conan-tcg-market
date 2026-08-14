@@ -10,8 +10,11 @@
 同じcard_idの既存カードからゲームデータを複製し、rarity="SP"・card_num・packだけ
 新規に採番して登録する。
 
-画像は公式のSPパラレル版そのものが存在しないため、複製元カードのimage_urlを
-そのまま流用する(実際のパラレル絵とは異なる=正確ではないが、無しよりはまし)。
+画像は公式のSPパラレル版そのものが存在しないため、トレカバースの商品詳細ページに
+載っている実際の商品写真(オリジナル解像度のもの)を使う。一覧ページのサムネイルは
+85x120程度と小さいため、商品ごとに詳細ページを1回追加取得して大きい画像のURLを
+取り出す。取得に失敗した場合だけ、複製元カードのimage_urlを仮流用する
+(実際のパラレル絵とは異なる=正確ではないが、無しよりはまし)。
 
 card_idが既存カードに1件も無い(=完全新規カードで複製元が無い)場合は、商品写真の
 解像度がゲームデータをOCRで読み取れるほど高くないため、誤ったデータを作るより
@@ -80,8 +83,10 @@ def fetch_page(category: int, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str]]:
-    """(カード名, card_id) のリストを返す。未開封のボックス商品自体は除外する。"""
+def parse_items(html: str) -> list[tuple[str, str, str | None]]:
+    """(カード名, card_id, 商品詳細ページのURL) のリストを返す。
+    未開封のボックス商品自体は除外する。
+    """
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for li in soup.select("li.list_item_cell"):
@@ -94,8 +99,28 @@ def parse_items(html: str) -> list[tuple[str, str]]:
         m = NAME_PATTERN.match(name_text)
         if not m:
             continue
-        results.append((m.group(1), m.group(2)))
+        link_el = li.select_one("a.item_data_link")
+        detail_url = link_el.get("href") if link_el else None
+        results.append((m.group(1), m.group(2), detail_url))
     return results
+
+
+def fetch_detail_image_url(detail_url: str) -> str | None:
+    """商品詳細ページから、一覧ページのサムネイルより大きいオリジナル画像のURLを取り出す。
+    見つからなければNoneを返す(呼び出し側で複製元の画像にフォールバックする)。
+    """
+    try:
+        resp = requests.get(detail_url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        logger.warning("トレカバースの商品詳細ページ取得に失敗 (%s): %s", detail_url, exc)
+        return None
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    link_el = soup.select_one(".main_photo_slide a.gallery_link")
+    if not link_el:
+        return None
+    return link_el.get("href")
 
 
 def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> dict:
@@ -129,7 +154,7 @@ def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> di
                 logger.warning("トレカバースの取得に失敗 (category=%d): %s", category, exc)
                 continue
 
-            for name, card_id in parse_items(html):
+            for name, card_id, detail_url in parse_items(html):
                 new_card_num = f"{num_prefix}-{card_id}"
 
                 existing = conn.execute(
@@ -145,6 +170,13 @@ def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> di
                 if not source:
                     skipped_no_source.append((name, card_id))
                     continue
+
+                image_url = source["image_url"]
+                if detail_url:
+                    time.sleep(delay)
+                    fetched_image = fetch_detail_image_url(detail_url)
+                    if fetched_image:
+                        image_url = fetched_image
 
                 now = datetime.now(timezone.utc).isoformat()
                 conn.execute(
@@ -163,7 +195,7 @@ def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> di
                         source["level"], source["ap"], source["lp"], pack_text,
                         source["ability_text"], source["hirameki"], source["cut_in"],
                         source["henso"], source["difficulty_first"], source["difficulty_second"],
-                        source["flavor_text"], source["illustrator"], source["image_url"],
+                        source["flavor_text"], source["illustrator"], image_url,
                         source["sub_image_url"], source["q_a"], None, None, now, DATA_SOURCE,
                     ),
                 )
