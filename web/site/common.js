@@ -1049,10 +1049,11 @@ function drawPriceChart(canvas, history, days) {
     }
   });
 
-  // x軸に日付ラベル(取得日)を表示。重ならないよう間引く。
+  // x軸に日付ラベル(取得日)を表示。重ならないよう間引くが、7日表示のときは
+  // 最大でも7点しか無いため、間引かず全日ぶん表示する。
   const maxLabels = Math.max(2, Math.floor(plotW / 80));
   let labelIndices;
-  if (dates.length <= maxLabels) {
+  if (days === 7 || dates.length <= maxLabels) {
     labelIndices = dates.map((_, i) => i);
   } else {
     labelIndices = [...new Set(
