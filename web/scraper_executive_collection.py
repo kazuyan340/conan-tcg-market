@@ -25,6 +25,11 @@ card_idが既存カードに1件も無い(=完全新規カードで複製元が�
 サブカテゴリ(141=[01] Flashback of 2025, 142=[02]Highway in 2026)。未開封の
 ボックス商品自体(商品名に「未開封」を含む)は除外する。将来[03]以降が追加されたら
 EXEC_CATEGORIESに手動で追記する必要がある(通常のブースターパック追加と同様)。
+
+将来、公式サイトのカード一覧に同じ(card_id, rarity)のカードが正式に追加された
+場合は逆輸入した方が重複になるため、cleanup_superseded()で自動的に削除する
+(ワークフローでは毎回 scraper_cards.py の後にこのモジュールを実行しているため、
+公式側に追加された当日中に検出・削除できる)。
 """
 import logging
 import re
@@ -123,6 +128,35 @@ def fetch_detail_image_url(detail_url: str) -> str | None:
     return link_el.get("href")
 
 
+def cleanup_superseded(conn) -> list[str]:
+    """公式サイトのカード一覧に、こちらが逆輸入した(card_id, rarity)と同じ組み合わせの
+    正式なカード(data_source IS NULL)が後から追加された場合、逆輸入した方は重複に
+    なるため削除する。ワークフローでは毎回 scraper_cards.py (公式同期) の後にこの
+    モジュールを実行しているため、公式側に追加された当日中に検出できる。
+
+    price_historyには外部キー制約があり、参照している行が残っていると
+    cardsの削除が失敗するため、先にそのカードのprice_historyを削除してから
+    cardsを削除する。削除したcard_numのリストを返す。
+    """
+    removed = []
+    rows = conn.execute(
+        "SELECT id, card_id, rarity, card_num FROM cards WHERE data_source IS NOT NULL"
+    ).fetchall()
+    for row in rows:
+        official = conn.execute(
+            "SELECT id FROM cards WHERE card_id = ? AND rarity = ? AND data_source IS NULL LIMIT 1",
+            (row["card_id"], row["rarity"]),
+        ).fetchone()
+        if official:
+            conn.execute("DELETE FROM price_history WHERE card_id = ?", (row["id"],))
+            conn.execute("DELETE FROM cards WHERE id = ?", (row["id"],))
+            removed.append(row["card_num"])
+    if removed:
+        conn.commit()
+        logger.info("公式サイトに追加されたため逆輸入カードを削除: %s", removed)
+    return removed
+
+
 def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> dict:
     """トレカバースからエグゼクティブコレクションのカードを取得し、
     既存カードから複製する形でcardsテーブルに追加する。
@@ -132,9 +166,12 @@ def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> di
         conn = db.get_connection()
         db.init_db(conn)
 
+    removed_superseded = cleanup_superseded(conn)
+
     added = []
     skipped_no_source = []
     skipped_existing = []
+    skipped_superseded = []
     first_request = True
 
     next_id_row = conn.execute(
@@ -162,6 +199,16 @@ def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> di
                 ).fetchone()
                 if existing:
                     skipped_existing.append(new_card_num)
+                    continue
+
+                # 公式サイトに既に(card_id, "SP")の正式なカードが追加されていれば、
+                # ここで逆輸入版を新たに作ると重複になるため作らない。
+                official = conn.execute(
+                    "SELECT id FROM cards WHERE card_id = ? AND rarity = 'SP' AND data_source IS NULL LIMIT 1",
+                    (card_id,),
+                ).fetchone()
+                if official:
+                    skipped_superseded.append(new_card_num)
                     continue
 
                 source = conn.execute(
@@ -207,10 +254,14 @@ def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> di
             "added": added,
             "skipped_no_source": skipped_no_source,
             "skipped_existing": skipped_existing,
+            "skipped_superseded": skipped_superseded,
+            "removed_superseded": removed_superseded,
         }
         logger.info(
-            "完了: %d件追加、複製元なしで%d件スキップ、%d件は登録済み",
+            "完了: %d件追加、複製元なしで%d件スキップ、%d件は登録済み、"
+            "公式追加により%d件スキップ・%d件削除",
             len(added), len(skipped_no_source), len(skipped_existing),
+            len(skipped_superseded), len(removed_superseded),
         )
         return summary
     finally:
