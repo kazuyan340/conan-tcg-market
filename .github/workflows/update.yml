@@ -158,11 +158,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add web/site/data/cards.json web/site/data/prices.json web/site/data/trends.json web/site/data/movers.json web/site/data/meta.json web/site/data/goods.json
+          git add web/site/data/cards.json web/site/data/prices.json web/site/data/trends.json web/site/data/movers.json web/site/data/meta.json web/site/data/goods.json web/site/data/unofficial-cards.json
           git diff --cached --quiet || git commit -m "chore: daily card/price update"
           # このジョブは駿河屋取得(30秒間隔のクロール遅延込み)のせいで50〜90分かかることがあり、
           # その間に他のpush(手動でのコード修正など)が入ると素のgit pushは
-          # "fetch first"で弾かれて、この回のデータ更新がまるごと失われてしまう。
-          # そのため、pushする直前に一度rebaseで追従してからpushし直す。
-          git pull --rebase origin master
+          # "fetch first"で弾かれる。以前は単純にrebaseで追従していたが、手動作業側も
+          # 同じデータファイル(cards.json/prices.json等)を更新しているとrebaseが
+          # コンフリクトして失敗し、このジョブが取得した分がまるごと失われる事故が
+          # 実際に起きた(2026-08-14)。このジョブが対象にしているのはこの6ファイルだけ
+          # なので、コンフリクトが起きた場合はこのジョブ自身が今まさに生成した内容
+          # (DBから再エクスポートした最新の状態)を優先して構わない。そのため
+          # rebaseではなくmerge -X oursを使い、コンフリクトしても自動的に自分の
+          # 内容で解決してpushを継続できるようにする。
+          git fetch origin master
+          git merge -X ours origin/master --no-edit
           git push
