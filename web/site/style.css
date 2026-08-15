@@ -430,32 +430,6 @@ body {
   text-overflow: ellipsis;
 }
 
-.admin-analytics {
-  padding: 16px 20px 0;
-}
-
-.admin-analytics h2,
-.admin-section-title {
-  font-size: 1.05rem;
-  margin: 0 0 8px;
-  padding: 0 20px;
-}
-
-.admin-analytics h2 {
-  padding: 0;
-}
-
-.admin-analytics-embed {
-  max-width: 900px;
-}
-
-.admin-analytics-embed iframe {
-  width: 100%;
-  max-width: 600px;
-  height: 450px;
-  border-radius: 8px;
-}
-
 .sort-row {
   display: flex;
   align-items: center;
