@@ -25,6 +25,11 @@ SECレアリティは同じcard_id+rarityで2種類の実物カード(card_num�
 「《未開封》」で始まる商品名は、チャレンジ戦・探偵マスターズ等の未開封プロモ
 パックの出品で、中身の1枚だけの単品カードとは全く別物の値段になるため除外する。
 
+売り切れの商品は一覧から消えず、<li>に"list_item_soldout"クラスが付いたまま
+最後に売れた時の価格が表示され続ける(2026-08-16にSR中森銀三で発覚)。これを
+チェックせず記録すると、売り切れなのに古い価格が最新の相場として残り続けて
+しまうため除外する。
+
 対象カテゴリは「コナンカード」カテゴリ(product-list/110)。単品カード以外
 (オリパ・BOX等)も同じカテゴリに混在しているが、それらは「ID[...]」表記を
 持たないため、正規表現にマッチせず自然に除外される。
@@ -120,6 +125,13 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int]]
 
         name_text = name_el.get_text()
         if "未開封" in name_text:
+            continue
+
+        # 売り切れの商品は<li>に"list_item_soldout"クラスが付き、価格欄には
+        # 最後に売れた時の値段が残ったままになる(<p class="stock soldout">在庫数×</p>)。
+        # これをチェックしないと、売り切れなのに古い価格を最新の相場として
+        # 記録し続けてしまう(実際に中森銀三SRで発生していた不具合)。
+        if "list_item_soldout" in (li.get("class") or []):
             continue
 
         m = NAME_PATTERN.search(name_text)
