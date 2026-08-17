@@ -1,8 +1,8 @@
 """駿河屋から高レアリティカードの価格を取得し price_history に保存するモジュール。
 
-駿河屋の検索結果ページには、Google Analytics用に埋め込まれた
-`item_name` (例: "B01005[SR]：江戸川コナン") と `price` (整数) の
-データレイヤーがそのまま残っており、これが最も安定して取得できる。
+検索結果ページの各商品は `div.item` 1個にまとまっており、その中に商品名
+(`.product-name`、例: "B01005[SR]：江戸川コナン")と価格欄(`.item_price`)が
+両方入っている。これを`div.item`単位でまとめてパースする。
 
 検索は「レアリティ単位」で行う。例えば "名探偵コナンTCG SR" で検索すると
 江戸川コナンに限らずSRレアリティの全カードが返ってくるため、
@@ -11,13 +11,19 @@
 駿河屋のrobots.txtは `Crawl-delay: 30` を指定しているため、
 リクエスト間隔は30秒を厳守する。
 
-品切れの商品もこのデータレイヤーには残ったままで、しかも直近の販売価格が
-`price`にそのまま入っているため、そのまま使うと「品切れなのに購入できる値段」を
-誤って記録してしまう(実例: B07002 SRが品切れなのにprice:200が埋め込まれていた)。
-データレイヤー側だけでは品切れかどうか判別できないため、同じページの見た目側
-(`.item_price`ブロック、品切れは"price_teika"ではなく"price"クラス+「品切れ」表記)を
-BeautifulSoupで別途パースし、データレイヤーの並び順(item_nameが出現する順序)と
-1対1で対応することを確認した上で突き合わせて、品切れの回だけ除外する。
+品切れの商品は価格欄が"price_teika"クラスの実売価格表示ではなく、
+"price"クラスのみで中身が「品切れ」というテキストになる。これをチェックせず
+記録すると「品切れなのに購入できる値段」を誤って記録してしまう
+(実例: B07002 SRが品切れなのにprice:200が埋め込まれていた)。
+
+以前はGoogle Analytics用のデータレイヤー(`item_name`/`price`)から名前と価格を、
+見た目側のHTML(`.item_price`)から品切れ判定だけを別々に取り、両者の出現順序が
+1対1で対応するという前提で突き合わせていた。しかし実際にはページによって
+データレイヤー側の件数と見た目側の件数が食い違うことがあり(実例: 2026-08-16に
+SR一覧22ページ目で22件 vs 24件のずれが発生し、B06067[SR]中森銀三が品切れなのに
+別の在庫ありの商品の価格と誤って対応付けられてしまった)、インデックス対応は
+信頼できないと判明した。そのため現在は`div.item`単位で商品名・価格・品切れ状態を
+まとめて1か所から取り、この種のずれが原理的に起こらないようにしている。
 """
 import logging
 import re
@@ -53,10 +59,8 @@ REQUEST_TIMEOUT = 15
 REQUEST_DELAY_SEC = 30  # 駿河屋のCrawl-delay:30を厳守
 MAX_PAGES_PER_RARITY = 60  # 安全のための上限(実際の最終ページはparse_last_pageで判定)
 
-ITEM_PATTERN = re.compile(
-    r"item_name:\s*common\.htmlDecode\('([^']*)'\).*?price:\s*(\d+),", re.S
-)
 NAME_PATTERN = re.compile(r"^([^\[]+)\[([^\]]+)\](?:[:：](.*))?$")
+PRICE_PATTERN = re.compile(r"[\d,]+")
 PAGE_LINK_PATTERN = re.compile(r"[?&]page=(\d+)")
 
 logger = logging.getLogger(__name__)
@@ -87,29 +91,39 @@ def fetch_search_page(session: requests.Session, rarity: str, page: int) -> str:
     return resp.text
 
 
-def parse_soldout_flags(html: str) -> list[bool]:
-    """ページ内の商品を出現順に見て、それぞれ品切れかどうかを返す。
-
-    品切れの商品は価格欄が"price_teika"クラスの実売価格表示ではなく、
-    "price"クラスのみで中身が「品切れ」というテキストになる。
-    """
-    soup = BeautifulSoup(html, "html.parser")
-    return ["品切れ" in block.get_text() for block in soup.select(".item_price")]
-
-
 def parse_items(html: str) -> list[tuple[str, str, int | None]]:
     """(card_num, rarity, price) のリストを返す。品切れの場合はpriceがNoneになる
     (呼び出し側で「今回は品切れと確認できた」の判定に使う)。
+
+    商品名・価格・品切れ状態を`div.item`単位でまとめて取るため、ページ内の
+    件数が食い違って対応がずれる心配が無い(モジュールdocstring参照)。
     """
-    soldout_flags = parse_soldout_flags(html)
+    soup = BeautifulSoup(html, "html.parser")
     results = []
-    for i, (raw_name, price_str) in enumerate(ITEM_PATTERN.findall(html)):
-        m = NAME_PATTERN.match(raw_name)
+    for item in soup.select("div.item"):
+        name_el = item.select_one(".product-name")
+        if not name_el:
+            continue
+        m = NAME_PATTERN.match(name_el.get_text(strip=True))
         if not m:
             continue
         card_num, rarity = m.group(1), m.group(2)
-        is_soldout = i < len(soldout_flags) and soldout_flags[i]
-        results.append((card_num, rarity, None if is_soldout else int(price_str)))
+
+        price_el = item.select_one(".item_price")
+        if not price_el:
+            continue
+
+        if "品切れ" in price_el.get_text():
+            results.append((card_num, rarity, None))
+            continue
+
+        teika_el = price_el.select_one(".price_teika")
+        if not teika_el:
+            continue
+        price_m = PRICE_PATTERN.search(teika_el.get_text())
+        if not price_m:
+            continue
+        results.append((card_num, rarity, int(price_m.group(0).replace(",", ""))))
     return results
 
 
