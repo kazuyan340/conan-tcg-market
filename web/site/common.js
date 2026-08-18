@@ -627,7 +627,11 @@ function openModal(card) {
   ];
 
   const infoEl = document.getElementById("modal-info");
-  infoEl.innerHTML = fields
+  // カードごとの固有ページ(検索エンジンからも個別にヒットできる静的ページ)への
+  // リンク。共有・ブックマーク用にも使える。card/{id}.html自体にはこのモーダルは
+  // 出てこないので相対パスはサイトルート基準で固定でよい。
+  const permalinkHtml = `<div class="field modal-permalink"><a href="card/${card.id}.html">🔗 このカードの詳細ページを見る</a></div>`;
+  infoEl.innerHTML = permalinkHtml + fields
     .filter(([, v]) => v !== null && v !== "" && v !== undefined)
     .map(([label, v]) => `<div class="field"><span class="label">${label}:</span><span>${escapeHtml(String(v))}</span></div>`)
     .join("");

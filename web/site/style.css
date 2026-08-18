@@ -860,6 +860,11 @@ body.modal-open {
   flex-shrink: 0;
 }
 
+.modal-info .modal-permalink {
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+}
+
 .modal-info .ability {
   margin-top: 8px;
   padding: 8px 10px;
@@ -1211,6 +1216,25 @@ body.modal-open {
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 20px 40px;
+}
+
+/* カード個別ページ(card/{id}.html)。.modal-card/.modal-body/.modal-info等は
+   モーダル用のクラスをそのまま流用している(position:fixedに依存していないため
+   通常のページ本文としても問題なく使える)。 */
+.card-detail-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.card-detail-card {
+  max-width: none;
+  width: auto;
+}
+
+.card-detail-back {
+  margin: 16px 4px 0;
+  font-size: 0.85rem;
 }
 
 .static-section {
