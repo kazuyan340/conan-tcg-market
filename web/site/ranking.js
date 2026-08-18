@@ -207,8 +207,9 @@ function totalPages() {
 }
 
 function createRankingTile(card, rank, price) {
-  const tile = document.createElement("div");
+  const tile = document.createElement("a");
   tile.className = "card-tile has-badge";
+  tile.href = `card/${card.id}.html`;
   tile.innerHTML = `
     <div class="trend-badge">#${rank}　${price.toLocaleString()}円</div>
     <img src="${card.image_url || ""}" alt="${escapeHtml(card.name)}" loading="lazy">
@@ -222,6 +223,9 @@ function createRankingTile(card, rank, price) {
   star.textContent = isFavorite(card.id) ? "★" : "☆";
   star.title = "お気に入り(価格チェック対象)に登録/解除";
   star.addEventListener("click", (e) => {
+    // タイルが<a>タグのため、preventDefaultしないとブラウザ標準のリンク遷移が
+    // 止まらず、星を押しただけでcard/{id}.htmlへ飛んでしまう(common.js参照)。
+    e.preventDefault();
     e.stopPropagation();
     const nowFav = toggleFavorite(card.id);
     star.textContent = nowFav ? "★" : "☆";
@@ -229,7 +233,9 @@ function createRankingTile(card, rank, price) {
   });
   tile.prepend(star);
 
-  tile.addEventListener("click", () => openModal(card));
+  tile.addEventListener("click", (e) => {
+    if (shouldOpenModalInstead(e)) openModal(card);
+  });
   return tile;
 }
 

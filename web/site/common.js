@@ -18,15 +18,18 @@ function trendBadgeLines(item) {
 
 function appendTrendCardTile(grid, item, card, badgeLinesFn, badgeClass) {
   const badgeHtml = badgeLinesFn(item).map((line) => escapeHtml(line)).join("<br>");
-  const tile = document.createElement("div");
+  const tile = document.createElement("a");
   tile.className = "card-tile";
+  tile.href = `card/${card.id}.html`;
   tile.innerHTML = `
     <div class="trend-badge ${badgeClass}">${badgeHtml}</div>
     <img src="${card.image_url || ""}" alt="${escapeHtml(card.name)}" loading="lazy">
     <div class="name">${escapeHtml(card.name)}</div>
     <div class="sub">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")}</div>
   `;
-  tile.addEventListener("click", () => openModal(card));
+  tile.addEventListener("click", (e) => {
+    if (shouldOpenModalInstead(e)) openModal(card);
+  });
   grid.appendChild(tile);
 }
 
@@ -566,9 +569,22 @@ async function renderLastUpdated() {
 }
 
 // カードタイルのDOM要素を作る。お気に入り星をクリックしても詳細モーダルは開かない。
+// タイルは<a href="card/{id}.html">として作る(通常クリックは今まで通り
+// モーダルを開く。Ctrl/Cmd/Shiftクリックや中クリックはブラウザ標準の
+// 「新しいタブで開く」を素通しし、実際にcard/{id}.htmlへ遷移させる)。
+// 検索エンジンのクロールで個別ページが発見されやすくなる(内部リンク)のと、
+// 右クリックの「リンクをコピー」で共有用URLを取れるようにするための変更。
+// trueを返した場合だけ呼び出し側でopenModal()する(=通常の左クリックだった)。
+function shouldOpenModalInstead(e) {
+  if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return false;
+  e.preventDefault();
+  return true;
+}
+
 function createCardTile(card, onFavoriteToggle) {
-  const tile = document.createElement("div");
+  const tile = document.createElement("a");
   tile.className = "card-tile";
+  tile.href = `card/${card.id}.html`;
 
   const star = document.createElement("button");
   star.type = "button";
@@ -576,6 +592,10 @@ function createCardTile(card, onFavoriteToggle) {
   star.textContent = isFavorite(card.id) ? "★" : "☆";
   star.title = "お気に入り(価格チェック対象)に登録/解除";
   star.addEventListener("click", (e) => {
+    // タイル自体が<a>タグになったため、stopPropagationだけでは(独自の
+    // クリックハンドラは止まっても)ブラウザ標準のリンク遷移までは止まらない。
+    // 星を押したときにcard/{id}.htmlへ飛んでしまっていた実際のバグの修正。
+    e.preventDefault();
     e.stopPropagation();
     const nowFav = toggleFavorite(card.id);
     star.textContent = nowFav ? "★" : "☆";
@@ -599,7 +619,9 @@ function createCardTile(card, onFavoriteToggle) {
   sub.innerHTML = `<span class="sub-meta">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")}</span><span class="sub-price">${escapeHtml(priceText)}</span>`;
 
   tile.append(star, img, name, sub);
-  tile.addEventListener("click", () => openModal(card));
+  tile.addEventListener("click", (e) => {
+    if (shouldOpenModalInstead(e)) openModal(card);
+  });
   return tile;
 }
 
@@ -627,11 +649,7 @@ function openModal(card) {
   ];
 
   const infoEl = document.getElementById("modal-info");
-  // カードごとの固有ページ(検索エンジンからも個別にヒットできる静的ページ)への
-  // リンク。共有・ブックマーク用にも使える。card/{id}.html自体にはこのモーダルは
-  // 出てこないので相対パスはサイトルート基準で固定でよい。
-  const permalinkHtml = `<div class="field modal-permalink"><a href="card/${card.id}.html">🔗 このカードの詳細ページを見る</a></div>`;
-  infoEl.innerHTML = permalinkHtml + fields
+  infoEl.innerHTML = fields
     .filter(([, v]) => v !== null && v !== "" && v !== undefined)
     .map(([label, v]) => `<div class="field"><span class="label">${label}:</span><span>${escapeHtml(String(v))}</span></div>`)
     .join("");

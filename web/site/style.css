@@ -500,12 +500,15 @@ body {
 }
 
 .card-tile {
+  display: block;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px;
   cursor: pointer;
   text-align: center;
+  text-decoration: none;
+  color: inherit;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   position: relative;
   /* グリッドアイテムは既定でmin-width:autoのため、.name(white-space:nowrap)の
@@ -858,11 +861,6 @@ body.modal-open {
   min-width: 6em;
   color: var(--muted);
   flex-shrink: 0;
-}
-
-.modal-info .modal-permalink {
-  margin-bottom: 6px;
-  font-size: 0.8rem;
 }
 
 .modal-info .ability {
