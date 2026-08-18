@@ -118,7 +118,6 @@ function render() {
     const img = document.createElement("img");
     img.src = card.image_url || "";
     img.alt = card.name;
-    img.addEventListener("click", () => openModal(card));
 
     const info = document.createElement("div");
     info.className = "price-check-info";
@@ -126,9 +125,20 @@ function render() {
       <div class="name">${escapeHtml(card.name)}</div>
       <div class="sub">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")} / ${escapeHtml(card.card_num || "")}</div>
     `;
-    info.querySelector(".name").addEventListener("click", () => openModal(card));
 
-    header.append(removeBtn, img, info);
+    // 画像+名前部分をこのカードの詳細ページへの実リンクにする(index.html等の
+    // タイルと同じ考え方)。通常クリックは今まで通りモーダルを開く。ページ全体を
+    // <a>にすると通知ラインの入力欄などが入れ子になってしまうため、ここでは
+    // クリックで開いていた画像+名前部分だけをリンクにする。
+    const link = document.createElement("a");
+    link.className = "price-check-link";
+    link.href = `card/${card.id}.html`;
+    link.append(img, info);
+    link.addEventListener("click", (e) => {
+      if (shouldOpenModalInstead(e)) openModal(card);
+    });
+
+    header.append(removeBtn, link);
 
     const stats = document.createElement("div");
     stats.className = "price-stats";

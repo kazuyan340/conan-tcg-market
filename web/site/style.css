@@ -680,6 +680,17 @@ body {
   position: relative;
 }
 
+.price-check-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
 .price-check-header img {
   width: 56px;
   border-radius: 4px;
