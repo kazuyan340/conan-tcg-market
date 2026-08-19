@@ -77,6 +77,13 @@ ID_TAIL_PATTERN = re.compile(r"[A-Za-z0-9]+$")
 ALNUM_ONLY_PATTERN = re.compile(r"[^A-Za-z0-9]+")
 # カード名の後ろに付く注釈(例: "(探偵マスターズ2026)")を拾う。
 ANNOTATION_PATTERN = re.compile(r"[（(]([^）)]+)[）)]")
+# 収録パック表記は通常、内部ID直後の末尾【...】に付くが、"工藤新一［CTP04]【C】《青》
+# ［P007]"のように、カード名の直後・【レアリティ】より前に付く商品もある。
+# NAME_PATTERNの末尾パック表記(group3)が無い場合、この直前位置も探す。
+# ただし"江戸川コナン［P001]【C】《青》［P001]"のように、内部IDをそのまま同じ
+# 角カッコ書式で重複表記しているだけの商品もあるため、実在のパックコードが必ず
+# "CT"で始まる(CT-P01/CT-D08等)ことを利用し、それ以外(内部IDの重複)を除外する。
+LEADING_PACK_PATTERN = re.compile(r"[\[［](CT[A-Za-z0-9\-]*)[\]／]\s*$", re.IGNORECASE)
 # 注釈とDBのpack列を突き合わせるときに無視する記号類(空白・カッコ・各種ハイフン)。
 # 長音記号「ー」は正式な文字として使われるカードもあるため対象に含めない。
 DECORATION_PATTERN = re.compile(r"[\s()（）\-‐‑‒–—−]+")
@@ -176,7 +183,13 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str |
         variant = detect_variant_suffix(model_number)
         pack_tag = extract_pack_tag(model_number)
 
-        annotation_matches = ANNOTATION_PATTERN.findall(name_text[:m.start()])
+        prefix_text = name_text[:m.start()]
+        if not pack:
+            leading_pack = LEADING_PACK_PATTERN.search(prefix_text)
+            if leading_pack:
+                pack = leading_pack.group(1)
+
+        annotation_matches = ANNOTATION_PATTERN.findall(prefix_text)
         annotation = annotation_matches[-1] if annotation_matches else None
 
         if "list_item_soldout" in (li.get("class") or []):
@@ -272,6 +285,19 @@ def _resolve_if_pair_by_annotation(candidates: list[int], card_num_by_id: dict[i
     return base_pk if annotation == "夕方" else if_pk
 
 
+def _resolve_foil_pair(candidates: list[int], card_num_by_id: dict[int, str], is_foil: bool) -> int | None:
+    """テーマデッキのDレアリティは、通常版とホイル版が連番のcard_num(例: D08019/D08020)
+    で別カードとして登録されている。候補がちょうど2件の場合に限り、card_numの
+    昇順で小さい方をホイル版、大きい方を通常版とみなし(ユーザーに確認済み。ただし
+    現時点の暫定情報)、商品名の「ホイル版」という注記の有無に応じてどちらか1件の
+    cards.idを返す。それ以外(2件でない)はNoneを返す。
+    """
+    if len(candidates) != 2:
+        return None
+    ordered = sorted(candidates, key=lambda pk: card_num_by_id.get(pk, ""))
+    return ordered[0] if is_foil else ordered[1]
+
+
 def resolve_candidate(model_number, rarity, pack, annotation, variant, pack_tag, lookup_with_pack, lookup, pack_text_by_id, card_num_by_id):
     """(内部ID, レアリティ, 収録パック表記, 注釈, SEC判別用の注記, 内部ID欄のパック名注記) から、
     1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
@@ -305,6 +331,11 @@ def resolve_candidate(model_number, rarity, pack, annotation, variant, pack_tag,
         resolved = _match_by_pack_tag(lookup.get(base_key, []), normalize_annotation_text(pack_tag), pack_text_by_id)
         if resolved is not None:
             return resolved
+
+    if rarity == "D":
+        foil_resolved = _resolve_foil_pair(candidates_for_if_pair, card_num_by_id, "ホイル版" in model_number)
+        if foil_resolved is not None:
+            return foil_resolved
 
     if variant:
         candidates_for_variant = pack_candidates if pack_candidates else lookup.get(base_key, [])
