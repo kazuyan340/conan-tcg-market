@@ -93,11 +93,18 @@ NAME_PATTERN = re.compile(r"【([A-Za-z0-9]+)】.*?\[型番\s*([A-Za-z0-9]+)\]\s
 # SECレアリティは同じcard_id+レアリティで2種類の実物カード(card_num末尾がSec1/Sec2)が
 # 存在し、商品名の「レンガ」「サイン入り」という注記でどちらか判別できる
 # (レンガ=Sec1、青山剛昌先生サイン入り=Sec2であることをユーザーに確認済み)。
+#
+# 同様に一部のパック(CT-P10等)には通常版と絵違いの「IFパラレル」が同じcard_id+
+# レアリティで存在し、card_num末尾に"2"が付くだけの別カードとして登録されている
+# (例: 通常版B10065P、IFパラレルB10065P2。P2=IFパラレルであることをユーザーに
+# 確認済み)。商品名の「IFパラレル」という注記で判別する。
 def detect_variant_suffix(name_text: str) -> str | None:
     if "サイン" in name_text:
         return "Sec2"
     if "レンガ" in name_text:
         return "Sec1"
+    if "IFパラレル" in name_text:
+        return "IF"
     return None
 
 
@@ -197,11 +204,27 @@ def build_lookup(conn):
 
 
 def _narrow_by_variant(candidates: list[tuple[int, str]], variant: str | None) -> int | None:
-    """候補が2件以上ある場合、商品名の注記(Sec1/Sec2)で1件に絞り込めればそのcards.idを、
+    """候補が2件以上ある場合、商品名の注記(Sec1/Sec2/IF)で1件に絞り込めればそのcards.idを、
     絞り込めなければNoneを返す(誤った価格を割り当てるより記録しない方が安全なため)。
     """
     if len(candidates) == 1:
         return candidates[0][0]
+
+    # IFパラレルはcard_num末尾に"2"が付くだけの別カードなので(Sec1/Sec2のような
+    # 固有の接尾辞ではなく)、候補2件が「無印」「無印+"2"」の組になっているかを
+    # 直接突き合わせて判別する。この組が見つかった場合、商品名に「IFパラレル」の
+    # 注記があればIF側を、無ければ(=無印の商品名なら)無印側を選べる。
+    if len(candidates) == 2:
+        (pk_a, num_a), (pk_b, num_b) = candidates
+        if num_a + "2" == num_b:
+            if_pk, base_pk = pk_b, pk_a
+        elif num_b + "2" == num_a:
+            if_pk, base_pk = pk_a, pk_b
+        else:
+            if_pk = base_pk = None
+        if if_pk is not None:
+            return if_pk if variant == "IF" else base_pk
+
     if variant:
         narrowed = [pk for pk, card_num in candidates if card_num.endswith(variant)]
         if len(narrowed) == 1:

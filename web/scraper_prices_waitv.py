@@ -82,11 +82,18 @@ def detect_variant_suffix(name_text: str) -> str | None:
     SECの2種類(Sec1=レンガ/無印, Sec2=サイン入り)を判別する。どちらでもなければNone。
     「レンガ」の位置はレアリティ直後の場合と、名前直後の別の括弧内の場合の両方が
     あるため、括弧の位置に依らずタイトル全体から探す。
+
+    同様に一部のパック(CT-P10等)の高レアには通常版と絵違いの「IFパラレル」が
+    同じcard_id+レアリティで存在し、card_num末尾に"2"が付くだけの別カードとして
+    登録されている(例: 通常版B10065P、IFパラレルB10065P2)。商品名の
+    「IFパラレル」という注記で判別する。
     """
     if "サイン" in name_text:
         return "Sec2"
     if "レンガ" in name_text:
         return "Sec1"
+    if "IFパラレル" in name_text:
+        return "IF"
     return None
 
 logger = logging.getLogger(__name__)
@@ -183,8 +190,26 @@ def build_lookup(conn):
     return lookup_with_pack, lookup, card_num_by_id
 
 
+def _resolve_if_pair(candidates: list[int], card_num_by_id: dict[int, str], variant: str | None) -> int | None:
+    """候補がちょうど2件で、card_numが「無印」「無印+"2"」(IFパラレル)の組になっている
+    場合に限り、商品名の注記(IF/無し)に応じてどちらか1件のcards.idを返す。
+    それ以外(2件でない、またはIFパラレルの組ではない)はNoneを返す。
+    """
+    if len(candidates) != 2:
+        return None
+    pk_a, pk_b = candidates
+    num_a, num_b = card_num_by_id.get(pk_a, ""), card_num_by_id.get(pk_b, "")
+    if num_a + "2" == num_b:
+        if_pk, base_pk = pk_b, pk_a
+    elif num_b + "2" == num_a:
+        if_pk, base_pk = pk_a, pk_b
+    else:
+        return None
+    return if_pk if variant == "IF" else base_pk
+
+
 def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup, card_num_by_id):
-    """(内部ID, レアリティ, 収録パック表記, SEC判別用の注記) から、1枚に絞り込めれば
+    """(内部ID, レアリティ, 収録パック表記, SEC/IF判別用の注記) から、1枚に絞り込めれば
     そのcards.idを、絞り込めなければNoneを返す。
     """
     norm_id = normalize_id(model_number)
@@ -193,8 +218,12 @@ def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, loo
     pack_candidates = None
     if pack:
         pack_candidates = lookup_with_pack.get((norm_id, rarity, normalize_pack_code(pack)))
-        if pack_candidates and len(pack_candidates) == 1:
-            return pack_candidates[0]
+        if pack_candidates:
+            if len(pack_candidates) == 1:
+                return pack_candidates[0]
+            if_resolved = _resolve_if_pair(pack_candidates, card_num_by_id, variant)
+            if if_resolved is not None:
+                return if_resolved
 
     if variant:
         candidates_for_variant = pack_candidates if pack_candidates else lookup.get(base_key, [])
@@ -203,6 +232,9 @@ def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, loo
             return narrowed[0]
 
     base_candidates = lookup.get(base_key, [])
+    if_resolved = _resolve_if_pair(base_candidates, card_num_by_id, variant)
+    if if_resolved is not None:
+        return if_resolved
     # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの絵違いが多数ある等)。
     # 誤った価格を割り当てるより、記録しない方が安全なためスキップする。
     if len(base_candidates) == 1:
