@@ -18,6 +18,13 @@
 で照合することで、わいTVでは絞り込めなかったパック内の重複(例: 同じ
 card_id+rarityでもパックが違う)を回避できる。
 
+プロモカード(カテゴリ48, 49)は上記のカテゴリ単位の絞り込みが効かない一方、
+商品名自体に「[型番 0198][プロモーションパックVol.8キラバージョン]」のように
+収録パック名の注記が付いている。同じcard_id+rarityのPRカードが複数の配布回に
+またがって存在するケース(例: 大岡紅葉の型番0198はチャレンジ戦配布/Vol.8通常/
+Vol.8キラの3枚)が多いため、この注記をcards.packと突き合わせて絞り込む
+(表記揺れは_normalize_pack_textで吸収する)。
+
 SECレアリティは同じcard_id+rarityで2種類の実物カード(card_num末尾がSec1/Sec2)
 が存在するが、商品名の注記が「レンガ」ならSec1、「サイン入り」(青山剛昌先生
 サイン入り)ならSec2と判別できることが分かっているため、detect_variant_suffix()
@@ -78,8 +85,10 @@ REQUEST_TIMEOUT = 15
 REQUEST_DELAY_SEC = 30
 MAX_PAGES_PER_CATEGORY = 20
 
-# 商品名の中の「【レアリティ】」「[型番xxxx]」を取り出す。
-NAME_PATTERN = re.compile(r"【([A-Za-z0-9]+)】.*?\[型番\s*([A-Za-z0-9]+)\]")
+# 商品名の中の「【レアリティ】」「[型番xxxx]」、続けてあれば「[プロモパック名]」を取り出す。
+# 例: "大岡紅葉【PR】《緑》[型番 0198][プロモーションパックVol.8キラバージョン]"
+#     "萩原千速 【PR】《黄》[型番 0940] [チャレンジ戦 他] 未開封"
+NAME_PATTERN = re.compile(r"【([A-Za-z0-9]+)】.*?\[型番\s*([A-Za-z0-9]+)\]\s*(?:\[\s*([^\]]*?)\s*\])?")
 
 # SECレアリティは同じcard_id+レアリティで2種類の実物カード(card_num末尾がSec1/Sec2)が
 # 存在し、商品名の「レンガ」「サイン入り」という注記でどちらか判別できる
@@ -90,6 +99,20 @@ def detect_variant_suffix(name_text: str) -> str | None:
     if "レンガ" in name_text:
         return "Sec1"
     return None
+
+
+# cards.packの表記("PRカード（プロモーションパックVol.8（キラバージョン）」等)と
+# 商品名の注記("プロモーションパックVol.8キラバージョン")は外側の「PRカード（）」の
+# 有無・括弧の全角半角・空白の有無で揺れるため、両方に適用して比較可能な形に揃える。
+def _normalize_pack_text(text: str | None) -> str:
+    if not text:
+        return ""
+    text = text.strip()
+    if text.startswith("PRカード"):
+        text = text[len("PRカード"):]
+    for ch in "（）() 　":
+        text = text.replace(ch, "")
+    return text
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +128,9 @@ def fetch_page(category: int, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, int, str | None]]:
-    """(card_id, レアリティ, 価格, 判別用の注記(Sec1/Sec2/None)) のリストを返す。
-    品切れ商品は除外する。
+def parse_items(html: str) -> list[tuple[str, str, int, str | None, str | None]]:
+    """(card_id, レアリティ, 価格, 判別用の注記(Sec1/Sec2/None), プロモパック名の注記(あれば))
+    のリストを返す。品切れ商品は除外する。
     """
     soup = BeautifulSoup(html, "html.parser")
     results = []
@@ -120,7 +143,7 @@ def parse_items(html: str) -> list[tuple[str, str, int, str | None]]:
         m = NAME_PATTERN.search(name_text)
         if not m:
             continue
-        rarity, model_number = m.group(1), m.group(2)
+        rarity, model_number, pack_tag = m.group(1), m.group(2), m.group(3)
         variant = detect_variant_suffix(name_text)
 
         stock_el = li.select_one(".stock")
@@ -136,7 +159,7 @@ def parse_items(html: str) -> list[tuple[str, str, int, str | None]]:
         except ValueError:
             continue
 
-        results.append((model_number, rarity, price, variant))
+        results.append((model_number, rarity, price, variant, pack_tag))
     return results
 
 
@@ -149,12 +172,15 @@ def parse_total_count(html: str) -> int:
 
 
 def build_lookup(conn):
-    """カード特定用の対応表を2種類作る。値は(cards.id, card_num)のリスト。
+    """カード特定用の対応表を3種類作る。値は(cards.id, card_num)のリスト。
 
     - (card_id, レアリティ, パックコード) -> [(cards.id, card_num), ...] (ブースターカテゴリ用)
-    - (card_id, レアリティ) -> [(cards.id, card_num), ...] (プロモカテゴリ用)
+    - (card_id, レアリティ, 正規化したパック名) -> [(cards.id, card_num), ...] (プロモカテゴリ用。
+      商品名の「[プロモーションパックVol.8キラバージョン]」等をcards.packと突き合わせる)
+    - (card_id, レアリティ) -> [(cards.id, card_num), ...] (どちらでも絞り込めない場合の最終フォールバック)
     """
     lookup_with_pack: dict[tuple[str, str, str], list[tuple[int, str]]] = defaultdict(list)
+    lookup_by_promo_pack: dict[tuple[str, str, str], list[tuple[int, str]]] = defaultdict(list)
     lookup: dict[tuple[str, str], list[tuple[int, str]]] = defaultdict(list)
     for row in db.search_cards(conn):
         base_key = (row["card_id"], row["rarity"])
@@ -164,7 +190,10 @@ def build_lookup(conn):
         pack_code = pack.split()[0] if pack.split() else ""
         if pack_code:
             lookup_with_pack[(base_key[0], base_key[1], pack_code)].append(entry)
-    return lookup_with_pack, lookup
+        normalized_pack = _normalize_pack_text(pack)
+        if normalized_pack:
+            lookup_by_promo_pack[(base_key[0], base_key[1], normalized_pack)].append(entry)
+    return lookup_with_pack, lookup_by_promo_pack, lookup
 
 
 def _narrow_by_variant(candidates: list[tuple[int, str]], variant: str | None) -> int | None:
@@ -180,14 +209,19 @@ def _narrow_by_variant(candidates: list[tuple[int, str]], variant: str | None) -
     return None
 
 
-def resolve_candidate(model_number, rarity, pack_code, variant, lookup_with_pack, lookup):
-    """(card_id, レアリティ, パックコード, 判別用の注記) から、1枚に絞り込めればそのcards.idを、
-    絞り込めなければNoneを返す。
+def resolve_candidate(model_number, rarity, pack_code, pack_tag, variant, lookup_with_pack, lookup_by_promo_pack, lookup):
+    """(card_id, レアリティ, パックコード, プロモパック名の注記, 判別用の注記) から、
+    1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
     """
     if pack_code:
         pack_candidates = lookup_with_pack.get((model_number, rarity, pack_code))
         if pack_candidates:
             return _narrow_by_variant(pack_candidates, variant)
+
+    if pack_tag:
+        promo_candidates = lookup_by_promo_pack.get((model_number, rarity, _normalize_pack_text(pack_tag)))
+        if promo_candidates:
+            return _narrow_by_variant(promo_candidates, variant)
 
     base_candidates = lookup.get((model_number, rarity), [])
     return _narrow_by_variant(base_candidates, variant)
@@ -204,7 +238,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
         conn = db.get_connection()
         db.init_db(conn)
 
-    lookup_with_pack, lookup = build_lookup(conn)
+    lookup_with_pack, lookup_by_promo_pack, lookup = build_lookup(conn)
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
@@ -230,8 +264,11 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     total = parse_total_count(html)
                     last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-                for model_number, rarity, price, variant in parse_items(html):
-                    card_pk = resolve_candidate(model_number, rarity, pack_code, variant, lookup_with_pack, lookup)
+                for model_number, rarity, price, variant, pack_tag in parse_items(html):
+                    card_pk = resolve_candidate(
+                        model_number, rarity, pack_code, pack_tag, variant,
+                        lookup_with_pack, lookup_by_promo_pack, lookup,
+                    )
                     if card_pk is None:
                         continue
                     all_prices[card_pk].append(price)
