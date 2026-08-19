@@ -104,6 +104,19 @@ def normalize_id(value: str) -> str:
     return str(int(value)) if value.isdigit() else value.upper()
 
 
+def extract_pack_tag(raw_id_text: str) -> str:
+    """内部ID欄の生テキストから、末尾のID部分より前に付く収録パック名の注記を取り出す
+    (例: "キラバージョン0094"->"キラバージョン"、
+    "プロモーションパック vol.13キラバージョン431"->"プロモーションパック vol.13キラバージョン"、
+    "P001"->"")。PRカードで(card_id, rarity)だけでは1枚に絞り込めない場合に、
+    これをcards.packと突き合わせて絞り込む。
+    """
+    m = ID_TAIL_PATTERN.search(raw_id_text)
+    if not m:
+        return ""
+    return raw_id_text[:m.start()].strip()
+
+
 def normalize_pack_code(value: str) -> str:
     """収録パック表記の表記ゆれ(ハイフンの有無・位置)を吸収する。
 
@@ -115,8 +128,14 @@ def normalize_pack_code(value: str) -> str:
 
 
 def normalize_annotation_text(value: str) -> str:
-    """カード名の注釈とDBのpack列を比較するため、空白・カッコ・ハイフン類を除去する。"""
-    return DECORATION_PATTERN.sub("", value)
+    """カード名の注釈・内部ID欄のパック名注記とDBのpack列を比較するため、空白・カッコ・
+    ハイフン類を除去し、DBだけに付く「PRカード」という外側の接頭辞、および
+    "vol."/"Vol."のような大文字小文字の表記ゆれを吸収する。
+    """
+    value = DECORATION_PATTERN.sub("", value)
+    if value.startswith("PRカード"):
+        value = value[len("PRカード"):]
+    return value.lower()
 
 
 def fetch_page(category: str, page: int) -> str:
@@ -126,11 +145,12 @@ def fetch_page(category: str, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str | None, int | None]]:
-    """(内部ID, レアリティ, 収録パック表記, 名前の注釈, SEC判別用の注記, 価格) のリストを返す。
+def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str | None, str | None, int | None]]:
+    """(内部ID, レアリティ, 収録パック表記, 名前の注釈, SEC判別用の注記, 内部ID欄のパック名注記,
+    価格) のリストを返す。
 
-    収録パック表記・注釈・SEC判別用の注記は無ければNone。在庫切れの場合は価格がNoneになる
-    (呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。
+    収録パック表記・注釈・SEC判別用の注記・パック名注記は無ければNone。在庫切れの場合は
+    価格がNoneになる(呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。
     未開封の非単品商品(プロモパック丸ごとの出品等)は除外する。
     """
     soup = BeautifulSoup(html, "html.parser")
@@ -154,12 +174,13 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str |
             continue
         rarity, model_number, pack = m.group(1), m.group(2), m.group(3)
         variant = detect_variant_suffix(model_number)
+        pack_tag = extract_pack_tag(model_number)
 
         annotation_matches = ANNOTATION_PATTERN.findall(name_text[:m.start()])
         annotation = annotation_matches[-1] if annotation_matches else None
 
         if "list_item_soldout" in (li.get("class") or []):
-            results.append((model_number, rarity, pack, annotation, variant, None))
+            results.append((model_number, rarity, pack, annotation, variant, pack_tag, None))
             continue
 
         price_el = li.select_one(".price .figure")
@@ -172,7 +193,7 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str |
         except ValueError:
             continue
 
-        results.append((model_number, rarity, pack, annotation, variant, price))
+        results.append((model_number, rarity, pack, annotation, variant, pack_tag, price))
     return results
 
 
@@ -208,9 +229,27 @@ def build_lookup(conn):
     return lookup_with_pack, lookup, pack_text_by_id, card_num_by_id
 
 
-def resolve_candidate(model_number, rarity, pack, annotation, variant, lookup_with_pack, lookup, pack_text_by_id, card_num_by_id):
-    """(内部ID, レアリティ, 収録パック表記, 注釈, SEC判別用の注記) から、1枚に絞り込めれば
-    そのcards.idを、絞り込めなければNoneを返す。優先順位はparse_items/モジュールdocstring参照。
+def _match_by_pack_tag(candidates: list[int], norm_tag: str, pack_text_by_id: dict[int, str]) -> int | None:
+    """内部ID欄のパック名注記(正規化済み)から候補を絞り込む。
+    完全一致が1件ならそれを、無ければ「注記がcards.packの部分文字列になっている」候補が
+    1件だけならそれを返す(注記が「キラバージョン」のようにVol.番号を欠く省略形の
+    ことがあるため)。どちらも1件に絞れなければNoneを返す。
+    """
+    if not norm_tag:
+        return None
+    exact = [pk for pk in candidates if pack_text_by_id.get(pk, "") == norm_tag]
+    if len(exact) == 1:
+        return exact[0]
+    contains = [pk for pk in candidates if norm_tag in pack_text_by_id.get(pk, "")]
+    if len(contains) == 1:
+        return contains[0]
+    return None
+
+
+def resolve_candidate(model_number, rarity, pack, annotation, variant, pack_tag, lookup_with_pack, lookup, pack_text_by_id, card_num_by_id):
+    """(内部ID, レアリティ, 収録パック表記, 注釈, SEC判別用の注記, 内部ID欄のパック名注記) から、
+    1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
+    優先順位はparse_items/モジュールdocstring参照。
     """
     norm_id = normalize_id(model_number)
     base_key = (norm_id, rarity)
@@ -230,6 +269,11 @@ def resolve_candidate(model_number, rarity, pack, annotation, variant, lookup_wi
             ]
             if len(matches) == 1:
                 return matches[0]
+
+    if pack_tag:
+        resolved = _match_by_pack_tag(lookup.get(base_key, []), normalize_annotation_text(pack_tag), pack_text_by_id)
+        if resolved is not None:
+            return resolved
 
     if variant:
         candidates_for_variant = pack_candidates if pack_candidates else lookup.get(base_key, [])
@@ -281,9 +325,9 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     total = parse_total_count(html)
                     last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-                for model_number, rarity, pack, annotation, variant, price in parse_items(html):
+                for model_number, rarity, pack, annotation, variant, pack_tag, price in parse_items(html):
                     card_pk = resolve_candidate(
-                        model_number, rarity, pack, annotation, variant,
+                        model_number, rarity, pack, annotation, variant, pack_tag,
                         lookup_with_pack, lookup, pack_text_by_id, card_num_by_id,
                     )
                     if card_pk is None or price is None:
