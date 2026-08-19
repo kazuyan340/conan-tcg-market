@@ -22,14 +22,19 @@ let selectedTypes = new Set(["キャラ", "イベント"]);
 // 押せる(パートナー/事件はメインデッキに入れられないので常に灰色)。
 let allowedTypes = new Set(["キャラ", "イベント"]);
 
-// 複数デッキを保存できるようにする。deckListの各要素が1デッキ分で、
-// deck変数はdeckList内の該当要素への参照(同じオブジェクトなので、deck.main[...]の
-// ようにdeckを直接書き換えれば、そのままdeckList側にも反映される)。
+// 複数デッキを保存できるようにする。deckListの各要素が1デッキ分。
+// 参照画面(showDeckView)ではdeck変数はdeckList内の該当要素への参照そのものだが、
+// 編集画面(showDeckEdit)に入る際はcloneDeck()でコピーしたものに差し替える。
+// 「保存」ボタン(saveEditedDeck)を押すまではdeckList側には反映されない。
 // deck = { id, name, partner: cardId|null, case: cardId|null, main: { cardId: count } }
 let deckList = [];
 let currentDeckId = null;
 let deck = { id: null, name: "", partner: null, case: null, main: {} };
 let openedSharedDeckFromUrl = false;
+// 編集画面に入ったら、そのデッキのコピー(deck変数)に対してのみ変更を加え、
+// 「保存」ボタンを押すまではdeckList(=localStorageに書き込まれる本体)には反映しない。
+// これにより、編集途中で画面を離れてもデッキ一覧には影響しない。
+let hasUnsavedChanges = false;
 const INCLUDE_PARTNER_CASE_KEY = "conanTcgDeckIncludePartnerCase";
 let includePartnerCaseInTotal = localStorage.getItem(INCLUDE_PARTNER_CASE_KEY) !== "false";
 
@@ -87,7 +92,57 @@ function showDeckEdit() {
   document.getElementById("view-deck-edit").classList.remove("hidden");
   document.getElementById("back-to-deck-list-nav").classList.remove("hidden");
   document.getElementById("deck-edit-title").textContent = deck.name || "";
+  setUnsavedChanges(false);
   renderDeckPanel();
+}
+
+function cloneDeck(d) {
+  return JSON.parse(JSON.stringify(d));
+}
+
+// 編集画面での変更はいったんこの関数経由でフラグを立てるだけにし、
+// deckList(=保存済みデータ)には触れない。実際の保存は「保存」ボタン(saveEditedDeck)で行う。
+function markDirty() {
+  setUnsavedChanges(true);
+  renderDeckPanel();
+}
+
+function setUnsavedChanges(value) {
+  hasUnsavedChanges = value;
+  const indicator = document.getElementById("unsaved-indicator");
+  if (indicator) indicator.classList.toggle("hidden", !value);
+}
+
+// 編集中のデッキ(deck)の内容をdeckListの該当エントリに書き戻し、localStorageに保存する。
+function saveEditedDeck() {
+  const idx = deckList.findIndex((d) => d.id === deck.id);
+  if (idx === -1) return;
+  deckList[idx] = cloneDeck(deck);
+  saveDeck();
+  setUnsavedChanges(false);
+  renderDeckList();
+
+  const btn = document.getElementById("save-deck-btn");
+  if (btn) {
+    const original = "💾 保存";
+    btn.textContent = "✅ 保存しました";
+    setTimeout(() => {
+      btn.textContent = original;
+    }, 1500);
+  }
+}
+
+// 未保存の変更があるまま編集画面を離れようとした場合に確認する。
+// 「キャンセル」されたらfalseを返し、呼び出し側は画面遷移を中止する。
+function confirmDiscardIfNeeded() {
+  if (!hasUnsavedChanges) return true;
+  const ok = confirm("保存されていない変更があります。破棄してデッキ一覧に戻りますか?");
+  if (ok) {
+    setUnsavedChanges(false);
+    const found = deckList.find((d) => d.id === deck.id);
+    if (found) deck = found;
+  }
+  return ok;
 }
 
 // .checkbox-listはposition:absoluteで浮かせているが、検索パネル自体が
@@ -232,7 +287,7 @@ function updateCountBadge(field) {
   const { listId, groupId } = FILTER_FIELDS[field];
   const badge = document.querySelector(`#${groupId} .count-badge`);
   const n = filterSelectionCount(listId);
-  badge.textContent = n ? ` (${n})` : "";
+  badge.textContent = n || "";
   badge.classList.toggle("hidden", n === 0);
 }
 
@@ -254,16 +309,28 @@ function bindEvents() {
     deck.partner = null;
     deck.case = null;
     deck.main = {};
-    saveDeck();
-    renderDeckPanel();
+    markDirty();
   });
 
   document.getElementById("share-deck").addEventListener("click", shareDeckUrl);
   document.getElementById("max-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(true));
   document.getElementById("min-rarity-deck").addEventListener("click", () => swapDeckToExtremeRarity(false));
-  document.getElementById("back-to-deck-list-nav").addEventListener("click", showDeckSelect);
-  document.getElementById("edit-deck-btn").addEventListener("click", showDeckEdit);
+  document.getElementById("back-to-deck-list-nav").addEventListener("click", () => {
+    if (!confirmDiscardIfNeeded()) return;
+    showDeckSelect();
+  });
+  document.getElementById("edit-deck-btn").addEventListener("click", () => {
+    deck = cloneDeck(deck);
+    showDeckEdit();
+  });
   document.getElementById("rename-deck-btn").addEventListener("click", renameDeck);
+  document.getElementById("save-deck-btn").addEventListener("click", saveEditedDeck);
+
+  window.addEventListener("beforeunload", (e) => {
+    if (!hasUnsavedChanges) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
 
   document.addEventListener("click", (e) => {
     for (const details of document.querySelectorAll(".filter-group[open]")) {
@@ -303,8 +370,9 @@ function createNewDeck() {
   const fresh = makeEmptyDeck(name || `デッキ${deckList.length + 1}`);
   deckList.push(fresh);
   currentDeckId = fresh.id;
-  deck = fresh;
   saveDeck();
+  // 編集画面ではdeckListの実体ではなくコピーを操作する(保存ボタンを押すまで反映しない)。
+  deck = cloneDeck(fresh);
   showDeckEdit();
 }
 
@@ -313,9 +381,8 @@ function renameDeck() {
   const name = prompt("デッキ名を入力してください", deck.name || "");
   if (name === null || name.trim() === "") return;
   deck.name = name.trim();
-  saveDeck();
+  setUnsavedChanges(true);
   document.getElementById("deck-edit-title").textContent = deck.name;
-  renderDeckList();
 }
 
 function switchToDeck(id) {
@@ -513,14 +580,12 @@ function mainDeckCount() {
 function addCard(card) {
   if (card.card_type === "パートナー") {
     deck.partner = card.id;
-    saveDeck();
-    renderDeckPanel();
+    markDirty();
     return;
   }
   if (card.card_type === "事件") {
     deck.case = card.id;
-    saveDeck();
-    renderDeckPanel();
+    markDirty();
     return;
   }
   if (copiesInGroup(card) >= MAX_COPIES) {
@@ -532,8 +597,7 @@ function addCard(card) {
     return;
   }
   deck.main[card.id] = (deck.main[card.id] || 0) + 1;
-  saveDeck();
-  renderDeckPanel();
+  markDirty();
 }
 
 // 「同じカード」判定キー。card_idはレアリティ違い(C/CP・R/RP・SR/SRP)やPRの
@@ -583,8 +647,7 @@ function swapDeckToExtremeRarity(wantMax) {
   if (deck.partner) deck.partner = bestVariantId(deck.partner, wantMax);
   if (deck.case) deck.case = bestVariantId(deck.case, wantMax);
 
-  saveDeck();
-  renderDeckPanel();
+  markDirty();
 }
 
 function removeOneFromMainDeck(cardId) {
@@ -594,8 +657,7 @@ function removeOneFromMainDeck(cardId) {
   } else {
     deck.main[cardId] = current - 1;
   }
-  saveDeck();
-  renderDeckPanel();
+  markDirty();
 }
 
 // 検索結果のカード1枚分のタイルを作る。タイルをクリックするとそのままデッキに追加される。
@@ -681,13 +743,11 @@ function renderSlotBox(elId, cardId, focusType, onClear) {
 function renderDeckPanel() {
   renderSlotBox("deck-partner", deck.partner, "パートナー", () => {
     deck.partner = null;
-    saveDeck();
-    renderDeckPanel();
+    markDirty();
   });
   renderSlotBox("deck-case", deck.case, "事件", () => {
     deck.case = null;
-    saveDeck();
-    renderDeckPanel();
+    markDirty();
   });
 
   // メインデッキ40枚を、カードごとの枚数を個々の枠に展開して描画する

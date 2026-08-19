@@ -31,7 +31,7 @@ SITE_BASE_URL = "https://kazuyan340.github.io/conan-tcg-market"
 CARD_PAGE_DIR = Path(__file__).parent / "site" / "card"
 SITE_DIR = Path(__file__).parent / "site"
 
-ASSET_VERSION = "41"
+ASSET_VERSION = "43"
 
 NAV_LINKS = [
     ("index.html", "📋 一覧"),

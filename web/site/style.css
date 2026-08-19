@@ -258,9 +258,22 @@ body {
   border-color: var(--accent);
 }
 
+/* 絶対配置のバッジにして、件数の桁が変わってもボタン自体の幅を変えないようにする
+   (以前はsummaryのテキストの一部として流れ込み、幅が変わって.filtersの折り返し位置が
+   ずれてしまっていた)。 */
 .count-badge {
-  color: var(--accent);
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 16px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
   font-weight: bold;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .checkbox-list {
@@ -1358,6 +1371,27 @@ body.modal-open {
 
 .deck-edit-title {
   font-weight: bold;
+}
+
+.save-deck-btn {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+  font-weight: bold;
+}
+
+.save-deck-btn:hover {
+  background: #256428;
+  color: #fff;
+}
+
+.unsaved-indicator {
+  font-size: 0.8rem;
+  color: #d33;
+}
+
+.unsaved-indicator.hidden {
+  display: none;
 }
 
 #view-deck-view {

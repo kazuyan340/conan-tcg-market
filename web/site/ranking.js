@@ -107,7 +107,7 @@ function updateCountBadge(field) {
   const { listId, groupId } = FILTER_FIELDS[field];
   const badge = document.querySelector(`#${groupId} .count-badge`);
   const n = filterSelectionCount(listId);
-  badge.textContent = n ? ` (${n})` : "";
+  badge.textContent = n || "";
   badge.classList.toggle("hidden", n === 0);
 }
 
