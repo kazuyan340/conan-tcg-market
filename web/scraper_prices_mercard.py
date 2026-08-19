@@ -246,6 +246,27 @@ def _match_by_pack_tag(candidates: list[int], norm_tag: str, pack_text_by_id: di
     return None
 
 
+def _resolve_if_pair_by_annotation(candidates: list[int], card_num_by_id: dict[int, str], annotation: str | None) -> int | None:
+    """候補がちょうど2件で、card_numが「無印」「無印+"2"」(IFパラレル)の組になっている
+    場合に限り、名前の注記から絞り込む。CT-P10のIFパラレルは無印側が「夕方」の
+    野球シーンで統一されており、IFパラレル側は「幼少期」「カフェ」等カードごとに
+    異なるシーンになっている(ユーザーに画像で確認済み)。そのため「夕方」なら無印、
+    それ以外の注記(空でなければ)ならIFパラレルとみなす。注記が無い、または
+    IFパラレルの組でなければNoneを返す。
+    """
+    if len(candidates) != 2 or not annotation:
+        return None
+    pk_a, pk_b = candidates
+    num_a, num_b = card_num_by_id.get(pk_a, ""), card_num_by_id.get(pk_b, "")
+    if num_a + "2" == num_b:
+        if_pk, base_pk = pk_b, pk_a
+    elif num_b + "2" == num_a:
+        if_pk, base_pk = pk_a, pk_b
+    else:
+        return None
+    return base_pk if annotation == "夕方" else if_pk
+
+
 def resolve_candidate(model_number, rarity, pack, annotation, variant, pack_tag, lookup_with_pack, lookup, pack_text_by_id, card_num_by_id):
     """(内部ID, レアリティ, 収録パック表記, 注釈, SEC判別用の注記, 内部ID欄のパック名注記) から、
     1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
@@ -269,6 +290,10 @@ def resolve_candidate(model_number, rarity, pack, annotation, variant, pack_tag,
             ]
             if len(matches) == 1:
                 return matches[0]
+
+        if_resolved = _resolve_if_pair_by_annotation(lookup.get(base_key, []), card_num_by_id, annotation)
+        if if_resolved is not None:
+            return if_resolved
 
     if pack_tag:
         resolved = _match_by_pack_tag(lookup.get(base_key, []), normalize_annotation_text(pack_tag), pack_text_by_id)
