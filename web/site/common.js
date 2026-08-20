@@ -314,7 +314,12 @@ function ryuunoshippoSearchUrl(cardNum) {
 }
 
 function mercardSearchUrl(cardName, cardRarity, cardId) {
-  const query = `${cardName} ${cardId || ""} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
+  // メルカードの商品名表示は内部IDを先頭ゼロ無しで載せている(例: "0609"のカードは
+  // "［609]"と表示される)。先頭ゼロ付きのcardIdをそのまま検索語に入れると1件も
+  // ヒットしなくなることを実際に確認したため、数字のみで先頭ゼロが付く場合は
+  // 落としてから使う。
+  const normalizedId = cardId && /^0+\d/.test(cardId) ? String(Number(cardId)) : cardId;
+  const query = `${cardName} ${normalizedId || ""} ${cardRarity || ""}`.replace(/\s+/g, " ").trim();
   return `https://www.mercardconan.jp/product-list?keyword=${encodeURIComponent(query)}`;
 }
 
