@@ -76,6 +76,22 @@ NAME_PATTERN = re.compile(
 )
 ID_TAIL_PATTERN = re.compile(r"[A-Za-z0-9]+$")
 ALNUM_ONLY_PATTERN = re.compile(r"[^A-Za-z0-9]+")
+
+# 通常【】内にはレアリティ表記(PR/SR/SEC等)だけが入るが、"【チャレンジ戦記念PR】"の
+# ように、大会名などのイベント名がレアリティの前に連結されて入っている商品がある。
+# このままだと元のレアリティ(PR等)と一致せず、DBに実在するカードなのに「該当なし」
+# 扱いになってしまう。既知のレアリティ表記(cards.rarityの実際の値)で終わっている
+# 場合に限り、その末尾部分を正しいレアリティとして取り出す。
+VALID_RARITIES = {"SRCP", "MRCP", "SEC", "SRP", "MRP", "CP2", "CP", "SR", "RP", "PR", "MR", "SP", "C", "R", "D"}
+
+
+def normalize_rarity(raw_rarity: str) -> str:
+    if raw_rarity in VALID_RARITIES:
+        return raw_rarity
+    for code in sorted(VALID_RARITIES, key=len, reverse=True):
+        if raw_rarity.endswith(code) and raw_rarity != code:
+            return code
+    return raw_rarity
 # カード名の後ろに付く注釈(例: "(探偵マスターズ2026)")を拾う。
 ANNOTATION_PATTERN = re.compile(r"[（(]([^）)]+)[）)]")
 # 収録パック表記は通常、内部ID直後の末尾【...】に付くが、"工藤新一［CTP04]【C】《青》
@@ -183,7 +199,7 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str |
         m = NAME_PATTERN.search(name_text)
         if not m:
             continue
-        rarity, model_number, pack = m.group(1), m.group(2), m.group(3)
+        rarity, model_number, pack = normalize_rarity(m.group(1)), m.group(2), m.group(3)
         variant = detect_variant_suffix(model_number)
         pack_tag = extract_pack_tag(model_number)
 
