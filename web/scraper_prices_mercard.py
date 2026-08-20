@@ -285,16 +285,36 @@ def _resolve_if_pair_by_annotation(candidates: list[int], card_num_by_id: dict[i
     return base_pk if annotation == "夕方" else if_pk
 
 
+_TRAILING_NUM = re.compile(r"(\d+)$")
+
+
+def _consecutive_card_nums(num_a: str, num_b: str) -> bool:
+    """card_numの接頭辞(英字部分)が一致し、末尾の数字部分がちょうど1違いの連番かどうか。
+    例: D08019/D08020 -> True。D01002/D08022のように接頭辞のパック部分ごと違う
+    (同キャラの別デッキへの再録)場合や、末尾がP/Sec1のように数字で終わらない
+    場合はFalseになる。
+    """
+    m_a, m_b = _TRAILING_NUM.search(num_a), _TRAILING_NUM.search(num_b)
+    if not m_a or not m_b:
+        return False
+    if num_a[: m_a.start()] != num_b[: m_b.start()]:
+        return False
+    return abs(int(m_a.group(1)) - int(m_b.group(1))) == 1
+
+
 def _resolve_foil_pair(candidates: list[int], card_num_by_id: dict[int, str], is_foil: bool) -> int | None:
     """テーマデッキのDレアリティは、通常版とホイル版が連番のcard_num(例: D08019/D08020)
-    で別カードとして登録されている。候補がちょうど2件の場合に限り、card_numの
-    昇順で小さい方をホイル版、大きい方を通常版とみなし(ユーザーに確認済み。ただし
-    現時点の暫定情報)、商品名の「ホイル版」という注記の有無に応じてどちらか1件の
-    cards.idを返す。それ以外(2件でない)はNoneを返す。
+    で別カードとして登録されている。候補がちょうど2件かつ、そのcard_numが実際に
+    連番の場合に限り(単に2件たまたま揃っただけの無関係な組み合わせを誤って
+    ペア扱いしないため)、card_numの昇順で小さい方をホイル版、大きい方を通常版と
+    みなし(ユーザーに確認済み。ただし現時点の暫定情報)、商品名の「ホイル版」と
+    いう注記の有無に応じてどちらか1件のcards.idを返す。それ以外はNoneを返す。
     """
     if len(candidates) != 2:
         return None
     ordered = sorted(candidates, key=lambda pk: card_num_by_id.get(pk, ""))
+    if not _consecutive_card_nums(card_num_by_id.get(ordered[0], ""), card_num_by_id.get(ordered[1], "")):
+        return None
     return ordered[0] if is_foil else ordered[1]
 
 

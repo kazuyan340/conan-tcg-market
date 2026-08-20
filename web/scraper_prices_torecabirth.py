@@ -257,16 +257,36 @@ def _narrow_by_variant(candidates: list[tuple[int, str]], variant: str | None) -
     return None
 
 
+_TRAILING_NUM = re.compile(r"(\d+)$")
+
+
+def _consecutive_card_nums(num_a: str, num_b: str) -> bool:
+    """card_numの接頭辞(英字部分)が一致し、末尾の数字部分がちょうど1違いの連番かどうか。
+    例: D08003/D08004 -> True。同じcard_idが別デッキに再録されているケース
+    (例: D01002/D08022)や、末尾が数字で終わらないcard_numはFalseになる。
+    """
+    m_a, m_b = _TRAILING_NUM.search(num_a), _TRAILING_NUM.search(num_b)
+    if not m_a or not m_b:
+        return False
+    if num_a[: m_a.start()] != num_b[: m_b.start()]:
+        return False
+    return abs(int(m_a.group(1)) - int(m_b.group(1))) == 1
+
+
 def _resolve_foil_pair(candidates: list[tuple[int, str]], is_foil: bool) -> int | None:
     """テーマデッキのDレアリティは、通常版とホイル(キラ)加工版が別カードとして
     登録されているが、Sec1/Sec2やIFパラレルと違って接尾辞での判別ができない。
-    候補がちょうど2件の場合に限り、card_numの昇順で小さい方をホイル版、大きい方を
-    通常版とみなし(メルカードでの調査でユーザーに確認済み。ただし現時点の暫定情報)、
-    商品名の「キラ加工」という注記の有無に応じてどちらか1件のcards.idを返す。
+    候補がちょうど2件かつ、そのcard_numが実際に連番の場合に限り(単に2件たまたま
+    揃っただけの無関係な組み合わせを誤ってペア扱いしないため)、card_numの昇順で
+    小さい方をホイル版、大きい方を通常版とみなし(メルカードでの調査でユーザーに
+    確認済み。ただし現時点の暫定情報)、商品名の「キラ加工」という注記の有無に
+    応じてどちらか1件のcards.idを返す。それ以外はNoneを返す。
     """
     if len(candidates) != 2:
         return None
     ordered = sorted(candidates, key=lambda c: c[1])
+    if not _consecutive_card_nums(ordered[0][1], ordered[1][1]):
+        return None
     return ordered[0][0] if is_foil else ordered[1][0]
 
 
