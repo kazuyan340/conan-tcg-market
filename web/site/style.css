@@ -460,70 +460,86 @@ body {
   color: var(--text);
 }
 
-.unresolved-group {
-  margin-bottom: 18px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card-bg);
+.unresolved-site-heading {
+  margin: 20px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--accent);
 }
 
-.unresolved-group-header {
-  font-size: 0.82rem;
-  color: var(--text);
-  line-height: 1.6;
-}
-
-.unresolved-group-header code {
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: var(--bg);
-  border: 1px solid var(--border);
+.unresolved-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
   font-size: 0.8rem;
 }
 
-.unresolved-site-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.72rem;
+.unresolved-thumb {
+  flex: none;
+  width: 40px;
+  height: 56px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unresolved-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.unresolved-thumb-empty {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.unresolved-row-info {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.unresolved-row-title {
+  color: var(--text);
+}
+
+.unresolved-row-title code {
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+
+.unresolved-rarity {
+  margin-left: 4px;
+  color: var(--muted);
+}
+
+.unresolved-price {
+  margin-left: 8px;
   font-weight: bold;
-  margin-right: 4px;
+}
+
+.unresolved-candidates {
+  margin-top: 2px;
+  color: var(--text);
+  font-size: 0.75rem;
 }
 
 .unresolved-hint {
-  display: block;
-  margin-top: 2px;
+  margin-top: 1px;
   color: var(--muted);
-  font-size: 0.75rem;
-}
-
-.unresolved-candidate-grid {
-  margin-top: 8px;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 8px;
-}
-
-.unresolved-missing-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
-
-.unresolved-missing-table th,
-.unresolved-missing-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  vertical-align: top;
-}
-
-.unresolved-missing-table th {
-  color: var(--muted);
-  font-weight: normal;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
 
 .sort-row {

@@ -56,13 +56,91 @@ function groupBySite(items) {
   return groups;
 }
 
-// ①候補は絞れたが1枚に特定できないカード: サイトごとに見出しを分け、その下に
-// ショップの出品情報(手がかり)を見出しにして、DB上の候補カードをcreateCardTileで
-// そのまま並べる(クリックで通常の価格モーダルが開ける)。
-function renderAmbiguousList(items) {
-  const container = document.getElementById("ambiguous-list");
+// サイト名 -> そのショップでitemを検索するURLを作る関数。common.jsの
+// SITE_LINK_BUILDERSと同じ関数を再利用する(通常の価格比較表のリンクと同じ仕組み)。
+// カード名で検索するサイト(トレカバース/わいTV/メルカード)はitem.product_name
+// (商品名からレアリティ等より前の部分を機械的に切り出したもの、無ければraw_key)を使う。
+const UNRESOLVED_SEARCH_URL_BUILDERS = {
+  "トレカバース": (item) => torecabirthSearchUrl(item.product_name || item.raw_key, item.rarity, item.raw_key),
+  "わいTV": (item) => waitvSearchUrl(item.product_name || item.raw_key, item.rarity, item.raw_key),
+  "メルカード": (item) => mercardSearchUrl(item.product_name || item.raw_key, item.rarity, item.raw_key),
+  "カードラボ": (item) => cardLaboSearchUrl(item.raw_key),
+  "竜のしっぽ": (item) => ryuunoshippoSearchUrl(item.raw_key),
+  "フルアヘッド": (item) => fullaheadSearchUrl(item.raw_key),
+  "まんぞく屋": (item) => manzokuyaSearchUrl(item.raw_key),
+  "駿河屋": (item) => surugaAffiliateUrl(item.raw_key),
+};
+
+function searchUrlFor(item) {
+  const builder = UNRESOLVED_SEARCH_URL_BUILDERS[item.site];
+  return builder ? builder(item) : null;
+}
+
+// 1件分の行を作る。①②共通(候補リストの有無だけが違う)。ショップの実際の商品画像を
+// サムネイルにして、画像・タイトルどちらをクリックしてもそのショップの検索結果
+// (該当する2枚・3枚が並んだ状態)を新しいタブで開く。card-tileやモーダルは使わない
+// (ここは「どれとどれが区別できていないか」を確認するための一覧であって、カード
+// 詳細を見るための一覧ではないため)。
+function renderUnresolvedRow(item) {
+  const url = searchUrlFor(item);
+  const row = document.createElement("div");
+  row.className = "unresolved-row";
+
+  const thumbLink = document.createElement("a");
+  thumbLink.className = "unresolved-thumb";
+  if (url) {
+    thumbLink.href = url;
+    thumbLink.target = "_blank";
+    thumbLink.rel = "noopener";
+  }
+  if (item.image_url) {
+    const img = document.createElement("img");
+    img.src = item.image_url;
+    img.alt = "";
+    img.loading = "lazy";
+    thumbLink.appendChild(img);
+  } else {
+    thumbLink.classList.add("unresolved-thumb-empty");
+    thumbLink.textContent = "🔍";
+  }
+  row.appendChild(thumbLink);
+
+  const info = document.createElement("div");
+  info.className = "unresolved-row-info";
+
+  const listingNote = item.listing_count > 1 ? `(${item.listing_count}件の出品)` : "";
+  const titleText = item.product_name || item.raw_key;
+  const titleHtml = url
+    ? `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(titleText)}</a>`
+    : escapeHtml(titleText);
+  info.innerHTML = `<div class="unresolved-row-title">
+      ${titleHtml}
+      <code>${escapeHtml(item.raw_key)}</code>${item.rarity ? ` <span class="unresolved-rarity">${escapeHtml(item.rarity)}</span>` : ""}
+      <span class="unresolved-price">${escapeHtml(formatPriceRange(item.prices))}${listingNote}</span>
+    </div>`;
+
+  if (item.candidates && item.candidates.length > 0) {
+    const cand = document.createElement("div");
+    cand.className = "unresolved-candidates";
+    cand.textContent = `区別できていない候補: ${item.candidates.map((c) => `${c.card_num}(${c.name})`).join(" / ")}`;
+    info.appendChild(cand);
+  }
+  if (item.hint) {
+    const hint = document.createElement("div");
+    hint.className = "unresolved-hint";
+    hint.textContent = item.hint;
+    info.appendChild(hint);
+  }
+
+  row.appendChild(info);
+  return row;
+}
+
+// ①②共通のサイトごと見出し+行リストを作る。
+function renderUnresolvedGroup(containerId, countId, items) {
+  const container = document.getElementById(containerId);
   container.innerHTML = "";
-  document.getElementById("ambiguous-count").textContent = `${items.length}件`;
+  document.getElementById(countId).textContent = `${items.length}件`;
 
   for (const [site, siteItems] of groupBySite(items)) {
     const siteHeading = document.createElement("h4");
@@ -71,64 +149,14 @@ function renderAmbiguousList(items) {
     container.appendChild(siteHeading);
 
     for (const item of siteItems) {
-      const group = document.createElement("div");
-      group.className = "unresolved-group";
-
-      const header = document.createElement("div");
-      header.className = "unresolved-group-header";
-      const listingNote = item.listing_count > 1 ? `(${item.listing_count}件の出品)` : "";
-      header.innerHTML = `手がかり: <code>${escapeHtml(item.raw_key)}</code>${item.rarity ? ` / ${escapeHtml(item.rarity)}` : ""}
-        / ${escapeHtml(formatPriceRange(item.prices))}${listingNote}
-        ${item.hint ? `<span class="unresolved-hint">${escapeHtml(item.hint)}</span>` : ""}`;
-      group.appendChild(header);
-
-      const candidateGrid = document.createElement("div");
-      candidateGrid.className = "card-grid unresolved-candidate-grid";
-      for (const card of item.candidates) {
-        candidateGrid.appendChild(createCardTile(card));
-      }
-      group.appendChild(candidateGrid);
-
-      container.appendChild(group);
+      container.appendChild(renderUnresolvedRow(item));
     }
   }
 }
 
-// ②自分のカードDBに全く見当たらないカード: サイトごとに表を分ける(画像が無いので表形式)。
-function renderMissingList(items) {
-  const container = document.getElementById("missing-list");
-  document.getElementById("missing-count").textContent = `${items.length}件`;
-  container.innerHTML = "";
-
-  for (const [site, siteItems] of groupBySite(items)) {
-    const siteHeading = document.createElement("h4");
-    siteHeading.className = "unresolved-site-heading";
-    siteHeading.textContent = `${site}(${siteItems.length}件)`;
-    container.appendChild(siteHeading);
-
-    const rows = siteItems
-      .map((item) => {
-        const listingNote = item.listing_count > 1 ? `(${item.listing_count}件の出品)` : "";
-        return `<tr>
-          <td><code>${escapeHtml(item.raw_key)}</code></td>
-          <td>${escapeHtml(item.rarity || "")}</td>
-          <td>${escapeHtml(formatPriceRange(item.prices))}${listingNote}</td>
-          <td class="unresolved-hint">${escapeHtml(item.hint || "")}</td>
-        </tr>`;
-      })
-      .join("");
-
-    const table = document.createElement("table");
-    table.className = "unresolved-missing-table";
-    table.innerHTML = `<thead><tr><th>手がかり</th><th>レアリティ</th><th>価格</th><th>備考</th></tr></thead>
-      <tbody>${rows}</tbody>`;
-    container.appendChild(table);
-  }
-}
-
 function renderUnresolved(data) {
-  renderAmbiguousList(data.ambiguous || []);
-  renderMissingList(data.missing || []);
+  renderUnresolvedGroup("ambiguous-list", "ambiguous-count", data.ambiguous || []);
+  renderUnresolvedGroup("missing-list", "missing-count", data.missing || []);
 }
 
 init();

@@ -153,13 +153,16 @@ def fetch_page(category: str, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str | None, str | None, int | None]]:
+def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str | None, str | None, int | None, str, str | None]]:
     """(内部ID, レアリティ, 収録パック表記, 名前の注釈, SEC判別用の注記, 内部ID欄のパック名注記,
-    価格) のリストを返す。
+    価格, 商品名のうち注釈・レアリティより前の部分(キャラ名), 商品画像URL(あれば)) の
+    リストを返す。
 
     収録パック表記・注釈・SEC判別用の注記・パック名注記は無ければNone。在庫切れの場合は
     価格がNoneになる(呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。
-    未開封の非単品商品(プロモパック丸ごとの出品等)は除外する。
+    未開封の非単品商品(プロモパック丸ごとの出品等)は除外する。末尾2つは1枚に特定
+    できなかった場合の管理ページ表示用(unresolved_report参照)で、価格照合そのものには
+    使わない。
     """
     soup = BeautifulSoup(html, "html.parser")
     results = []
@@ -192,9 +195,13 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str |
 
         annotation_matches = ANNOTATION_PATTERN.findall(prefix_text)
         annotation = annotation_matches[-1] if annotation_matches else None
+        product_name = ANNOTATION_PATTERN.sub("", prefix_text).strip()
+
+        photo_el = li.select_one(".global_photo")
+        image_url = photo_el.get("data-src") if photo_el else None
 
         if "list_item_soldout" in (li.get("class") or []):
-            results.append((model_number, rarity, pack, annotation, variant, pack_tag, None))
+            results.append((model_number, rarity, pack, annotation, variant, pack_tag, None, product_name, image_url))
             continue
 
         price_el = li.select_one(".price .figure")
@@ -207,7 +214,7 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str |
         except ValueError:
             continue
 
-        results.append((model_number, rarity, pack, annotation, variant, pack_tag, price))
+        results.append((model_number, rarity, pack, annotation, variant, pack_tag, price, product_name, image_url))
     return results
 
 
@@ -409,7 +416,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     total = parse_total_count(html)
                     last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-                for model_number, rarity, pack, annotation, variant, pack_tag, price in parse_items(html):
+                for model_number, rarity, pack, annotation, variant, pack_tag, price, product_name, image_url in parse_items(html):
                     card_pk = resolve_candidate(
                         model_number, rarity, pack, annotation, variant, pack_tag,
                         lookup_with_pack, lookup, pack_text_by_id, card_num_by_id,
@@ -425,7 +432,8 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                                 hint_parts.append(f"pack_tag={pack_tag!r}")
                             unresolved_entries.append({
                                 "raw_key": model_number, "rarity": rarity, "price": price,
-                                "hint": " ".join(hint_parts),
+                                "hint": " ".join(hint_parts), "product_name": product_name,
+                                "image_url": image_url,
                             })
                         continue
                     all_prices[card_pk].append(price)

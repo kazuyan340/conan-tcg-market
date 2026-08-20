@@ -153,11 +153,14 @@ def fetch_page(page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int]]:
-    """(内部ID, レアリティ, 収録パック表記, SEC判別用の注記, 価格) のリストを返す。
+def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int, str, str | None]]:
+    """(内部ID, レアリティ, 収録パック表記, SEC判別用の注記, 価格,
+    商品名のうちID表記より前の部分(キャラ名等), 商品画像URL(あれば)) のリストを返す。
 
     パック表記・SEC判別用の注記は無ければNone。「ID[...]」表記が無い商品
     (オリパ・BOX等)や、「《未開封》」から始まる未開封プロモパックの出品は対象外として除く。
+    末尾2つは1枚に特定できなかった場合の管理ページ表示用(unresolved_report参照)で、
+    価格照合そのものには使わない。
     """
     soup = BeautifulSoup(html, "html.parser")
     results = []
@@ -182,6 +185,7 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int]]
             continue
         pack, model_number, rarity = m.group(1), m.group(2), m.group(3)
         variant = detect_variant_suffix(name_text)
+        product_name = name_text[: m.start()].strip().rstrip("（(")
 
         price_el = li.select_one(".price .figure")
         if not price_el:
@@ -193,7 +197,10 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int]]
         except ValueError:
             continue
 
-        results.append((model_number, rarity, pack, variant, price))
+        photo_el = li.select_one(".global_photo")
+        image_url = photo_el.get("data-src") if photo_el else None
+
+        results.append((model_number, rarity, pack, variant, price, product_name, image_url))
     return results
 
 
@@ -362,7 +369,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 total = parse_total_count(html)
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-            for model_number, rarity, pack, variant, price in parse_items(html):
+            for model_number, rarity, pack, variant, price, product_name, image_url in parse_items(html):
                 card_pk = resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id)
                 if card_pk is None:
                     hint_parts = [f"pack={pack!r}"] if pack else []
@@ -370,7 +377,8 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                         hint_parts.append(f"variant={variant}")
                     unresolved_entries.append({
                         "raw_key": model_number, "rarity": rarity, "price": price,
-                        "hint": " ".join(hint_parts),
+                        "hint": " ".join(hint_parts), "product_name": product_name,
+                        "image_url": image_url,
                     })
                     continue
                 all_prices[card_pk].append(price)
