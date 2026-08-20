@@ -2,11 +2,14 @@
 価格を取得し price_history に保存するモジュール。
 
 わいTVと同じOcnk系ECカートで、HTML構造(`li.list_item_cell`, `.goods_name`,
-`.price .figure`)も共通。ただし単品カードは「コナンカード:ブースターパック」
-配下の弾ごとのカテゴリ10個と、「コナンカード:プロモカード」配下のカテゴリ2個
-(計12カテゴリ)に分かれており(スターターデッキ/テーマデッキ/エグゼクティブ
-コレクションのカテゴリは未開封の箱・デッキ製品でありグッズ扱いのため対象外)、
-1カテゴリに全件まとまっているわいTVと違い複数カテゴリを回る必要がある。
+`.price .figure`)も共通。単品カードは「コナンカード:ブースターパック」配下の
+弾ごとのカテゴリ10個、「コナンカード:プロモカード」配下のカテゴリ2個、
+エグゼクティブコレクション2個、スターターデッキ/テーマデッキ11個(計25カテゴリ)
+に分かれており、1カテゴリに全件まとまっているわいTVと違い複数カテゴリを回る
+必要がある。
+(2026-08-20追記: 以前はスターターデッキ/テーマデッキを「未開封の箱・デッキ製品
+でグッズ扱い」として対象外にしていたが誤りで、実際にはブースター同様に単品バラ
+売りの専用カテゴリが存在していた。)
 
 商品名には「服部平蔵＆遠山銀司郎【MR】《緑》[型番1082]」のように【】内の
 レアリティと、[型番xxxx]としてDBの`card_id`列(レアリティ違いをまとめる
@@ -31,6 +34,12 @@ SECレアリティは同じcard_id+rarityで2種類の実物カード(card_num�
 でこれを読み取って絞り込みに使う。それでも(card_id, rarity[, pack, 注記])で
 1枚に絞り込めない場合は記録しない(誤った価格を書き込むより記録しない方が
 安全、というわいTVでの方針を踏襲)。
+
+スターターデッキ/テーマデッキのDレアリティは、通常版とホイル(キラ)加工版が
+連番のcard_num(例: D08003/D08004)で別カードとして登録されており、商品名の
+「キラ加工」という注記の有無でしか区別できない。メルカードでの調査で「card_num
+が小さい方がホイル版」という対応が分かっている(暫定情報)ため、同じ規則を
+_resolve_foil_pair()で適用する。
 
 トレカバースのrobots.txtはAI学習ボット(GPTBot等)のみDisallowで一般クローラー
 への制限が無いが、他サイトと同様に安全側でリクエスト間隔30秒を採用する。
@@ -71,6 +80,20 @@ BOOSTER_CATEGORY_PACKS = {
     # そちらと合わせてEXC01/EXC02にしてある)。
     141: "EXC01",
     142: "EXC02",
+    # スターターデッキ/テーマデッキも(未開封の箱ではなく)単品バラ売りのカテゴリが
+    # 別に存在することが判明したため追加(2026-08-20)。旧ドキュメント(モジュール
+    # docstring)では「デッキ製品でグッズ扱いのため対象外」としていたが誤りだった。
+    9: "CT-D01",
+    10: "CT-D02",
+    11: "CT-D03",
+    12: "CT-D04",
+    13: "CT-D05",
+    26: "CT-D06",
+    42: "CT-D07",
+    73: "CT-D08",
+    74: "CT-D09",
+    103: "CT-D10",
+    123: "CT-D11",
 }
 PROMO_CATEGORIES = [48, 49]
 ALL_CATEGORIES = list(BOOSTER_CATEGORY_PACKS) + PROMO_CATEGORIES
@@ -105,6 +128,8 @@ def detect_variant_suffix(name_text: str) -> str | None:
         return "Sec1"
     if "IFパラレル" in name_text:
         return "IF"
+    if "キラ加工" in name_text:
+        return "FOIL"
     return None
 
 
@@ -232,6 +257,19 @@ def _narrow_by_variant(candidates: list[tuple[int, str]], variant: str | None) -
     return None
 
 
+def _resolve_foil_pair(candidates: list[tuple[int, str]], is_foil: bool) -> int | None:
+    """テーマデッキのDレアリティは、通常版とホイル(キラ)加工版が別カードとして
+    登録されているが、Sec1/Sec2やIFパラレルと違って接尾辞での判別ができない。
+    候補がちょうど2件の場合に限り、card_numの昇順で小さい方をホイル版、大きい方を
+    通常版とみなし(メルカードでの調査でユーザーに確認済み。ただし現時点の暫定情報)、
+    商品名の「キラ加工」という注記の有無に応じてどちらか1件のcards.idを返す。
+    """
+    if len(candidates) != 2:
+        return None
+    ordered = sorted(candidates, key=lambda c: c[1])
+    return ordered[0][0] if is_foil else ordered[1][0]
+
+
 def resolve_candidate(model_number, rarity, pack_code, pack_tag, variant, lookup_with_pack, lookup_by_promo_pack, lookup):
     """(card_id, レアリティ, パックコード, プロモパック名の注記, 判別用の注記) から、
     1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
@@ -239,7 +277,10 @@ def resolve_candidate(model_number, rarity, pack_code, pack_tag, variant, lookup
     if pack_code:
         pack_candidates = lookup_with_pack.get((model_number, rarity, pack_code))
         if pack_candidates:
-            return _narrow_by_variant(pack_candidates, variant)
+            narrowed = _narrow_by_variant(pack_candidates, variant)
+            if narrowed is None and rarity == "D":
+                narrowed = _resolve_foil_pair(pack_candidates, variant == "FOIL")
+            return narrowed
 
     if pack_tag:
         promo_candidates = lookup_by_promo_pack.get((model_number, rarity, _normalize_pack_text(pack_tag)))
