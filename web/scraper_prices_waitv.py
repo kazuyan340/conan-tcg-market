@@ -50,6 +50,7 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
+from unresolved_report import write_unresolved
 
 BASE_URL = "https://www.cardshop-waitv.net/product-list/110"
 PAGE_SIZE = 120
@@ -71,8 +72,11 @@ MAX_PAGES = 60
 # ことがあるため、レアリティ自体は英数字のみ拾い、それ以降は読み飛ばす
 # (以前はレアリティ直後が英数字以外だと正規表現ごとマッチせず、商品自体が
 # 丸ごと読み飛ばされていた)。
+# パック表記にはPRカードの「PR_vol11」「PR_vol11_kira」のようにアンダースコア
+# 区切りのものもあるため、文字クラスに"_"も含める(以前は無く、末尾の"kira"等
+# 一部しか拾えていなかった)。
 NAME_PATTERN = re.compile(
-    r"(?:([A-Za-z0-9\-]+)\s+)?ID[\[［]([^\]］]+)[\]］]\s+([A-Za-z0-9]+)[^）)]*[）)]"
+    r"(?:([A-Za-z0-9_\-]+)\s+)?ID[\[［]([^\]］]+)[\]］]\s+([A-Za-z0-9]+)[^）)]*[）)]"
 )
 ALNUM_ONLY_PATTERN = re.compile(r"[^A-Za-z0-9]+")
 
@@ -108,6 +112,38 @@ def normalize_id(value: str) -> str:
 def normalize_pack_code(value: str) -> str:
     """収録パック表記の表記ゆれ(ハイフンの有無・位置)を吸収する。"""
     return ALNUM_ONLY_PATTERN.sub("", value).upper()
+
+
+# PRカードのパック表記は"PR_vol11"(通常)/"PR_vol11_kira"(キラバージョン)という
+# 独自形式で、CT-Pxx系のブースターパックコードとは別物(cards.packの先頭コードとは
+# 突き合わせられない)。cards.packの"プロモーションパックVol.11（キラバージョン）"
+# 等と比較できる文字列に変換する。
+PROMO_PACK_PATTERN = re.compile(r"^PR_vol(\d+)(_kira)?$", re.IGNORECASE)
+
+
+def normalize_waitv_promo_pack(pack: str) -> str:
+    m = PROMO_PACK_PATTERN.match(pack)
+    if not m:
+        return ""
+    text = f"プロモーションパックvol.{m.group(1)}"
+    if m.group(2):
+        text += "キラバージョン"
+    return text
+
+
+def normalize_db_pack_text(pack: str | None) -> str:
+    """cards.packの表記("PRカード（プロモーションパックVol.11（キラバージョン）」等)を、
+    normalize_waitv_promo_packと比較できる形に揃える(外側の「PRカード（）」の
+    有無・括弧の全角半角・空白の有無・vol.の大文字小文字の表記ゆれを吸収する)。
+    """
+    if not pack:
+        return ""
+    pack = pack.strip()
+    if pack.startswith("PRカード"):
+        pack = pack[len("PRカード"):]
+    for ch in "（）() 　":
+        pack = pack.replace(ch, "")
+    return pack.lower()
 
 
 def fetch_page(page: int) -> str:
@@ -170,13 +206,16 @@ def parse_total_count(html: str) -> int:
 
 
 def build_lookup(conn):
-    """カード特定用の対応表を3種類作る。
+    """カード特定用の対応表を4種類作る。
 
-    - (正規化card_id, レアリティ, 正規化パックコード) -> cards.idのリスト
+    - (正規化card_id, レアリティ, 正規化パックコード) -> cards.idのリスト(ブースター用)
+    - (正規化card_id, レアリティ, 正規化パック名) -> cards.idのリスト(PRカードの
+      "PR_vol11"等の表記用。normalize_waitv_promo_pack/normalize_db_pack_text参照)
     - (正規化card_id, レアリティ) -> cards.idのリスト
-    - cards.id -> card_num(SECのSec1/Sec2判別用)
+    - cards.id -> card_num(SECのSec1/Sec2、IFパラレル、テーマデッキのホイル判別用)
     """
     lookup_with_pack: dict[tuple[str, str, str], list[int]] = defaultdict(list)
+    lookup_by_promo_pack: dict[tuple[str, str, str], list[int]] = defaultdict(list)
     lookup: dict[tuple[str, str], list[int]] = defaultdict(list)
     card_num_by_id: dict[int, str] = {}
     for row in db.search_cards(conn):
@@ -187,7 +226,10 @@ def build_lookup(conn):
         pack_code = pack.split()[0] if pack.split() else ""
         if pack_code:
             lookup_with_pack[(base_key[0], base_key[1], normalize_pack_code(pack_code))].append(row["id"])
-    return lookup_with_pack, lookup, card_num_by_id
+        normalized_pack = normalize_db_pack_text(pack)
+        if normalized_pack:
+            lookup_by_promo_pack[(base_key[0], base_key[1], normalized_pack)].append(row["id"])
+    return lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id
 
 
 def _resolve_if_pair(candidates: list[int], card_num_by_id: dict[int, str], variant: str | None) -> int | None:
@@ -208,7 +250,39 @@ def _resolve_if_pair(candidates: list[int], card_num_by_id: dict[int, str], vari
     return if_pk if variant == "IF" else base_pk
 
 
-def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup, card_num_by_id):
+_TRAILING_NUM = re.compile(r"(\d+)$")
+
+
+def _consecutive_card_nums(num_a: str, num_b: str) -> bool:
+    """card_numの接頭辞(英字部分)が一致し、末尾の数字部分がちょうど1違いの連番かどうか。
+    例: D08019/D08020 -> True。同じcard_idが別デッキに再録されているケース
+    (例: D01002/D08022)はFalseになる。
+    """
+    m_a, m_b = _TRAILING_NUM.search(num_a), _TRAILING_NUM.search(num_b)
+    if not m_a or not m_b:
+        return False
+    if num_a[: m_a.start()] != num_b[: m_b.start()]:
+        return False
+    return abs(int(m_a.group(1)) - int(m_b.group(1))) == 1
+
+
+def _resolve_foil_pair(candidates: list[int], card_num_by_id: dict[int, str]) -> int | None:
+    """テーマデッキのDレアリティは、通常版とホイル(キラ)加工版が連番のcard_numで
+    別カードとして登録されているが、わいTVの商品名にはどちらか判別できる注記が
+    一切無い(トレカバースの「キラ加工」・メルカードの「ホイル版」に相当する表記が
+    無いことを確認済み)。候補がちょうど2件かつ実際に連番の場合に限り、判別材料が
+    無い以上は安全側として常に大きい方(通常版)とみなす(メルカードで注記が無い
+    場合に無印側とみなす方針と同じ)。それ以外はNoneを返す。
+    """
+    if len(candidates) != 2:
+        return None
+    ordered = sorted(candidates, key=lambda pk: card_num_by_id.get(pk, ""))
+    if not _consecutive_card_nums(card_num_by_id.get(ordered[0], ""), card_num_by_id.get(ordered[1], "")):
+        return None
+    return ordered[1]
+
+
+def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id):
     """(内部ID, レアリティ, 収録パック表記, SEC/IF判別用の注記) から、1枚に絞り込めれば
     そのcards.idを、絞り込めなければNoneを返す。
     """
@@ -225,6 +299,13 @@ def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, loo
             if if_resolved is not None:
                 return if_resolved
 
+    if pack:
+        normalized_promo = normalize_waitv_promo_pack(pack)
+        if normalized_promo:
+            promo_candidates = lookup_by_promo_pack.get((norm_id, rarity, normalized_promo))
+            if promo_candidates and len(promo_candidates) == 1:
+                return promo_candidates[0]
+
     if variant:
         candidates_for_variant = pack_candidates if pack_candidates else lookup.get(base_key, [])
         narrowed = [pk for pk in candidates_for_variant if card_num_by_id.get(pk, "").endswith(variant)]
@@ -235,6 +316,10 @@ def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, loo
     if_resolved = _resolve_if_pair(base_candidates, card_num_by_id, variant)
     if if_resolved is not None:
         return if_resolved
+    if rarity == "D":
+        foil_resolved = _resolve_foil_pair(pack_candidates if pack_candidates else base_candidates, card_num_by_id)
+        if foil_resolved is not None:
+            return foil_resolved
     # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの絵違いが多数ある等)。
     # 誤った価格を割り当てるより、記録しない方が安全なためスキップする。
     if len(base_candidates) == 1:
@@ -252,10 +337,11 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
         conn = db.get_connection()
         db.init_db(conn)
 
-    lookup_with_pack, lookup, card_num_by_id = build_lookup(conn)
+    lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id = build_lookup(conn)
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
+    unresolved_entries: list[dict] = []
     first_request = True
 
     try:
@@ -277,8 +363,15 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
             for model_number, rarity, pack, variant, price in parse_items(html):
-                card_pk = resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup, card_num_by_id)
+                card_pk = resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id)
                 if card_pk is None:
+                    hint_parts = [f"pack={pack!r}"] if pack else []
+                    if variant:
+                        hint_parts.append(f"variant={variant}")
+                    unresolved_entries.append({
+                        "raw_key": model_number, "rarity": rarity, "price": price,
+                        "hint": " ".join(hint_parts),
+                    })
                     continue
                 all_prices[card_pk].append(price)
 
@@ -292,6 +385,8 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             count = len(prices)
             min_price = min(prices)
             db.insert_price(conn, card_pk, "わいTV", min_price, recorded_at=run_recorded_at, sample_count=count)
+
+        write_unresolved("わいTV", unresolved_entries)
 
         summary = {
             "target": len(lookup),

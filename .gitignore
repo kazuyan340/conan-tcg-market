@@ -4,5 +4,9 @@ data/conan_tcg.db
 data/update_log.txt
 data/card_images/
 web/__pycache__/
+# 各スクレイパーがsync_prices()実行のたびに書き出す中間データ。
+# build_unresolved_report.pyがこれをまとめてweb/site/data/unresolved-shop-items.json
+# (公開・コミット対象)を作るので、生データ自体はコミット不要。
+web/site/data/unresolved_raw/
 .claude/
 actions-runner/

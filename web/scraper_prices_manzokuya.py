@@ -28,6 +28,7 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
+from unresolved_report import write_unresolved
 
 LIST_URL = "https://shopmanzokuya.com/products/list"
 CATEGORY_ID = 3556
@@ -121,6 +122,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     logger.info("価格取得対象: %d件", len(target_by_num))
 
     all_prices: dict[str, list[int]] = defaultdict(list)
+    unresolved_entries: list[dict] = []
     first_request = True
 
     try:
@@ -143,6 +145,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
 
             for card_num, price in parse_items(html):
                 if card_num not in target_by_num:
+                    unresolved_entries.append({"raw_key": card_num, "rarity": None, "price": price, "hint": ""})
                     continue
                 all_prices[card_num].append(price)
 
@@ -157,6 +160,8 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             count = len(prices)
             min_price = min(prices)
             db.insert_price(conn, card_pk, "まんぞく屋", min_price, recorded_at=run_recorded_at, sample_count=count)
+
+        write_unresolved("まんぞく屋", unresolved_entries)
 
         unmatched = sorted(set(target_by_num) - set(all_prices))
         summary = {

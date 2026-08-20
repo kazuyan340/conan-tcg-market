@@ -85,11 +85,16 @@ jobs:
       # 同一run内でも保存直後に別ジョブから読めない(反映の時間差がある)ことがあり、
       # 実際にこれが原因で駿河屋の取得結果が次のジョブに渡らず消えたことがあった。
       # artifactはrun内で確実に一貫性があるのでこちらを使う。
+      # 駿河屋の価格取得で見つかった「1枚に特定できなかった商品」一覧
+      # (web/site/data/unresolved_raw/駿河屋.json)も、DBと同じくこのジョブでしか
+      # 生成されないため、同じartifactで一緒に引き継ぐ。
       - name: Hand off database to the next job
         uses: actions/upload-artifact@v4
         with:
           name: conan-tcg-db
-          path: data/conan_tcg.db
+          path: |
+            data/conan_tcg.db
+            web/site/data/unresolved_raw/駿河屋.json
           retention-days: 1
 
   fetch_others_and_publish:
@@ -111,11 +116,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # data/conan_tcg.db と web/site/data/unresolved_raw/駿河屋.json の両方が
+      # 元のパスのまま展開されるよう、リポジトリルート(path: .)に復元する
+      # (Hand off databaseステップでこの2つを同じartifactにまとめているため)。
       - name: Receive database from the Suruga-ya job
         uses: actions/download-artifact@v4
         with:
           name: conan-tcg-db
-          path: data
+          path: .
 
       - name: Fetch high-rarity prices from Card Labo
         run: python web/scraper_prices_cardlabo.py
@@ -144,6 +152,12 @@ jobs:
       - name: Fetch official goods/products list
         run: python web/scraper_goods.py
 
+      # 各scraper_prices_*.pyがsync_prices()実行中に書き出したweb/site/data/
+      # unresolved_raw/{site}.json(駿河屋分はSuruga-yaジョブからartifactで受け取り
+      # 済み)をまとめて、管理ページ用のunresolved-shop-items.jsonを作る。
+      - name: Build unresolved shop-listing report
+        run: python web/build_unresolved_report.py
+
       - name: Export static JSON for the site
         run: python web/export_static.py
 
@@ -164,7 +178,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add web/site/data/cards.json web/site/data/prices.json web/site/data/trends.json web/site/data/movers.json web/site/data/meta.json web/site/data/goods.json web/site/data/unofficial-cards.json web/site/card/ web/site/sitemap.xml
+          git add web/site/data/cards.json web/site/data/prices.json web/site/data/trends.json web/site/data/movers.json web/site/data/meta.json web/site/data/goods.json web/site/data/unofficial-cards.json web/site/data/unresolved-shop-items.json web/site/card/ web/site/sitemap.xml
           git diff --cached --quiet || git commit -m "chore: daily card/price update"
           # このジョブは駿河屋取得(30秒間隔のクロール遅延込み)のせいで50〜90分かかることがあり、
           # その間に他のpush(手動でのコード修正など)が入ると素のgit pushは

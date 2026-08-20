@@ -50,6 +50,7 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
+from unresolved_report import write_unresolved
 
 BASE_URL = "https://www.mercardconan.jp/product-list"
 # カテゴリ番号: 1=パートナー, 2=キャラ, 3=イベント, 4=事件 (5=サプライ, 6=セット販売, 7=デッキ販売は除外)
@@ -386,6 +387,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
+    unresolved_entries: list[dict] = []
     first_request = True
 
     try:
@@ -413,6 +415,18 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                         lookup_with_pack, lookup, pack_text_by_id, card_num_by_id,
                     )
                     if card_pk is None or price is None:
+                        if card_pk is None and price is not None:
+                            hint_parts = []
+                            if pack:
+                                hint_parts.append(f"pack={pack!r}")
+                            if annotation:
+                                hint_parts.append(f"annotation={annotation!r}")
+                            if pack_tag:
+                                hint_parts.append(f"pack_tag={pack_tag!r}")
+                            unresolved_entries.append({
+                                "raw_key": model_number, "rarity": rarity, "price": price,
+                                "hint": " ".join(hint_parts),
+                            })
                         continue
                     all_prices[card_pk].append(price)
 
@@ -426,6 +440,8 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
             count = len(prices)
             min_price = min(prices)
             db.insert_price(conn, card_pk, "メルカード", min_price, recorded_at=run_recorded_at, sample_count=count)
+
+        write_unresolved("メルカード", unresolved_entries)
 
         summary = {
             "target": len(lookup),
