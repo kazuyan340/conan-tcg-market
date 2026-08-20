@@ -120,6 +120,21 @@
     </div>
 
     <h3>メインデッキ(キャラ・イベント) <span class="deck-hint">枠をクリックすると右の一覧が絞り込まれます・埋まっている枠はクリックで1枚減らせます</span></h3>
+    <div class="sort-row">
+      <label for="deck-sort-select">並び順</label>
+      <select id="deck-sort-select">
+        <option value="name_asc">名前順</option>
+        <option value="name_desc">名前順(降順)</option>
+        <option value="card_num_asc">番号順</option>
+        <option value="card_num_desc">番号順(降順)</option>
+        <option value="level_asc">レベル順</option>
+        <option value="level_desc">レベル順(降順)</option>
+        <option value="ap_asc">AP順</option>
+        <option value="ap_desc">AP順(降順)</option>
+        <option value="lp_asc">LP順</option>
+        <option value="lp_desc">LP順(降順)</option>
+      </select>
+    </div>
     <div id="deck-main-grid" class="deck-main-grid"></div>
   </main>
 

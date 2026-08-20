@@ -42,6 +42,8 @@ const grid = document.getElementById("card-grid");
 const resultCount = document.getElementById("result-count");
 const keywordInput = document.getElementById("keyword");
 const sortSelect = document.getElementById("sort-select");
+const deckSortSelect = document.getElementById("deck-sort-select");
+let deckSortMode = "name_asc";
 
 async function init() {
   allCards = await loadCardData();
@@ -294,6 +296,10 @@ function updateCountBadge(field) {
 function bindEvents() {
   keywordInput.addEventListener("input", debounce(applyFilters, 200));
   sortSelect.addEventListener("change", applyFilters);
+  deckSortSelect.addEventListener("change", () => {
+    deckSortMode = deckSortSelect.value;
+    renderDeckPanel();
+  });
 
   const includeCheckbox = document.getElementById("include-partner-case");
   includeCheckbox.checked = includePartnerCaseInTotal;
@@ -740,6 +746,34 @@ function renderSlotBox(elId, cardId, focusType, onClear) {
   });
 }
 
+// メインデッキ枠の並び替え。検索パネルのsortByOrderと同じ"フィールド名_asc|desc"形式。
+// 数値項目(レベル/AP/LP)は値が無いカードを昇順/降順を問わず常に末尾に回す
+// (同値・欠損時は名前順で安定させる)。番号順は駿河屋等と同じcard_num表記
+// (英字+数字混在)なので、数字部分も考慮するnumeric照合を使う。
+function deckEntryCompare(a, b, sortMode) {
+  // "card_num_asc"のようにフィールド名自体に"_"を含むため、末尾の"_asc"/"_desc"
+  // だけを区切る(先頭からのsplit("_")だと"card_num"が"card"+"num"に割れてしまう)。
+  const cut = sortMode.lastIndexOf("_");
+  const field = sortMode.slice(0, cut);
+  const direction = sortMode.slice(cut + 1);
+  const sign = direction === "desc" ? -1 : 1;
+
+  if (field === "card_num") {
+    return sign * (a.card.card_num || "").localeCompare(b.card.card_num || "", "ja", { numeric: true });
+  }
+  if (field === "level" || field === "ap" || field === "lp") {
+    const av = a.card[field];
+    const bv = b.card[field];
+    const aMissing = av === null || av === undefined;
+    const bMissing = bv === null || bv === undefined;
+    if (aMissing && bMissing) return a.card.name.localeCompare(b.card.name, "ja");
+    if (aMissing) return 1;
+    if (bMissing) return -1;
+    if (av !== bv) return sign * (av - bv);
+  }
+  return sign * a.card.name.localeCompare(b.card.name, "ja");
+}
+
 function renderDeckPanel() {
   renderSlotBox("deck-partner", deck.partner, "パートナー", () => {
     deck.partner = null;
@@ -758,7 +792,7 @@ function renderDeckPanel() {
   const entries = Object.entries(deck.main)
     .map(([id, count]) => ({ card: cardById.get(Number(id)), count }))
     .filter((e) => e.card)
-    .sort((a, b) => a.card.name.localeCompare(b.card.name, "ja"));
+    .sort((a, b) => deckEntryCompare(a, b, deckSortMode));
 
   const total = computeDeckTotal(deck);
 
