@@ -12,8 +12,10 @@ web/site/data/unresolved-shop-items.json を作る。
 新たにサイトへアクセスすることはなく、既に書き出し済みの生データとDBだけで完結する。
 """
 import json
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 from unresolved_report import UNRESOLVED_DIR
 
