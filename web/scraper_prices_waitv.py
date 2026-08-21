@@ -253,16 +253,22 @@ def build_lookup(conn):
 def _match_by_annotation(candidates: list[int], annotation: str | None, pack_text_by_id: dict[int, str]) -> int | None:
     """商品名の「（キラバージョン）」のような、ID表記の外に別途付く注記から絞り込む。
     正規化した注記がcards.packの正規化済み全文に含まれる候補が1件だけなら、その
-    cards.idを返す。それ以外はNoneを返す。
+    cards.idを返す。
+
+    注記が無い場合は、候補のうち「キラバージョン」を含まない(=無印)ものが
+    ちょうど1件だけなら、それを無印版とみなして返す(「キラ」の注記が無ければ
+    無印、というルールをユーザーに確認済み)。それ以外は絞り込めずNoneを返す。
     """
-    if not annotation:
+    if annotation:
+        norm_annotation = normalize_db_pack_text(annotation)
+        if norm_annotation:
+            matches = [pk for pk in candidates if norm_annotation in pack_text_by_id.get(pk, "")]
+            if len(matches) == 1:
+                return matches[0]
         return None
-    norm_annotation = normalize_db_pack_text(annotation)
-    if not norm_annotation:
-        return None
-    matches = [pk for pk in candidates if norm_annotation in pack_text_by_id.get(pk, "")]
-    if len(matches) == 1:
-        return matches[0]
+    non_kira = [pk for pk in candidates if "キラバージョン" not in pack_text_by_id.get(pk, "")]
+    if len(non_kira) == 1:
+        return non_kira[0]
     return None
 
 
@@ -340,10 +346,9 @@ def resolve_candidate(model_number, rarity, pack, variant, annotation, lookup_wi
             if promo_candidates and len(promo_candidates) == 1:
                 return promo_candidates[0]
 
-    if annotation:
-        annotation_resolved = _match_by_annotation(lookup.get(base_key, []), annotation, pack_text_by_id)
-        if annotation_resolved is not None:
-            return annotation_resolved
+    annotation_resolved = _match_by_annotation(lookup.get(base_key, []), annotation, pack_text_by_id)
+    if annotation_resolved is not None:
+        return annotation_resolved
 
     if variant:
         candidates_for_variant = pack_candidates if pack_candidates else lookup.get(base_key, [])
