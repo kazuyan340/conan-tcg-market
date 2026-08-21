@@ -26,8 +26,8 @@ def candidates_for(conn, raw_key: str, rarity: str | None) -> list[dict]:
     """card_idの表記ゆれ(先頭ゼロの有無)を吸収するため、生の値そのものでの一致と、
     数値としての一致(先頭ゼロ違い)の両方を試す。サイトによってlookupキーの
     正規化方法が異なる(先頭ゼロを落とすサイト/落とさないサイトが混在する)ため。
-    候補カードの一覧は「どのカード同士で区別が付いていないか」をテキストで
-    示すためのものなので、card_num/nameだけ返す(画像は出さない方針のため不要)。
+    image_urlは、管理ページで「この候補で確定」をユーザーが目で見て選べるように
+    するために含める(手動確定リストの元になる)。
     """
     raw_key = raw_key.strip()
     is_num = raw_key.isdigit()
@@ -35,12 +35,12 @@ def candidates_for(conn, raw_key: str, rarity: str | None) -> list[dict]:
     params = [raw_key, 1 if is_num else 0, raw_key if is_num else "0"]
     if rarity:
         rows = conn.execute(
-            f"SELECT id, card_num, name, rarity, pack FROM cards WHERE ({condition}) AND rarity=?",
+            f"SELECT id, card_num, name, rarity, pack, image_url FROM cards WHERE ({condition}) AND rarity=?",
             (*params, rarity),
         ).fetchall()
     else:
         rows = conn.execute(
-            f"SELECT id, card_num, name, rarity, pack FROM cards WHERE ({condition})",
+            f"SELECT id, card_num, name, rarity, pack, image_url FROM cards WHERE ({condition})",
             params,
         ).fetchall()
     return [dict(r) for r in rows]

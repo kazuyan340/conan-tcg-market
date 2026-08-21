@@ -15,6 +15,7 @@ async function init() {
   bindModalEvents();
   renderLastUpdated();
   render(cards);
+  bindManualResolutionControls();
 
   const unresolved = await unresolvedRes.json();
   renderUnresolved(unresolved);
@@ -124,6 +125,7 @@ function renderUnresolvedRow(item) {
     cand.className = "unresolved-candidates";
     cand.textContent = `区別できていない候補: ${item.candidates.map((c) => `${c.card_num}(${c.name})`).join(" / ")}`;
     info.appendChild(cand);
+    info.appendChild(renderCandidatePicker(item));
   }
   if (item.hint) {
     const hint = document.createElement("div");
@@ -134,6 +136,95 @@ function renderUnresolvedRow(item) {
 
   row.appendChild(info);
   return row;
+}
+
+// 手動確定の選択は、このサイトには保存先(サーバー)が無いのでブラウザの
+// localStorageに置くだけにする。ユーザーがエクスポートしたJSONをClaudeに渡し、
+// scraper_prices_*.pyの手動確定リストへ組み込んでもらう運用(README的にはHTML側
+// のadmin-note参照)。
+const MANUAL_RESOLUTION_KEY = "conan_manual_resolutions_v1";
+
+function loadManualResolutions() {
+  try {
+    return JSON.parse(localStorage.getItem(MANUAL_RESOLUTION_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveManualResolutions(map) {
+  localStorage.setItem(MANUAL_RESOLUTION_KEY, JSON.stringify(map));
+}
+
+function resolutionKeyFor(item) {
+  return `${item.site}|${item.raw_key}|${item.rarity || ""}`;
+}
+
+function updateManualResolutionCount() {
+  const el = document.getElementById("manual-resolution-count");
+  if (!el) return;
+  const count = Object.keys(loadManualResolutions()).length;
+  el.textContent = `${count}件選択済み`;
+}
+
+// 候補画像をクリックして選べるピッカーを1件分作る。選択はlocalStorageに保存する
+// だけで、この場では何も自動反映しない(サイト側にサーバーが無いため)。
+function renderCandidatePicker(item) {
+  const key = resolutionKeyFor(item);
+  const picker = document.createElement("div");
+  picker.className = "unresolved-picker";
+
+  const grid = document.createElement("div");
+  grid.className = "unresolved-picker-grid";
+
+  const resolutions = loadManualResolutions();
+  const chosenCardNum = resolutions[key] ? resolutions[key].card_num : null;
+
+  for (const c of item.candidates) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "unresolved-picker-item" + (chosenCardNum === c.card_num ? " selected" : "");
+    btn.title = `${c.card_num} ${c.name}`;
+    btn.innerHTML = `<img src="${c.image_url || ""}" alt="" loading="lazy"><span>${escapeHtml(c.card_num)}</span>`;
+    btn.addEventListener("click", () => {
+      const current = loadManualResolutions();
+      current[key] = {
+        site: item.site, raw_key: item.raw_key, rarity: item.rarity,
+        card_id: c.id, card_num: c.card_num, name: c.name,
+      };
+      saveManualResolutions(current);
+      grid.querySelectorAll(".unresolved-picker-item").forEach((el) => el.classList.remove("selected"));
+      btn.classList.add("selected");
+      updateManualResolutionCount();
+    });
+    grid.appendChild(btn);
+  }
+  picker.appendChild(grid);
+  return picker;
+}
+
+function exportManualResolutions() {
+  const resolutions = loadManualResolutions();
+  const list = Object.values(resolutions);
+  const blob = new Blob([JSON.stringify(list, null, 1)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "manual_resolutions.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function bindManualResolutionControls() {
+  updateManualResolutionCount();
+  document.getElementById("export-manual-resolutions").addEventListener("click", exportManualResolutions);
+  document.getElementById("clear-manual-resolutions").addEventListener("click", () => {
+    if (!confirm("この端末に保存した選択を全て消します。よろしいですか？")) return;
+    localStorage.removeItem(MANUAL_RESOLUTION_KEY);
+    renderUnresolved(window.__unresolvedData || { ambiguous: [], missing: [] });
+  });
 }
 
 // ①②共通のサイトごと見出し+行リストを作る。
@@ -155,8 +246,10 @@ function renderUnresolvedGroup(containerId, countId, items) {
 }
 
 function renderUnresolved(data) {
+  window.__unresolvedData = data;
   renderUnresolvedGroup("ambiguous-list", "ambiguous-count", data.ambiguous || []);
   renderUnresolvedGroup("missing-list", "missing-count", data.missing || []);
+  updateManualResolutionCount();
 }
 
 init();
