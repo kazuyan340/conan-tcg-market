@@ -79,6 +79,10 @@ NAME_PATTERN = re.compile(
     r"(?:([A-Za-z0-9_\-]+)\s+)?ID[\[［]([^\]］]+)[\]］]\s+([A-Za-z0-9]+)[^）)]*[）)]"
 )
 ALNUM_ONLY_PATTERN = re.compile(r"[^A-Za-z0-9]+")
+# カード名の後ろ・ID表記の前に付く注釈(例: "鈴木園子（キラバージョン）（ID[0400] PR）"の
+# 「キラバージョン」)を拾う。パック表記(PR_vol11等)が無いPRカードでも、この注記が
+# cards.packと突き合わせられることがある。
+ANNOTATION_PATTERN = re.compile(r"[（(]([^）)]+)[）)]")
 
 
 def detect_variant_suffix(name_text: str) -> str | None:
@@ -153,11 +157,11 @@ def fetch_page(page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int, str, str | None]]:
-    """(内部ID, レアリティ, 収録パック表記, SEC判別用の注記, 価格,
-    商品名のうちID表記より前の部分(キャラ名等), 商品画像URL(あれば)) のリストを返す。
+def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, str | None, int, str, str | None]]:
+    """(内部ID, レアリティ, 収録パック表記, SEC判別用の注記, 名前の注釈(「（キラバージョン）」等),
+    価格, 商品名のうちID表記より前の部分(キャラ名等), 商品画像URL(あれば)) のリストを返す。
 
-    パック表記・SEC判別用の注記は無ければNone。「ID[...]」表記が無い商品
+    パック表記・SEC判別用の注記・名前の注釈は無ければNone。「ID[...]」表記が無い商品
     (オリパ・BOX等)や、「《未開封》」から始まる未開封プロモパックの出品は対象外として除く。
     末尾2つは1枚に特定できなかった場合の管理ページ表示用(unresolved_report参照)で、
     価格照合そのものには使わない。
@@ -185,7 +189,10 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int, 
             continue
         pack, model_number, rarity = m.group(1), m.group(2), m.group(3)
         variant = detect_variant_suffix(name_text)
-        product_name = name_text[: m.start()].strip().rstrip("（(")
+        prefix_text = name_text[: m.start()]
+        product_name = prefix_text.strip().rstrip("（(")
+        annotation_matches = ANNOTATION_PATTERN.findall(prefix_text)
+        annotation = annotation_matches[-1] if annotation_matches else None
 
         price_el = li.select_one(".price .figure")
         if not price_el:
@@ -200,7 +207,7 @@ def parse_items(html: str) -> list[tuple[str, str, str | None, str | None, int, 
         photo_el = li.select_one(".global_photo")
         image_url = photo_el.get("data-src") if photo_el else None
 
-        results.append((model_number, rarity, pack, variant, price, product_name, image_url))
+        results.append((model_number, rarity, pack, variant, annotation, price, product_name, image_url))
     return results
 
 
@@ -213,18 +220,21 @@ def parse_total_count(html: str) -> int:
 
 
 def build_lookup(conn):
-    """カード特定用の対応表を4種類作る。
+    """カード特定用の対応表を5種類作る。
 
     - (正規化card_id, レアリティ, 正規化パックコード) -> cards.idのリスト(ブースター用)
     - (正規化card_id, レアリティ, 正規化パック名) -> cards.idのリスト(PRカードの
       "PR_vol11"等の表記用。normalize_waitv_promo_pack/normalize_db_pack_text参照)
     - (正規化card_id, レアリティ) -> cards.idのリスト
     - cards.id -> card_num(SECのSec1/Sec2、IFパラレル、テーマデッキのホイル判別用)
+    - cards.id -> 正規化したpack列全文(商品名の「（キラバージョン）」のような注記との
+      突き合わせ用。_match_by_annotation参照)
     """
     lookup_with_pack: dict[tuple[str, str, str], list[int]] = defaultdict(list)
     lookup_by_promo_pack: dict[tuple[str, str, str], list[int]] = defaultdict(list)
     lookup: dict[tuple[str, str], list[int]] = defaultdict(list)
     card_num_by_id: dict[int, str] = {}
+    pack_text_by_id: dict[int, str] = {}
     for row in db.search_cards(conn):
         base_key = (normalize_id(row["card_id"]), row["rarity"])
         lookup[base_key].append(row["id"])
@@ -236,7 +246,24 @@ def build_lookup(conn):
         normalized_pack = normalize_db_pack_text(pack)
         if normalized_pack:
             lookup_by_promo_pack[(base_key[0], base_key[1], normalized_pack)].append(row["id"])
-    return lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id
+        pack_text_by_id[row["id"]] = normalized_pack
+    return lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id, pack_text_by_id
+
+
+def _match_by_annotation(candidates: list[int], annotation: str | None, pack_text_by_id: dict[int, str]) -> int | None:
+    """商品名の「（キラバージョン）」のような、ID表記の外に別途付く注記から絞り込む。
+    正規化した注記がcards.packの正規化済み全文に含まれる候補が1件だけなら、その
+    cards.idを返す。それ以外はNoneを返す。
+    """
+    if not annotation:
+        return None
+    norm_annotation = normalize_db_pack_text(annotation)
+    if not norm_annotation:
+        return None
+    matches = [pk for pk in candidates if norm_annotation in pack_text_by_id.get(pk, "")]
+    if len(matches) == 1:
+        return matches[0]
+    return None
 
 
 def _resolve_if_pair(candidates: list[int], card_num_by_id: dict[int, str], variant: str | None) -> int | None:
@@ -289,9 +316,9 @@ def _resolve_foil_pair(candidates: list[int], card_num_by_id: dict[int, str]) ->
     return ordered[1]
 
 
-def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id):
-    """(内部ID, レアリティ, 収録パック表記, SEC/IF判別用の注記) から、1枚に絞り込めれば
-    そのcards.idを、絞り込めなければNoneを返す。
+def resolve_candidate(model_number, rarity, pack, variant, annotation, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id, pack_text_by_id):
+    """(内部ID, レアリティ, 収録パック表記, SEC/IF判別用の注記, 名前の注釈) から、
+    1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
     """
     norm_id = normalize_id(model_number)
     base_key = (norm_id, rarity)
@@ -312,6 +339,11 @@ def resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, loo
             promo_candidates = lookup_by_promo_pack.get((norm_id, rarity, normalized_promo))
             if promo_candidates and len(promo_candidates) == 1:
                 return promo_candidates[0]
+
+    if annotation:
+        annotation_resolved = _match_by_annotation(lookup.get(base_key, []), annotation, pack_text_by_id)
+        if annotation_resolved is not None:
+            return annotation_resolved
 
     if variant:
         candidates_for_variant = pack_candidates if pack_candidates else lookup.get(base_key, [])
@@ -344,7 +376,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
         conn = db.get_connection()
         db.init_db(conn)
 
-    lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id = build_lookup(conn)
+    lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id, pack_text_by_id = build_lookup(conn)
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
@@ -369,12 +401,14 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 total = parse_total_count(html)
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-            for model_number, rarity, pack, variant, price, product_name, image_url in parse_items(html):
-                card_pk = resolve_candidate(model_number, rarity, pack, variant, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id)
+            for model_number, rarity, pack, variant, annotation, price, product_name, image_url in parse_items(html):
+                card_pk = resolve_candidate(model_number, rarity, pack, variant, annotation, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id, pack_text_by_id)
                 if card_pk is None:
                     hint_parts = [f"pack={pack!r}"] if pack else []
                     if variant:
                         hint_parts.append(f"variant={variant}")
+                    if annotation:
+                        hint_parts.append(f"annotation={annotation!r}")
                     unresolved_entries.append({
                         "raw_key": model_number, "rarity": rarity, "price": price,
                         "hint": " ".join(hint_parts), "product_name": product_name,
