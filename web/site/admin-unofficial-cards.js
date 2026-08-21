@@ -77,12 +77,9 @@ function searchUrlFor(item) {
   return builder ? builder(item) : null;
 }
 
-// 1件分の行を作る。①②共通(候補リストの有無だけが違う)。ショップの実際の商品画像を
-// サムネイルにして、画像・タイトルどちらをクリックしてもそのショップの検索結果
-// (該当する2枚・3枚が並んだ状態)を新しいタブで開く。card-tileやモーダルは使わない
-// (ここは「どれとどれが区別できていないか」を確認するための一覧であって、カード
-// 詳細を見るための一覧ではないため)。
-function renderUnresolvedRow(item) {
+// missing(候補が1件も無い)側の1行。選択の余地が無いので従来通り
+// (raw_key, rarity)単位で価格範囲・件数をまとめたまま表示する。
+function renderMissingRow(item) {
   const url = searchUrlFor(item);
   const row = document.createElement("div");
   row.className = "unresolved-row";
@@ -120,17 +117,79 @@ function renderUnresolvedRow(item) {
       <span class="unresolved-price">${escapeHtml(formatPriceRange(item.prices))}${listingNote}</span>
     </div>`;
 
-  if (item.candidates && item.candidates.length > 0) {
-    const cand = document.createElement("div");
-    cand.className = "unresolved-candidates";
-    cand.textContent = `区別できていない候補: ${item.candidates.map((c) => `${c.card_num}(${c.name})`).join(" / ")}`;
-    info.appendChild(cand);
-    info.appendChild(renderCandidatePicker(item));
-  }
   if (item.hint) {
     const hint = document.createElement("div");
     hint.className = "unresolved-hint";
     hint.textContent = item.hint;
+    info.appendChild(hint);
+  }
+
+  row.appendChild(info);
+  return row;
+}
+
+// ambiguous(候補は絞れたが1枚に特定できない)側は、同じ(raw_key, rarity)の
+// 出品同士でも実際には違う物理カードのことがあるため、出品ごとに個別の
+// サムネイル・リンク・候補ピッカーを持たせる。見出し(候補一覧)だけは
+// (raw_key, rarity)単位でまとめてコンパクトにする。
+function renderAmbiguousGroup(item) {
+  const wrap = document.createElement("div");
+  wrap.className = "unresolved-group";
+
+  const heading = document.createElement("div");
+  heading.className = "unresolved-candidates";
+  heading.textContent = `${item.raw_key}${item.rarity ? ` ${item.rarity}` : ""} 区別できていない候補: ${item.candidates.map((c) => `${c.card_num}(${c.name})`).join(" / ")}`;
+  wrap.appendChild(heading);
+
+  item.listings.forEach((listing, index) => {
+    wrap.appendChild(renderAmbiguousListingRow(item, listing, index));
+  });
+
+  return wrap;
+}
+
+function renderAmbiguousListingRow(item, listing, index) {
+  const url = listing.product_url || searchUrlFor({ ...item, product_name: listing.product_name });
+  const row = document.createElement("div");
+  row.className = "unresolved-row unresolved-listing-row";
+
+  const thumbLink = document.createElement("a");
+  thumbLink.className = "unresolved-thumb";
+  if (url) {
+    thumbLink.href = url;
+    thumbLink.target = "_blank";
+    thumbLink.rel = "noopener";
+  }
+  if (listing.image_url) {
+    const img = document.createElement("img");
+    img.src = listing.image_url;
+    img.alt = "";
+    img.loading = "lazy";
+    thumbLink.appendChild(img);
+  } else {
+    thumbLink.classList.add("unresolved-thumb-empty");
+    thumbLink.textContent = "🔍";
+  }
+  row.appendChild(thumbLink);
+
+  const info = document.createElement("div");
+  info.className = "unresolved-row-info";
+
+  const titleText = listing.product_name || item.raw_key;
+  const titleHtml = url
+    ? `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(titleText)}</a>`
+    : escapeHtml(titleText);
+  info.innerHTML = `<div class="unresolved-row-title">
+      ${titleHtml}
+      <span class="unresolved-price">${escapeHtml(formatPriceRange(listing.price != null ? [listing.price] : []))}</span>
+    </div>`;
+
+  info.appendChild(renderCandidatePicker(item, listing, index));
+
+  if (listing.hint) {
+    const hint = document.createElement("div");
+    hint.className = "unresolved-hint";
+    hint.textContent = listing.hint;
     info.appendChild(hint);
   }
 
@@ -156,8 +215,14 @@ function saveManualResolutions(map) {
   localStorage.setItem(MANUAL_RESOLUTION_KEY, JSON.stringify(map));
 }
 
-function resolutionKeyFor(item) {
-  return `${item.site}|${item.raw_key}|${item.rarity || ""}`;
+// 出品ごとに一意なキー。product_urlがあればそれで(Python側のload_manual_resolutions
+// はproduct_urlでマッチする)。CardLabo等、まだproduct_urlを出していないサイトの
+// 出品に対しては、この端末内だけで一意になるフォールバックキーを使う
+// (エクスポート後にPython側で使うにはそのサイトのスクレイパーにもproduct_url
+// 対応が必要)。
+function resolutionKeyFor(item, listing, index) {
+  if (listing && listing.product_url) return listing.product_url;
+  return `${item.site}|${item.raw_key}|${item.rarity || ""}|${index}`;
 }
 
 function updateManualResolutionCount() {
@@ -167,10 +232,12 @@ function updateManualResolutionCount() {
   el.textContent = `${count}件選択済み`;
 }
 
-// 候補画像をクリックして選べるピッカーを1件分作る。選択はlocalStorageに保存する
-// だけで、この場では何も自動反映しない(サイト側にサーバーが無いため)。
-function renderCandidatePicker(item) {
-  const key = resolutionKeyFor(item);
+// 候補画像をクリックして選べるピッカーを出品1件分作る。選択はlocalStorageに保存する
+// だけで、この場では何も自動反映しない(サイト側にサーバーが無いため)。同じ
+// (raw_key, rarity)でも出品ごとに別の物理カードのことがあるため、キーは
+// この出品固有(product_url、無ければフォールバック)にする。
+function renderCandidatePicker(item, listing, index) {
+  const key = resolutionKeyFor(item, listing, index);
   const picker = document.createElement("div");
   picker.className = "unresolved-picker";
 
@@ -189,6 +256,7 @@ function renderCandidatePicker(item) {
     btn.addEventListener("click", () => {
       const current = loadManualResolutions();
       current[key] = {
+        product_url: listing.product_url || null,
         site: item.site, raw_key: item.raw_key, rarity: item.rarity,
         card_id: c.id, card_num: c.card_num, name: c.name,
       };
@@ -227,28 +295,35 @@ function bindManualResolutionControls() {
   });
 }
 
-// ①②共通のサイトごと見出し+行リストを作る。
-function renderUnresolvedGroup(containerId, countId, items) {
+// サイトごとの見出し+行リストを作る。renderRowで1グループ(または1件)分の
+// DOMを作る関数を差し替えられるようにして、ambiguous(出品ごとの候補ピッカー付き
+// グループ)とmissing(候補無しの単純な集約行)の両方で共用する。
+function renderUnresolvedGroup(containerId, countId, items, renderRow, countOf) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
-  document.getElementById(countId).textContent = `${items.length}件`;
+  const totalCount = countOf ? items.reduce((sum, item) => sum + countOf(item), 0) : items.length;
+  document.getElementById(countId).textContent = `${totalCount}件`;
 
   for (const [site, siteItems] of groupBySite(items)) {
+    const siteCount = countOf ? siteItems.reduce((sum, item) => sum + countOf(item), 0) : siteItems.length;
     const siteHeading = document.createElement("h4");
     siteHeading.className = "unresolved-site-heading";
-    siteHeading.textContent = `${site}(${siteItems.length}件)`;
+    siteHeading.textContent = `${site}(${siteCount}件)`;
     container.appendChild(siteHeading);
 
     for (const item of siteItems) {
-      container.appendChild(renderUnresolvedRow(item));
+      container.appendChild(renderRow(item));
     }
   }
 }
 
 function renderUnresolved(data) {
   window.__unresolvedData = data;
-  renderUnresolvedGroup("ambiguous-list", "ambiguous-count", data.ambiguous || []);
-  renderUnresolvedGroup("missing-list", "missing-count", data.missing || []);
+  renderUnresolvedGroup(
+    "ambiguous-list", "ambiguous-count", data.ambiguous || [],
+    renderAmbiguousGroup, (item) => item.listings.length,
+  );
+  renderUnresolvedGroup("missing-list", "missing-count", data.missing || [], renderMissingRow);
   updateManualResolutionCount();
 }
 

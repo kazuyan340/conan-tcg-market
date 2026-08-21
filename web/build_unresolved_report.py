@@ -46,9 +46,9 @@ def candidates_for(conn, raw_key: str, rarity: str | None) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def dedupe(rows: list[dict]) -> list[dict]:
-    """同じ(site, raw_key, rarity)の複数出品/複数価格は1件にまとめ、価格リストと
-    件数を集約する。
+def dedupe_missing(rows: list[dict]) -> list[dict]:
+    """候補が1件も無い(missing)ものは選択の余地が無いので、従来通り
+    (site, raw_key, rarity)単位で価格リストと件数を集約してコンパクトに表示する。
     """
     grouped: dict[tuple, dict] = {}
     for r in rows:
@@ -59,6 +59,31 @@ def dedupe(rows: list[dict]) -> list[dict]:
             grouped[key]["listing_count"] += 1
             if r["price"] is not None:
                 grouped[key]["prices"].append(r["price"])
+    return list(grouped.values())
+
+
+def group_ambiguous(rows: list[dict]) -> list[dict]:
+    """候補があるもの(ambiguous)は、ユーザーが商品ページの画像を見て出品ごとに
+    候補を選べる必要があるため、1出品=1レコードのまま(site, raw_key, rarity)で
+    見出しだけまとめる(候補リストはraw_key+rarityが同じなら全出品で共通)。
+    """
+    grouped: dict[tuple, dict] = {}
+    for r in rows:
+        key = (r["site"], r["raw_key"], r["rarity"])
+        listing = {
+            "product_url": r.get("product_url"),
+            "image_url": r.get("image_url"),
+            "price": r.get("price"),
+            "product_name": r.get("product_name"),
+            "hint": r.get("hint", ""),
+        }
+        if key not in grouped:
+            grouped[key] = {
+                "site": r["site"], "raw_key": r["raw_key"], "rarity": r["rarity"],
+                "candidates": r["candidates"], "listings": [listing],
+            }
+        else:
+            grouped[key]["listings"].append(listing)
     return list(grouped.values())
 
 
@@ -79,13 +104,14 @@ def build_report(conn) -> dict:
                 "price": e.get("price"), "hint": e.get("hint", ""),
                 "product_name": e.get("product_name") or "",
                 "image_url": e.get("image_url"),
+                "product_url": e.get("product_url"),
             }
             if cands:
                 ambiguous.append({**row, "candidates": cands})
             else:
                 missing.append(row)
 
-    return {"ambiguous": dedupe(ambiguous), "missing": dedupe(missing)}
+    return {"ambiguous": group_ambiguous(ambiguous), "missing": dedupe_missing(missing)}
 
 
 def main():
