@@ -199,8 +199,7 @@ function renderAmbiguousListingRow(item, listing, index) {
 
 // 手動確定の選択は、このサイトには保存先(サーバー)が無いのでブラウザの
 // localStorageに置くだけにする。ユーザーがエクスポートしたJSONをClaudeに渡し、
-// scraper_prices_*.pyの手動確定リストへ組み込んでもらう運用(README的にはHTML側
-// のadmin-note参照)。
+// scraper_prices_*.pyの手動確定リストへ組み込んでもらう運用。
 const MANUAL_RESOLUTION_KEY = "conan_manual_resolutions_v1";
 
 function loadManualResolutions() {

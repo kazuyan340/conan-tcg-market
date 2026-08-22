@@ -26,12 +26,6 @@
 
 <section class="unresolved-section">
   <h2>🕵️ ショップにはあるが自分のサイトに反映できていないカード</h2>
-  <p class="admin-note">
-    各ショップの出品を全件取得し、価格が付いているのにカードを1枚に特定できなかったものを
-    機械的に洗い出した一覧です(手動で見つけた分ではなく、監査スクリプトによる全件チェック)。
-    「型番+レアリティ」等からDBの候補までは絞れたが1枚に決め切れなかったものと、
-    そもそも該当する型番がDBに1件も無いものの2種類に分けています。
-  </p>
 
   <div class="unresolved-export-bar">
     <span id="manual-resolution-count" class="result-count">0件選択済み</span>
@@ -40,11 +34,6 @@
   </div>
 
   <h3>① 候補は絞れたが1枚に特定できないカード<span id="ambiguous-count" class="result-count"></span></h3>
-  <p class="admin-note">
-    「これだ」と分かるものがあれば、候補画像をクリックして選んでください。選択はこの
-    ブラウザに保存されるだけで自動反映はされません。選び終えたら「選択をエクスポート」で
-    ファイルをダウンロードし、Claudeに渡してください(以降の自動取得に組み込みます)。
-  </p>
   <div id="ambiguous-list"></div>
 
   <h3>② 自分のカードDBに全く見当たらないカード<span id="missing-count" class="result-count"></span></h3>
