@@ -138,7 +138,7 @@ function renderAmbiguousGroup(item) {
 
   const heading = document.createElement("div");
   heading.className = "unresolved-candidates";
-  heading.textContent = `${item.raw_key}${item.rarity ? ` ${item.rarity}` : ""} 区別できていない候補: ${item.candidates.map((c) => `${c.card_num}(${c.name})`).join(" / ")}`;
+  heading.textContent = `${item.raw_key}${item.rarity ? ` ${item.rarity}` : ""} 区別できていない候補: ${item.candidates.map((c) => `${c.card_num}(${c.name})${c.pack ? `[${c.pack}]` : ""}`).join(" / ")}`;
   wrap.appendChild(heading);
 
   item.listings.forEach((listing, index) => {
@@ -251,8 +251,8 @@ function renderCandidatePicker(item, listing, index) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "unresolved-picker-item" + (chosenCardNum === c.card_num ? " selected" : "");
-    btn.title = `${c.card_num} ${c.name}`;
-    btn.innerHTML = `<img src="${c.image_url || ""}" alt="" loading="lazy"><span>${escapeHtml(c.card_num)}</span>`;
+    btn.title = `${c.card_num} ${c.name}${c.pack ? ` / ${c.pack}` : ""}`;
+    btn.innerHTML = `<img src="${c.image_url || ""}" alt="" loading="lazy"><span>${escapeHtml(c.card_num)}</span>${c.pack ? `<span class="unresolved-picker-pack">${escapeHtml(c.pack)}</span>` : ""}`;
     btn.addEventListener("click", () => {
       const current = loadManualResolutions();
       current[key] = {

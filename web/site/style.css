@@ -590,7 +590,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  width: 48px;
+  width: 84px;
   padding: 3px;
   border: 2px solid var(--border);
   border-radius: 6px;
@@ -611,7 +611,15 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 44px;
+  max-width: 78px;
+}
+
+.unresolved-picker-item .unresolved-picker-pack {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .unresolved-picker-item.selected {

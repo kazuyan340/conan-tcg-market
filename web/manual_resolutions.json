@@ -241,5 +241,68 @@
   "card_id": 1462,
   "card_num": "PR072",
   "name": "江戸川コナン"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/7963",
+  "site": "トレカバース",
+  "raw_key": "1057",
+  "rarity": "PR",
+  "card_id": 2614,
+  "card_num": "PR274",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/7962",
+  "site": "トレカバース",
+  "raw_key": "1057",
+  "rarity": "PR",
+  "card_id": 2615,
+  "card_num": "PR275",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/3965",
+  "site": "トレカバース",
+  "raw_key": "0618",
+  "rarity": "PR",
+  "card_id": 1422,
+  "card_num": "PR117",
+  "name": "江戸川コナン"
+ },
+ {
+  "product_url": "https://www.mercardconan.jp/product/351",
+  "site": "メルカード",
+  "raw_key": "P001",
+  "rarity": "C",
+  "card_id": 289,
+  "card_num": "B02001",
+  "name": "江戸川コナン"
+ },
+ {
+  "product_url": "https://www.mercardconan.jp/product/366",
+  "site": "メルカード",
+  "raw_key": "P003",
+  "rarity": "C",
+  "card_id": 312,
+  "card_num": "B02016",
+  "name": "服部平次"
+ },
+ {
+  "product_url": "https://www.mercardconan.jp/product/385",
+  "site": "メルカード",
+  "raw_key": "P004",
+  "rarity": "C",
+  "card_id": 344,
+  "card_num": "B02035",
+  "name": "怪盗キッド"
+ },
+ {
+  "product_url": "https://www.mercardconan.jp/product/2885",
+  "site": "メルカード",
+  "raw_key": "609",
+  "rarity": "PR",
+  "card_id": 1425,
+  "card_num": "PR134",
+  "name": "ベルモット"
  }
 ]
