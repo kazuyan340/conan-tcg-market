@@ -304,5 +304,140 @@
   "card_id": 1425,
   "card_num": "PR134",
   "name": "ベルモット"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8793",
+  "site": "わいTV",
+  "raw_key": "0431",
+  "rarity": "PR",
+  "card_id": 2628,
+  "card_num": "PR294",
+  "name": "怪盗キッド"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7737",
+  "site": "わいTV",
+  "raw_key": "0402",
+  "rarity": "PR",
+  "card_id": 461,
+  "card_num": "PR048",
+  "name": "諸伏高明"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7209",
+  "site": "わいTV",
+  "raw_key": "0402",
+  "rarity": "PR",
+  "card_id": 457,
+  "card_num": "PR044",
+  "name": "諸伏高明"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7654",
+  "site": "わいTV",
+  "raw_key": "0404",
+  "rarity": "PR",
+  "card_id": 914,
+  "card_num": "PR060",
+  "name": "服部平次"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7227",
+  "site": "わいTV",
+  "raw_key": "0227",
+  "rarity": "PR",
+  "card_id": 1976,
+  "card_num": "PR204",
+  "name": "羽田秀𠮷"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8782",
+  "site": "わいTV",
+  "raw_key": "0167",
+  "rarity": "D",
+  "card_id": 267,
+  "card_num": "D06003",
+  "name": "服部平次"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6453",
+  "site": "わいTV",
+  "raw_key": "0167",
+  "rarity": "D",
+  "card_id": 268,
+  "card_num": "D06004",
+  "name": "服部平次"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8781",
+  "site": "わいTV",
+  "raw_key": "0169",
+  "rarity": "D",
+  "card_id": 274,
+  "card_num": "D06010",
+  "name": "怪盗キッド"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/5547",
+  "site": "トレカバース",
+  "raw_key": "0832",
+  "rarity": "PR",
+  "card_id": 1965,
+  "card_num": "PR196",
+  "name": "ブルーサファイア"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/5544",
+  "site": "トレカバース",
+  "raw_key": "0832",
+  "rarity": "PR",
+  "card_id": 1964,
+  "card_num": "PR195",
+  "name": "ブルーサファイア"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/7969",
+  "site": "トレカバース",
+  "raw_key": "0619",
+  "rarity": "PR",
+  "card_id": 2620,
+  "card_num": "PR285",
+  "name": "諸伏景光"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/7966",
+  "site": "トレカバース",
+  "raw_key": "0502",
+  "rarity": "PR",
+  "card_id": 2618,
+  "card_num": "PR283",
+  "name": "上原由衣"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/7965",
+  "site": "トレカバース",
+  "raw_key": "0500",
+  "rarity": "PR",
+  "card_id": 2617,
+  "card_num": "PR282",
+  "name": "大和敢助"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/7462",
+  "site": "トレカバース",
+  "raw_key": "P081",
+  "rarity": "PR",
+  "card_id": 2609,
+  "card_num": "PR261",
+  "name": "萩原千速＆横溝重悟＆萩原研二＆松田陣平"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/7461",
+  "site": "トレカバース",
+  "raw_key": "P080",
+  "rarity": "PR",
+  "card_id": 2608,
+  "card_num": "PR260",
+  "name": "江戸川コナン＆世良真純"
  }
 ]
