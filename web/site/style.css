@@ -454,6 +454,11 @@ body {
   font-size: 1.1rem;
 }
 
+.section-heading {
+  margin: 16px 20px 0;
+  font-size: 1.1rem;
+}
+
 .unresolved-section h3 {
   margin: 24px 0 8px;
   font-size: 0.95rem;
