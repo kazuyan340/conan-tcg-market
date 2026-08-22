@@ -2,54 +2,6 @@
  "ambiguous": [
   {
    "site": "わいTV",
-   "raw_key": "0431",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 1496,
-     "card_num": "PR167",
-     "name": "怪盗キッド",
-     "rarity": "PR",
-     "pack": "サンデーS 2025年9月号付録",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753704129582220.jpg"
-    },
-    {
-     "id": 1970,
-     "card_num": "PR197",
-     "name": "怪盗キッド",
-     "rarity": "PR",
-     "pack": "チャレンジ戦 他",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1764290716022546.jpg"
-    },
-    {
-     "id": 2628,
-     "card_num": "PR294",
-     "name": "怪盗キッド",
-     "rarity": "PR",
-     "pack": "プロモーションパックVol.13",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194437594.jpg"
-    },
-    {
-     "id": 2634,
-     "card_num": "PR300",
-     "name": "怪盗キッド",
-     "rarity": "PR",
-     "pack": "プロモーションパックVol.13（キラバージョン）",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194480796.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.cardshop-waitv.net/product/8793",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3130353435323133362e6a706700323430000074006669745f686569676874.jpg",
-     "price": 2080,
-     "product_name": "怪盗キッド",
-     "hint": ""
-    }
-   ]
-  },
-  {
-   "site": "わいTV",
    "raw_key": "0402",
    "rarity": "PR",
    "candidates": [
@@ -104,16 +56,9 @@
    ],
    "listings": [
     {
-     "product_url": "https://www.cardshop-waitv.net/product/7737",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534313232302e6a706700323430000074006669745f686569676874.jpg",
-     "price": 1580,
-     "product_name": "諸伏高明（キラバージョン）",
-     "hint": "annotation='キラバージョン'"
-    },
-    {
-     "product_url": "https://www.cardshop-waitv.net/product/7209",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534313233362e6a706700323430000074006669745f686569676874.jpg",
-     "price": 880,
+     "product_url": "https://www.cardshop-waitv.net/product/10040",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37393730393832392e6a706700323430000074006669745f686569676874.jpg",
+     "price": 2980,
      "product_name": "諸伏高明",
      "hint": ""
     }
@@ -121,423 +66,81 @@
   },
   {
    "site": "わいTV",
-   "raw_key": "0404",
+   "raw_key": "0411",
    "rarity": "PR",
    "candidates": [
     {
-     "id": 914,
-     "card_num": "PR060",
-     "name": "服部平次",
-     "rarity": "PR",
-     "pack": "PRカード（プロモーションパックVol.4）",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1732542002099321.jpg"
-    },
-    {
-     "id": 918,
-     "card_num": "PR064",
-     "name": "服部平次",
-     "rarity": "PR",
-     "pack": "PRカード（プロモーションパックVol.4（キラバージョン））",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1732542002113285.jpg"
-    },
-    {
-     "id": 1427,
-     "card_num": "PR154",
-     "name": "服部平次",
-     "rarity": "PR",
-     "pack": "サンデーS 2025年8月号付録",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/196f2902e533b9.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.cardshop-waitv.net/product/7654",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534303235362e6a706700323430000074006669745f686569676874.jpg",
-     "price": 1980,
-     "product_name": "服部平次",
-     "hint": ""
-    }
-   ]
-  },
-  {
-   "site": "わいTV",
-   "raw_key": "0227",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 1669,
-     "card_num": "PR153",
-     "name": "羽田秀𠮷",
+     "id": 1984,
+     "card_num": "PR212",
+     "name": "工藤新一",
      "rarity": "PR",
      "pack": "チャレンジ戦 他",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/198c702beb63c5.jpg"
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1766493009010120.jpg"
     },
     {
-     "id": 1976,
-     "card_num": "PR204",
-     "name": "羽田秀𠮷",
+     "id": 2813,
+     "card_num": "PR311",
+     "name": "工藤新一",
      "rarity": "PR",
-     "pack": "プロモーションパックVol.10",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1764290716058575.jpg"
+     "pack": "プロモーションパックVol.14",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1785395500851338.jpg"
     },
     {
-     "id": 1982,
-     "card_num": "PR210",
-     "name": "羽田秀𠮷",
+     "id": 2819,
+     "card_num": "PR317",
+     "name": "工藤新一",
      "rarity": "PR",
-     "pack": "プロモーションパックVol.10（キラバージョン）",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1764290716094416.jpg"
+     "pack": "プロモーションパックVol.14（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1785395500895766.jpg"
     }
    ],
    "listings": [
     {
-     "product_url": "https://www.cardshop-waitv.net/product/7227",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303533363638382e6a706700323430000074006669745f686569676874.jpg",
-     "price": 520,
-     "product_name": "羽田秀吉",
+     "product_url": "https://www.cardshop-waitv.net/product/10033",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3133393535323736312e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1480,
+     "product_name": "工藤新一",
      "hint": ""
     }
    ]
   },
   {
    "site": "わいTV",
-   "raw_key": "0167",
-   "rarity": "D",
-   "candidates": [
-    {
-     "id": 267,
-     "card_num": "D06003",
-     "name": "服部平次",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176798125.jpg"
-    },
-    {
-     "id": 268,
-     "card_num": "D06004",
-     "name": "服部平次",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176801241.jpg"
-    },
-    {
-     "id": 285,
-     "card_num": "D06021",
-     "name": "服部平次",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902792192.jpg"
-    },
-    {
-     "id": 287,
-     "card_num": "D06023",
-     "name": "服部平次",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902801757.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.cardshop-waitv.net/product/8782",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534323030302e6a706700323430000074006669745f686569676874.jpg",
-     "price": 680,
-     "product_name": "服部平次",
-     "hint": "pack='CT-D06'"
-    },
-    {
-     "product_url": "https://www.cardshop-waitv.net/product/6453",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534313939362e6a706700323430000074006669745f686569676874.jpg",
-     "price": 380,
-     "product_name": "服部平次",
-     "hint": "pack='CT-D06'"
-    }
-   ]
-  },
-  {
-   "site": "わいTV",
-   "raw_key": "0169",
-   "rarity": "D",
-   "candidates": [
-    {
-     "id": 274,
-     "card_num": "D06010",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176820249.jpg"
-    },
-    {
-     "id": 275,
-     "card_num": "D06011",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176827920.jpg"
-    },
-    {
-     "id": 286,
-     "card_num": "D06022",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902798752.jpg"
-    },
-    {
-     "id": 288,
-     "card_num": "D06024",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902804096.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.cardshop-waitv.net/product/8781",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534313937322e6a706700323430000074006669745f686569676874.jpg",
-     "price": 880,
-     "product_name": "怪盗キッド",
-     "hint": "pack='CT-D06'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
-   "raw_key": "0832",
+   "raw_key": "0445",
    "rarity": "PR",
    "candidates": [
     {
-     "id": 1964,
-     "card_num": "PR195",
-     "name": "ブルーサファイア",
+     "id": 2013,
+     "card_num": "PR233",
+     "name": "赤井秀一",
      "rarity": "PR",
-     "pack": "魅惑の推理パーティー",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/19aaa0308c1288.jpg"
+     "pack": "チャレンジ戦 他",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336072915.jpg"
     },
     {
-     "id": 1965,
-     "card_num": "PR196",
-     "name": "ブルーサファイア",
+     "id": 2814,
+     "card_num": "PR312",
+     "name": "赤井秀一",
      "rarity": "PR",
-     "pack": "魅惑の推理パーティー",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/19aaa0572cd12f.jpg"
+     "pack": "プロモーションパックVol.14",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1785395500859188.jpg"
+    },
+    {
+     "id": 2820,
+     "card_num": "PR318",
+     "name": "赤井秀一",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.14（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1785395500907050.jpg"
     }
    ],
    "listings": [
     {
-     "product_url": "https://www.torecabirth.jp/product/5547",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f31396161613033303863313238382e6a706700323430000074006669745f686569676874.jpg",
-     "price": 17980,
-     "product_name": "ブルーサファイア キラ化工",
-     "hint": "pack_tag='魅惑の推理パーティー'"
-    },
-    {
-     "product_url": "https://www.torecabirth.jp/product/5544",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f31396161613033303863313238382e6a706700323430000074006669745f686569676874.jpg",
-     "price": 780,
-     "product_name": "ブルーサファイア",
-     "hint": "pack_tag='魅惑の推理パーティー'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
-   "raw_key": "0619",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 1426,
-     "card_num": "PR132",
-     "name": "諸伏景光",
-     "rarity": "PR",
-     "pack": "週刊少年サンデー 2025年26号付録",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/196f28d819c18b.jpg"
-    },
-    {
-     "id": 1996,
-     "card_num": "PR213",
-     "name": "諸伏景光",
-     "rarity": "PR",
-     "pack": "サンデーS 2026年3月号付録",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159335966462.jpg"
-    },
-    {
-     "id": 2620,
-     "card_num": "PR285",
-     "name": "諸伏景光",
-     "rarity": "PR",
-     "pack": "サンデーS 定期購読特典",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194382517.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.torecabirth.jp/product/7969",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313737393838353139343338323531372e6a706700323430000074006669745f686569676874.jpg",
-     "price": 4280,
-     "product_name": "諸伏景光",
-     "hint": "pack_tag='少年サンデーS定期購読 ホログラム仕様'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
-   "raw_key": "0502",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 1708,
-     "card_num": "PR177",
-     "name": "上原由衣",
-     "rarity": "PR",
-     "pack": "サンデーS 2025年12月号付録",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1761913346568080.jpg"
-    },
-    {
-     "id": 2618,
-     "card_num": "PR283",
-     "name": "上原由衣",
-     "rarity": "PR",
-     "pack": "サンデーS 定期購読特典",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194368166.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.torecabirth.jp/product/7966",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313737393838353139343336383136362e6a706700323430000074006669745f686569676874.jpg",
-     "price": 1980,
-     "product_name": "上原由衣",
-     "hint": "pack_tag='少年サンデーS定期購読 ホログラム仕様'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
-   "raw_key": "0501",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 1995,
-     "card_num": "PR198",
-     "name": "諸伏高明",
-     "rarity": "PR",
-     "pack": "サンデーS 2026年2月号付録",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/19b58e632131c4.jpg"
-    },
-    {
-     "id": 2619,
-     "card_num": "PR284",
-     "name": "諸伏高明",
-     "rarity": "PR",
-     "pack": "サンデーS 定期購読特典",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194375923.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.torecabirth.jp/product/7968",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313737393838353139343337353932332e6a706700323430000074006669745f686569676874.jpg",
-     "price": 2980,
-     "product_name": "諸伏高明",
-     "hint": "pack_tag='少年サンデーS定期購読 ホログラム仕様'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
-   "raw_key": "0500",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 1966,
-     "card_num": "PR193",
-     "name": "大和敢助",
-     "rarity": "PR",
-     "pack": "サンデーS 2026年1月号付録",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1764290715984597.jpg"
-    },
-    {
-     "id": 2617,
-     "card_num": "PR282",
-     "name": "大和敢助",
-     "rarity": "PR",
-     "pack": "サンデーS 定期購読特典",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194361655.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.torecabirth.jp/product/7965",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313737393838353139343336313635352e6a706700323430000074006669745f686569676874.jpg",
-     "price": 1980,
-     "product_name": "大和敢助",
-     "hint": "pack_tag='少年サンデーS定期購読 ホログラム仕様'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
-   "raw_key": "P081",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 2607,
-     "card_num": "PR259",
-     "name": "萩原千速＆横溝重悟＆萩原研二＆松田陣平",
-     "rarity": "PR",
-     "pack": "名探偵コナンスタンプラリー2026",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1776331415761887.jpg"
-    },
-    {
-     "id": 2609,
-     "card_num": "PR261",
-     "name": "萩原千速＆横溝重悟＆萩原研二＆松田陣平",
-     "rarity": "PR",
-     "pack": "名探偵コナンスタンプラリー2026",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1776331415776369.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.torecabirth.jp/product/7462",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313737363333313431353737363336392e6a706700323430000074006669745f686569676874.jpg",
-     "price": 2980,
-     "product_name": "萩原千速＆横溝重悟＆萩原研二＆松田陣平",
-     "hint": "pack_tag='名探偵コナンスタンプラリー2026'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
-   "raw_key": "P080",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 2606,
-     "card_num": "PR258",
-     "name": "江戸川コナン＆世良真純",
-     "rarity": "PR",
-     "pack": "名探偵コナンスタンプラリー2026",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1776331415751744.jpg"
-    },
-    {
-     "id": 2608,
-     "card_num": "PR260",
-     "name": "江戸川コナン＆世良真純",
-     "rarity": "PR",
-     "pack": "名探偵コナンスタンプラリー2026",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1776331415769450.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.torecabirth.jp/product/7461",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313737363333313431353736393435302e6a706700323430000074006669745f686569676874.jpg",
-     "price": 2580,
-     "product_name": "江戸川コナン＆世良真純",
-     "hint": "pack_tag='名探偵コナンスタンプラリー2026'"
+     "product_url": "https://www.cardshop-waitv.net/product/10032",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3133393535323735332e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1280,
+     "product_name": "赤井秀一",
+     "hint": ""
     }
    ]
   },
@@ -1222,6 +825,20 @@
   },
   {
    "site": "フルアヘッド",
+   "raw_key": "A03002",
+   "rarity": null,
+   "price": 380,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    380
+   ]
+  },
+  {
+   "site": "フルアヘッド",
    "raw_key": "A03005",
    "rarity": null,
    "price": 120,
@@ -1232,6 +849,34 @@
    "listing_count": 1,
    "prices": [
     120
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "A03036",
+   "rarity": null,
+   "price": 80,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    80
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "A03006P",
+   "rarity": null,
+   "price": 80,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    80
    ]
   },
   {
@@ -1306,6 +951,34 @@
   },
   {
    "site": "フルアヘッド",
+   "raw_key": "A05009",
+   "rarity": null,
+   "price": 120,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    120
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "A05010",
+   "rarity": null,
+   "price": 80,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    80
+   ]
+  },
+  {
+   "site": "フルアヘッド",
    "raw_key": "A05030",
    "rarity": null,
    "price": 120,
@@ -1320,16 +993,30 @@
   },
   {
    "site": "フルアヘッド",
-   "raw_key": "A05092",
+   "raw_key": "A05069",
    "rarity": null,
-   "price": 180,
+   "price": 120,
    "hint": "",
    "product_name": "",
    "image_url": null,
    "product_url": null,
    "listing_count": 1,
    "prices": [
-    180
+    120
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "A05078",
+   "rarity": null,
+   "price": 80,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    80
    ]
   },
   {
@@ -1362,6 +1049,20 @@
   },
   {
    "site": "フルアヘッド",
+   "raw_key": "A05089P2",
+   "rarity": null,
+   "price": 280,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    280
+   ]
+  },
+  {
+   "site": "フルアヘッド",
    "raw_key": "A06041",
    "rarity": null,
    "price": 80,
@@ -1386,6 +1087,20 @@
    "listing_count": 1,
    "prices": [
     1780
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "A06069",
+   "rarity": null,
+   "price": 80,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    80
    ]
   },
   {
@@ -1470,6 +1185,48 @@
    "listing_count": 1,
    "prices": [
     2780
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "SP003",
+   "rarity": null,
+   "price": 780,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    780
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "SP004",
+   "rarity": null,
+   "price": 580,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    580
+   ]
+  },
+  {
+   "site": "フルアヘッド",
+   "raw_key": "SP006",
+   "rarity": null,
+   "price": 580,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    580
    ]
   },
   {
@@ -3253,8 +3010,8 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "名探偵コナンTCG Case-StartDeck02 「服部平次」 ",
-   "rarity": "CT-D02",
+   "raw_key": "名探偵コナンTCG Case-StartDeck04 「赤井秀一」 ",
+   "rarity": "CT-D04",
    "price": 500,
    "hint": "",
    "product_name": "",
@@ -3268,8 +3025,8 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "名探偵コナンTCG Case-StartDeck04 「赤井秀一」 ",
-   "rarity": "CT-D04",
+   "raw_key": "名探偵コナンTCG Case-StartDeck02 「服部平次」 ",
+   "rarity": "CT-D02",
    "price": 500,
    "hint": "",
    "product_name": "",
@@ -3311,7 +3068,7 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "S-TD-C02/0019",
+   "raw_key": "S-TD-C01/0020",
    "rarity": "-",
    "price": 160,
    "hint": "",
@@ -3325,7 +3082,7 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "S-TD-C01/0020",
+   "raw_key": "S-TD-C02/0019",
    "rarity": "-",
    "price": 160,
    "hint": "",
@@ -3733,7 +3490,7 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "CNN/02E-023",
+   "raw_key": "CNN/02E-038",
    "rarity": "R",
    "price": 160,
    "hint": "",
@@ -3747,7 +3504,7 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "CNN/02E-038",
+   "raw_key": "CNN/02E-023",
    "rarity": "R",
    "price": 160,
    "hint": "",
@@ -3831,20 +3588,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "CNN/02E-036",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "",
-   "image_url": null,
-   "product_url": null,
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "CNN/02E-013",
    "rarity": "R",
    "price": 160,
@@ -3860,6 +3603,20 @@
   {
    "site": "駿河屋",
    "raw_key": "CNN/02E-009",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "CNN/02E-036",
    "rarity": "R",
    "price": 160,
    "hint": "",
@@ -3901,6 +3658,20 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "CNN/02E-033",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "CNN/02E-007",
    "rarity": "R",
    "price": 160,
@@ -3929,7 +3700,7 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "CNN/02E-033",
+   "raw_key": "CNN/02E-031",
    "rarity": "R",
    "price": 160,
    "hint": "",
@@ -3957,20 +3728,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "CNN/02E-035",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "",
-   "image_url": null,
-   "product_url": null,
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "CNN/02E-020",
    "rarity": "R",
    "price": 160,
@@ -3985,7 +3742,35 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "CNN/02E-031",
+   "raw_key": "CNN/02E-035",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "CNN/02E-029",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "",
+   "image_url": null,
+   "product_url": null,
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "CNN/02E-026",
    "rarity": "R",
    "price": 160,
    "hint": "",
@@ -4041,21 +3826,7 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "CNN/02E-029",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "",
-   "image_url": null,
-   "product_url": null,
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "CNN/02E-026",
+   "raw_key": "CNN/02E-027",
    "rarity": "R",
    "price": 160,
    "hint": "",
@@ -4070,20 +3841,6 @@
   {
    "site": "駿河屋",
    "raw_key": "CNN/02E-015",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "",
-   "image_url": null,
-   "product_url": null,
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "CNN/02E-027",
    "rarity": "R",
    "price": 160,
    "hint": "",
