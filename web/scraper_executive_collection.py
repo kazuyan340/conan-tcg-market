@@ -18,8 +18,10 @@
 
 card_idが既存カードに1件も無い(=完全新規カードで複製元が無い)場合は、商品写真の
 解像度がゲームデータをOCRで読み取れるほど高くないため、誤ったデータを作るより
-記録しない方が安全と判断してスキップする(2026年8月時点で[02]の「コナン界の
-かっ飛び女大集合！」card_id=1159が該当)。
+記録しない方が安全と判断してスキップする。ただし、ユーザーが実物のカードを見て
+種別・ゲームデータを確認済みのものはMANUAL_CARD_DATAに登録し、複製元の代わりに使う
+(2026年8月時点でcard_id=1159「コナン界のかっ飛び女大集合！(仮)」が該当。事件カードで
+レベル/AP/LP/能力テキストはいずれも印刷が無いことをユーザーが確認済み)。
 
 対象カテゴリはトレカバースの「コナンカード:エグゼクティブコレクション」配下の
 サブカテゴリ(141=[01] Flashback of 2025, 142=[02]Highway in 2026)。未開封の
@@ -62,6 +64,16 @@ EXEC_ID_BASE = 900_000_000
 
 # データの出どころを示すタグ。cards.data_source列に入れる。
 DATA_SOURCE = "shop:torecabirth"
+
+# 複製元(同じcard_idの既存カード)が存在しないカードのうち、ユーザーが実物のカードを
+# 見てゲームデータを確認済みのもの。card_id -> cardsテーブルの列値(明記の無い列はNone)。
+MANUAL_CARD_DATA: dict[str, dict] = {
+    "1159": {
+        "name": "コナン界のかっ飛び女大集合！(仮)",
+        "card_type": "事件",
+        "color": "黄",
+    },
+}
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -215,8 +227,18 @@ def sync_executive_collection(conn=None, delay: float = REQUEST_DELAY_SEC) -> di
                     "SELECT * FROM cards WHERE card_id = ? LIMIT 1", (card_id,)
                 ).fetchone()
                 if not source:
-                    skipped_no_source.append((name, card_id))
-                    continue
+                    manual = MANUAL_CARD_DATA.get(card_id)
+                    if manual is None:
+                        skipped_no_source.append((name, card_id))
+                        continue
+                    source = {
+                        "card_id": card_id, "name": None, "card_type": None, "color": None,
+                        "category": None, "level": None, "ap": None, "lp": None,
+                        "ability_text": None, "hirameki": None, "cut_in": None, "henso": None,
+                        "difficulty_first": None, "difficulty_second": None, "flavor_text": None,
+                        "illustrator": None, "image_url": None, "sub_image_url": None, "q_a": None,
+                        **manual,
+                    }
 
                 image_url = source["image_url"]
                 if detail_url:
