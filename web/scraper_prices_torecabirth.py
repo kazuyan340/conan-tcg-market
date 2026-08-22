@@ -147,6 +147,25 @@ def _normalize_pack_text(text: str | None) -> str:
         text = text.replace(ch, "")
     return text
 
+
+# ショップのパック注記とcards.packの表記が完全一致しない場合の最終手段。
+# 「定期購読」を含むcards.packはDB全体で「サンデーS 定期購読特典」の1件のみ
+# (2026年8月時点で確認済み)なので、注記にこのキーワードが入っていれば、その
+# キーワードを含むpackを持つ候補が同一raw_key内でちょうど1件のときに限り一致とみなす。
+PACK_KEYWORDS = ["定期購読"]
+
+
+def _resolve_by_pack_keyword(
+    candidates: list[tuple[int, str]], pack_tag: str, pack_text_by_id: dict[int, str]
+) -> int | None:
+    for keyword in PACK_KEYWORDS:
+        if keyword not in pack_tag:
+            continue
+        matched = [pk for pk, _ in candidates if keyword in pack_text_by_id.get(pk, "")]
+        if len(matched) == 1:
+            return matched[0]
+    return None
+
 logger = logging.getLogger(__name__)
 
 
@@ -221,22 +240,26 @@ def build_lookup(conn):
     - (card_id, レアリティ, 正規化したパック名) -> [(cards.id, card_num), ...] (プロモカテゴリ用。
       商品名の「[プロモーションパックVol.8キラバージョン]」等をcards.packと突き合わせる)
     - (card_id, レアリティ) -> [(cards.id, card_num), ...] (どちらでも絞り込めない場合の最終フォールバック)
+
+    加えて、cards.id -> pack本文の辞書も返す(_resolve_by_pack_keyword用)。
     """
     lookup_with_pack: dict[tuple[str, str, str], list[tuple[int, str]]] = defaultdict(list)
     lookup_by_promo_pack: dict[tuple[str, str, str], list[tuple[int, str]]] = defaultdict(list)
     lookup: dict[tuple[str, str], list[tuple[int, str]]] = defaultdict(list)
+    pack_text_by_id: dict[int, str] = {}
     for row in db.search_cards(conn):
         base_key = (row["card_id"], row["rarity"])
         entry = (row["id"], row["card_num"])
         lookup[base_key].append(entry)
         pack = row["pack"] or ""
+        pack_text_by_id[row["id"]] = pack
         pack_code = pack.split()[0] if pack.split() else ""
         if pack_code:
             lookup_with_pack[(base_key[0], base_key[1], pack_code)].append(entry)
         normalized_pack = _normalize_pack_text(pack)
         if normalized_pack:
             lookup_by_promo_pack[(base_key[0], base_key[1], normalized_pack)].append(entry)
-    return lookup_with_pack, lookup_by_promo_pack, lookup
+    return lookup_with_pack, lookup_by_promo_pack, lookup, pack_text_by_id
 
 
 def _narrow_by_variant(candidates: list[tuple[int, str]], variant: str | None) -> int | None:
@@ -301,7 +324,7 @@ def _resolve_foil_pair(candidates: list[tuple[int, str]], is_foil: bool) -> int 
     return ordered[0][0] if is_foil else ordered[1][0]
 
 
-def resolve_candidate(model_number, rarity, pack_code, pack_tag, variant, lookup_with_pack, lookup_by_promo_pack, lookup):
+def resolve_candidate(model_number, rarity, pack_code, pack_tag, variant, lookup_with_pack, lookup_by_promo_pack, lookup, pack_text_by_id):
     """(card_id, レアリティ, パックコード, プロモパック名の注記, 判別用の注記) から、
     1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
     """
@@ -319,6 +342,10 @@ def resolve_candidate(model_number, rarity, pack_code, pack_tag, variant, lookup
             return _narrow_by_variant(promo_candidates, variant)
 
     base_candidates = lookup.get((model_number, rarity), [])
+    if pack_tag:
+        keyword_resolved = _resolve_by_pack_keyword(base_candidates, pack_tag, pack_text_by_id)
+        if keyword_resolved is not None:
+            return keyword_resolved
     return _narrow_by_variant(base_candidates, variant)
 
 
@@ -333,7 +360,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
         conn = db.get_connection()
         db.init_db(conn)
 
-    lookup_with_pack, lookup_by_promo_pack, lookup = build_lookup(conn)
+    lookup_with_pack, lookup_by_promo_pack, lookup, pack_text_by_id = build_lookup(conn)
     logger.info("価格取得対象: %d件(card_id x レアリティの組み合わせ)", len(lookup))
 
     all_prices: dict[int, list[int]] = defaultdict(list)
@@ -366,7 +393,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     if card_pk is None:
                         card_pk = resolve_candidate(
                             model_number, rarity, pack_code, pack_tag, variant,
-                            lookup_with_pack, lookup_by_promo_pack, lookup,
+                            lookup_with_pack, lookup_by_promo_pack, lookup, pack_text_by_id,
                         )
                     if card_pk is None:
                         hint_parts = [f"pack_tag={pack_tag!r}"] if pack_tag else []
