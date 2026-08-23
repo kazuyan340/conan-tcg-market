@@ -637,5 +637,23 @@
   "card_id": 1485,
   "card_num": "PR156",
   "name": "「もう少し引き付けろ…」"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/3020",
+  "site": "トレカバース",
+  "raw_key": "0183",
+  "rarity": "PR",
+  "card_id": 1173,
+  "card_num": "PR097",
+  "name": "灰原哀"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/3966",
+  "site": "トレカバース",
+  "raw_key": "0618",
+  "rarity": "PR",
+  "card_id": 1423,
+  "card_num": "PR118",
+  "name": "江戸川コナン"
  }
 ]
