@@ -22,6 +22,7 @@ import time
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -30,7 +31,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 from unresolved_report import write_unresolved
 
-LIST_URL = "https://shopmanzokuya.com/products/list"
+BASE_URL = "https://shopmanzokuya.com"
+LIST_URL = BASE_URL + "/products/list"
 CATEGORY_ID = 3556
 PAGE_SIZE = 100
 
@@ -62,8 +64,11 @@ def fetch_page(page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, int]]:
-    """(card_num, price) のリストを返す。在庫0件(品切れ)の商品は除外する。"""
+def parse_items(html: str) -> list[tuple[str, int, str | None, str | None, str | None]]:
+    """(card_num, price, 商品名(あれば), 商品画像URL(あれば), 商品ページURL(あれば))
+    のリストを返す。在庫0件(品切れ)の商品は除外する。末尾3つは価格照合には使わず、
+    1枚に特定できなかった場合の管理ページ表示用(unresolved_report参照)。
+    """
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for li in soup.select("li.ec-shelfGrid__item"):
@@ -79,10 +84,16 @@ def parse_items(html: str) -> list[tuple[str, int]]:
             if re.search(r"在庫:0\b", stock_text):
                 continue
 
-        m = CARD_NUM_PATTERN.search(name_el.get_text())
+        product_name = name_el.get_text(strip=True)
+        m = CARD_NUM_PATTERN.search(product_name)
         if not m:
             continue
         card_num = m.group(0)
+
+        link_el = li.find("a", href=True)
+        product_url = link_el["href"] if link_el else None
+        img_el = li.select_one(".ec-shelfGrid__item-image img")
+        image_url = urljoin(BASE_URL, img_el["src"]) if img_el and img_el.get("src") else None
 
         price_el = li.select_one(".price02-default")
         if not price_el:
@@ -94,7 +105,7 @@ def parse_items(html: str) -> list[tuple[str, int]]:
         except ValueError:
             continue
 
-        results.append((card_num, price))
+        results.append((card_num, price, product_name, image_url, product_url))
     return results
 
 
@@ -143,9 +154,12 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 total = parse_total_count(html)
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-            for card_num, price in parse_items(html):
+            for card_num, price, product_name, image_url, product_url in parse_items(html):
                 if card_num not in target_by_num:
-                    unresolved_entries.append({"raw_key": card_num, "rarity": None, "price": price, "hint": ""})
+                    unresolved_entries.append({
+                        "raw_key": card_num, "rarity": None, "price": price, "hint": "",
+                        "product_name": product_name, "image_url": image_url, "product_url": product_url,
+                    })
                     continue
                 all_prices[card_num].append(price)
 
