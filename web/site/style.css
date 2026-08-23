@@ -448,6 +448,17 @@ body {
   font-size: 1.1rem;
 }
 
+.affiliate-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 20px 0;
+}
+
+.affiliate-links a {
+  text-decoration: none;
+}
+
 .unresolved-section h3 {
   margin: 24px 0 8px;
   font-size: 0.95rem;
