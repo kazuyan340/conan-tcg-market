@@ -64,6 +64,10 @@ NAME_PATTERN = re.compile(r"^([^\[]+)\[([^\]]+)\](?:[:：](.*))?$")
 PRICE_PATTERN = re.compile(r"[\d,]+")
 PAGE_LINK_PATTERN = re.compile(r"[?&]page=(\d+)")
 
+# 駿河屋の商品カテゴリ欄(.item_detail .condition.background-kishu)の先頭がこの
+# 文字列でなければ、無関係な他ジャンル商品として除外する(parse_items参照)。
+CATEGORY_PREFIX = "名探偵コナンカードゲーム"
+
 logger = logging.getLogger(__name__)
 
 
@@ -110,6 +114,17 @@ def parse_items(html: str) -> list[tuple[str, str, int | None, str | None, str |
         m = NAME_PATTERN.match(name_el.get_text(strip=True))
         if not m:
             continue
+
+        # 検索は「名探偵コナンTCG {レアリティ}」というゆるいキーワード一致で行って
+        # いるため、無関係な商品が紛れ込むことがある(実例: バディファイトの
+        # コナンコラボブースター「S-UB-C01/S005[究極レア]：名探偵コナン」が、
+        # 商品名にたまたま「名探偵コナン」を含むだけでヒットしていた)。カテゴリ欄の
+        # 先頭が「名探偵コナンカードゲーム」であることを確認し、他ジャンルの商品を除外する。
+        category_el = item.select_one(".item_detail .condition.background-kishu")
+        category_text = category_el.get_text(strip=True) if category_el else ""
+        if not category_text.startswith(CATEGORY_PREFIX):
+            continue
+
         card_num, rarity = m.group(1), m.group(2)
         product_name = m.group(3).strip() if m.group(3) else None
 
