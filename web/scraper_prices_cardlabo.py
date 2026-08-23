@@ -47,6 +47,12 @@ MAX_PAGES = 60  # 安全のための上限(実際の最終ページはparse_tota
 # 呼び出し側でテキスト抽出(get_text)した後にこの正規表現を適用する。
 NAME_PATTERN = re.compile(r"【([^】]+)】(?:[^【\[]*)\[([^\]\[]+)\]\s*$")
 
+# 上と同じ商品名テキストからキャラ名部分だけを取り出す(管理ページの
+# 「反映できていないカード」一覧に表示するため。価格照合には使わない)。
+# レアリティの後ろにパック略称が挟まることがある(例:
+# "【CTCG】犯人【C】CT-P02[B02088]")ため、末尾の[型番]の直前は任意の文字列を許容する。
+PRODUCT_NAME_PATTERN = re.compile(r"^【CTCG】(.+?)【[^】]+】[^【\[]*\[[^\]]+\]\s*$")
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,9 +63,11 @@ def fetch_search_page(page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, int | None]]:
-    """(card_num, rarity, price) のリストを返す。在庫切れの場合はpriceがNoneになる
-    (呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。
+def parse_items(html: str) -> list[tuple[str, str, int | None, str | None, str | None, str | None]]:
+    """(card_num, rarity, price, キャラ名(あれば), 商品画像URL(あれば),
+    商品ページURL(あれば)) のリストを返す。在庫切れの場合はpriceがNoneになる
+    (呼び出し側で「今回は在庫切れと確認できた」の判定に使う)。末尾3つは価格照合
+    には使わず、1枚に特定できなかった場合の管理ページ表示用(unresolved_report参照)。
     """
     soup = BeautifulSoup(html, "html.parser")
     results = []
@@ -68,13 +76,21 @@ def parse_items(html: str) -> list[tuple[str, str, int | None]]:
         if not name_el:
             continue
 
-        m = NAME_PATTERN.search(name_el.get_text())
+        name_text = name_el.get_text()
+        m = NAME_PATTERN.search(name_text)
         if not m:
             continue
         rarity, card_num = m.group(1), m.group(2)
 
+        name_m = PRODUCT_NAME_PATTERN.match(name_text)
+        product_name = name_m.group(1) if name_m else None
+        photo_el = li.select_one(".global_photo")
+        image_url = photo_el.get("data-src") if photo_el else None
+        link_el = li.select_one("a.item_data_link")
+        product_url = link_el.get("href") if link_el else None
+
         if "list_item_soldout" in (li.get("class") or []):
-            results.append((card_num, rarity, None))
+            results.append((card_num, rarity, None, product_name, image_url, product_url))
             continue
 
         price_el = li.select_one(".price .figure")
@@ -87,7 +103,7 @@ def parse_items(html: str) -> list[tuple[str, str, int | None]]:
         except ValueError:
             continue
 
-        results.append((card_num, rarity, price))
+        results.append((card_num, rarity, price, product_name, image_url, product_url))
     return results
 
 
@@ -139,10 +155,13 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 total = parse_total_count(html)
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
-            for card_num, rarity, price in parse_items(html):
+            for card_num, rarity, price, product_name, image_url, product_url in parse_items(html):
                 if card_num not in target_by_num or price is None:
                     if card_num not in target_by_num and price is not None:
-                        unresolved_entries.append({"raw_key": card_num, "rarity": rarity, "price": price, "hint": ""})
+                        unresolved_entries.append({
+                            "raw_key": card_num, "rarity": rarity, "price": price, "hint": "",
+                            "product_name": product_name, "image_url": image_url, "product_url": product_url,
+                        })
                     continue
                 all_prices[card_num].append(price)
 
