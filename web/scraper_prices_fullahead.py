@@ -21,6 +21,7 @@ import time
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -29,8 +30,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 from unresolved_report import write_unresolved
 
+BASE_URL = "https://www.full-conan.com"
 # ページ1も含めて/shopbrand/conan/page{N}/recommend/ で統一してアクセスできる。
-LIST_URL_TEMPLATE = "https://www.full-conan.com/shopbrand/conan/page{page}/recommend/"
+LIST_URL_TEMPLATE = BASE_URL + "/shopbrand/conan/page{page}/recommend/"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -58,9 +60,11 @@ def fetch_page(page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, int | None]]:
-    """(card_num, price) のリストを返す。売り切れの場合はpriceがNoneになる
-    (呼び出し側で「今回は売り切れと確認できた」の判定に使う)。
+def parse_items(html: str) -> list[tuple[str, int | None, str | None, str | None, str | None]]:
+    """(card_num, price, 商品名(あれば), 商品画像URL(あれば), 商品ページURL(あれば))
+    のリストを返す。売り切れの場合はpriceがNoneになる(呼び出し側で「今回は
+    売り切れと確認できた」の判定に使う)。末尾3つは価格照合には使わず、1枚に
+    特定できなかった場合の管理ページ表示用(unresolved_report参照)。
     """
     soup = BeautifulSoup(html, "html.parser")
     results = []
@@ -69,16 +73,22 @@ def parse_items(html: str) -> list[tuple[str, int | None]]:
         if not container:
             continue
 
-        m = CARD_NUM_PATTERN.match(name_el.get_text().strip() + " ")
+        product_name = name_el.get_text().strip()
+        m = CARD_NUM_PATTERN.match(product_name + " ")
         if not m:
             continue
         card_num = m.group(1)
+
+        link_el = container.find("a", href=True)
+        product_url = urljoin(BASE_URL, link_el["href"]) if link_el else None
+        img_el = container.select_one(".itemImg img")
+        image_url = img_el.get("src") if img_el else None
 
         # 売り切れ商品は<p class="soldout">sold out</p>が同じブロック内に付くが、
         # 価格(<strong>)自体は最後に売れた時の値段が残ったままなので、これを
         # チェックしないと在庫切れの古い価格を最新の相場として記録してしまう。
         if container.select_one(".soldout"):
-            results.append((card_num, None))
+            results.append((card_num, None, product_name, image_url, product_url))
             continue
 
         price_el = container.select_one(".itemPrice strong")
@@ -91,7 +101,7 @@ def parse_items(html: str) -> list[tuple[str, int | None]]:
         except ValueError:
             continue
 
-        results.append((card_num, price))
+        results.append((card_num, price, product_name, image_url, product_url))
     return results
 
 
@@ -137,10 +147,13 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 total = parse_total_count(html)
                 last_page = max(1, -(-total // page_size))  # 切り上げ除算
 
-            for card_num, price in parse_items(html):
+            for card_num, price, product_name, image_url, product_url in parse_items(html):
                 if card_num not in target_by_num or price is None:
                     if card_num not in target_by_num and price is not None:
-                        unresolved_entries.append({"raw_key": card_num, "rarity": None, "price": price, "hint": ""})
+                        unresolved_entries.append({
+                            "raw_key": card_num, "rarity": None, "price": price, "hint": "",
+                            "product_name": product_name, "image_url": image_url, "product_url": product_url,
+                        })
                     continue
                 all_prices[card_num].append(price)
 

@@ -92,9 +92,11 @@ def fetch_search_page(session: requests.Session, rarity: str, page: int) -> str:
     return resp.text
 
 
-def parse_items(html: str) -> list[tuple[str, str, int | None]]:
-    """(card_num, rarity, price) のリストを返す。品切れの場合はpriceがNoneになる
-    (呼び出し側で「今回は品切れと確認できた」の判定に使う)。
+def parse_items(html: str) -> list[tuple[str, str, int | None, str | None, str | None, str | None]]:
+    """(card_num, rarity, price, キャラ名(あれば), 商品画像URL(あれば),
+    商品ページURL(あれば)) のリストを返す。品切れの場合はpriceがNoneになる
+    (呼び出し側で「今回は品切れと確認できた」の判定に使う)。末尾3つは価格照合
+    には使わず、1枚に特定できなかった場合の管理ページ表示用(unresolved_report参照)。
 
     商品名・価格・品切れ状態を`div.item`単位でまとめて取るため、ページ内の
     件数が食い違って対応がずれる心配が無い(モジュールdocstring参照)。
@@ -109,13 +111,19 @@ def parse_items(html: str) -> list[tuple[str, str, int | None]]:
         if not m:
             continue
         card_num, rarity = m.group(1), m.group(2)
+        product_name = m.group(3).strip() if m.group(3) else None
+
+        thumb_link = item.select_one(".photo_box .thum a")
+        product_url = thumb_link.get("href") if thumb_link else None
+        img_el = item.select_one(".photo_box .thum img")
+        image_url = img_el.get("src") if img_el else None
 
         price_el = item.select_one(".item_price")
         if not price_el:
             continue
 
         if "品切れ" in price_el.get_text():
-            results.append((card_num, rarity, None))
+            results.append((card_num, rarity, None, product_name, image_url, product_url))
             continue
 
         teika_el = price_el.select_one(".price_teika")
@@ -124,7 +132,7 @@ def parse_items(html: str) -> list[tuple[str, str, int | None]]:
         price_m = PRICE_PATTERN.search(teika_el.get_text())
         if not price_m:
             continue
-        results.append((card_num, rarity, int(price_m.group(0).replace(",", ""))))
+        results.append((card_num, rarity, int(price_m.group(0).replace(",", "")), product_name, image_url, product_url))
     return results
 
 
@@ -188,10 +196,13 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                     last_page = parse_last_page(html)
 
                 items = parse_items(html)
-                for card_num, item_rarity, price in items:
+                for card_num, item_rarity, price, product_name, image_url, product_url in items:
                     if card_num not in target_by_num or price is None:
                         if card_num not in target_by_num and price is not None:
-                            unresolved_entries.append({"raw_key": card_num, "rarity": item_rarity, "price": price, "hint": ""})
+                            unresolved_entries.append({
+                                "raw_key": card_num, "rarity": item_rarity, "price": price, "hint": "",
+                                "product_name": product_name, "image_url": image_url, "product_url": product_url,
+                            })
                         continue
                     all_prices[card_num].append(price)
 
