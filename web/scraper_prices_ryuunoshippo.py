@@ -44,12 +44,21 @@ REQUEST_TIMEOUT = 15
 REQUEST_DELAY_SEC = 30
 MAX_PAGES = 60  # 安全のための上限(実際の最終ページはparse_total_countから算出)
 
-# 例: "[1082]服部平蔵&遠山銀司郎(MR)(B10021)"
-NAME_PATTERN = re.compile(r"\(([^()]+)\)\(([^()]+)\)\s*$")
+# 例: "[1082]服部平蔵&遠山銀司郎(MR)(B10021)"。まれに複数イラストレーター違いの
+# 商品は末尾にもう1つ"(illust.XXX)"が付く(例:
+# "[0739]沖野ヨーコ(CP)(B07007P)(illust.ぬい)")ため、これがあっても本来の
+# (レアリティ)(カード番号)の位置がずれないよう、末尾のillustカッコは任意で許容する。
+NAME_PATTERN = re.compile(r"\(([^()]+)\)\(([^()]+)\)(?:\(illust\.[^()]*\))?\s*$")
+
+# CT-P08弾等の一部の商品は、末尾のカード番号カッコの中に内部IDが二重に
+# 埋め込まれている(例: "[0884]赤井秀一&ジョディ・スターリング(MRP)([0884]B08046P)"
+# のように、先頭と同じ"[0884]"がカード番号側にも付く)。この場合card_numを
+# 正しく取り出すため、先頭の"[...]"だけを取り除く。
+LEADING_ID_PATTERN = re.compile(r"^\[[^\]]*\]")
 
 # 上と同じ商品名テキストからキャラ名部分だけを取り出す(管理ページの
 # 「反映できていないカード」一覧に表示するため。価格照合には使わない)。
-PRODUCT_NAME_PATTERN = re.compile(r"^\[[^\]]+\](.+?)\([^()]+\)\([^()]+\)\s*$")
+PRODUCT_NAME_PATTERN = re.compile(r"^\[[^\]]+\](.+?)\([^()]+\)\([^()]+\)(?:\(illust\.[^()]*\))?\s*$")
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +87,7 @@ def parse_items(html: str) -> list[tuple[str, str, int | None, str | None, str |
         m = NAME_PATTERN.search(name_text)
         if not m:
             continue
-        rarity, card_num = m.group(1), m.group(2)
+        rarity, card_num = m.group(1), LEADING_ID_PATTERN.sub("", m.group(2))
 
         name_m = PRODUCT_NAME_PATTERN.match(name_text)
         product_name = name_m.group(1) if name_m else None
@@ -154,14 +163,26 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
             for card_num, rarity, price, product_name, image_url, product_url in parse_items(html):
-                if card_num not in target_by_num or price is None:
-                    if card_num not in target_by_num and price is not None:
+                # 一部の商品(CT-P08弾等)は、レアリティが「RP」「CP」等パラレル系
+                # なのにカッコ内のカード番号だけ"P"が付いていない(ショップ側の表記漏れ、
+                # 実例多数で確認済み)。パラレル系レアリティで素のcard_numがヒットしない
+                # 場合に限り、末尾"P"を補って再照合する。
+                lookup_num = card_num
+                if (
+                    lookup_num not in target_by_num
+                    and rarity and rarity.endswith("P") and not lookup_num.endswith("P")
+                    and (lookup_num + "P") in target_by_num
+                ):
+                    lookup_num = lookup_num + "P"
+
+                if lookup_num not in target_by_num or price is None:
+                    if lookup_num not in target_by_num and price is not None:
                         unresolved_entries.append({
                             "raw_key": card_num, "rarity": rarity, "price": price, "hint": "",
                             "product_name": product_name, "image_url": image_url, "product_url": product_url,
                         })
                     continue
-                all_prices[card_num].append(price)
+                all_prices[lookup_num].append(price)
 
             if progress_callback:
                 progress_callback(page, last_page, len(all_prices))
