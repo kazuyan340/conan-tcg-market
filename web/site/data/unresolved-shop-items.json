@@ -2,6 +2,349 @@
  "ambiguous": [
   {
    "site": "わいTV",
+   "raw_key": "0940",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2613,
+     "card_num": "PR287",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "チャレンジ戦 他",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/19db9914eeb1a7.jpg"
+    },
+    {
+     "id": 2637,
+     "card_num": "PR278",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "ちゃお 2026年6月号付録",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1782441097692224.jpg"
+    },
+    {
+     "id": 2808,
+     "card_num": "PR306",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "サンデーS 2026年9月号付録",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1785395500805491.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10074",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3133373132393932332e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1380,
+     "product_name": "萩原千速",
+     "hint": ""
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "1060",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2623,
+     "card_num": "PR289",
+     "name": "円谷光彦",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.13",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194402942.jpg"
+    },
+    {
+     "id": 2629,
+     "card_num": "PR295",
+     "name": "円谷光彦",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.13（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1779885194445319.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10039",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3130353435323133322e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1250,
+     "product_name": "円谷光彦（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "1056",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2169,
+     "card_num": "PR265",
+     "name": "風見裕也",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.12",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1774884005664960.jpg"
+    },
+    {
+     "id": 2175,
+     "card_num": "PR271",
+     "name": "風見裕也",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.12（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1774884005702702.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/7260",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37393730393831332e6a706700323430000074006669745f686569676874.jpg",
+     "price": 880,
+     "product_name": "風見裕也（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "1054",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2167,
+     "card_num": "PR263",
+     "name": "怪盗キッド",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.12",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1774884005651341.jpg"
+    },
+    {
+     "id": 2173,
+     "card_num": "PR269",
+     "name": "怪盗キッド",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.12（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1774884005689584.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/8529",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37393730393832312e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1180,
+     "product_name": "怪盗キッド（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "0027",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 1497,
+     "card_num": "PR168",
+     "name": "遠山和葉",
+     "rarity": "PR",
+     "pack": "チャレンジ戦 他",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753704129587829.jpg"
+    },
+    {
+     "id": 2018,
+     "card_num": "PR238",
+     "name": "遠山和葉",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.11",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159371817453.jpg"
+    },
+    {
+     "id": 2024,
+     "card_num": "PR244",
+     "name": "遠山和葉",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.11（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159371922728.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/7222",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303533363433362e6a706700323430000074006669745f686569676874.jpg",
+     "price": 4280,
+     "product_name": "遠山和葉（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    },
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10042",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303533363436302e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1980,
+     "product_name": "遠山和葉",
+     "hint": ""
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "0933",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2015,
+     "card_num": "PR235",
+     "name": "メアリー",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.11",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336084867.jpg"
+    },
+    {
+     "id": 2021,
+     "card_num": "PR241",
+     "name": "メアリー",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.11（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159371862468.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/7423",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303533363435312e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1980,
+     "product_name": "メアリー（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "0932",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2014,
+     "card_num": "PR234",
+     "name": "毛利蘭",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.11",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336078340.jpg"
+    },
+    {
+     "id": 2020,
+     "card_num": "PR240",
+     "name": "毛利蘭",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.11（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159371845748.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/7699",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303533363435322e6a706700323430000074006669745f686569676874.jpg",
+     "price": 620,
+     "product_name": "毛利蘭（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "0255",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 441,
+     "card_num": "PR028",
+     "name": "ジョディ・スターリング",
+     "rarity": "PR",
+     "pack": "PRカード（プロモーションパックVol.2）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721703853384516.jpg"
+    },
+    {
+     "id": 445,
+     "card_num": "PR032",
+     "name": "ジョディ・スターリング",
+     "rarity": "PR",
+     "pack": "PRカード（プロモーションパックVol.2（キラバージョン））",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721703853398161.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/7211",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534313838342e6a706700323430000074006669745f686569676874.jpg",
+     "price": 420,
+     "product_name": "ジョディ・スターリング（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "0254",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 440,
+     "card_num": "PR027",
+     "name": "白馬探",
+     "rarity": "PR",
+     "pack": "PRカード（プロモーションパックVol.2）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721703853380347.jpg"
+    },
+    {
+     "id": 444,
+     "card_num": "PR031",
+     "name": "白馬探",
+     "rarity": "PR",
+     "pack": "PRカード（プロモーションパックVol.2（キラバージョン））",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721703853394289.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/7390",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534313838382e6a706700323430000074006669745f686569676874.jpg",
+     "price": 520,
+     "product_name": "白馬探（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "0256",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 442,
+     "card_num": "PR029",
+     "name": "白鳥任三郎",
+     "rarity": "PR",
+     "pack": "PRカード（プロモーションパックVol.2）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721703853387008.jpg"
+    },
+    {
+     "id": 446,
+     "card_num": "PR033",
+     "name": "白鳥任三郎",
+     "rarity": "PR",
+     "pack": "PRカード（プロモーションパックVol.2（キラバージョン））",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721703853401734.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/7663",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534313838302e6a706700323430000074006669745f686569676874.jpg",
+     "price": 320,
+     "product_name": "白鳥任三郎（★キラバージョン）",
+     "hint": "annotation='★キラバージョン'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
    "raw_key": "P014",
    "rarity": "PR",
    "candidates": [
@@ -27,13 +370,27 @@
      "product_url": "https://www.cardshop-waitv.net/product/6458",
      "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37303534323038382e6a706700323430000074006669745f686569676874.jpg",
      "price": 580,
-     "product_name": "江戸川コナン&工藤新一",
+     "product_name": "※開封済　江戸川コナン&工藤新一",
      "hint": ""
     }
    ]
   }
  ],
  "missing": [
+  {
+   "site": "わいTV",
+   "raw_key": "1015",
+   "rarity": "PR",
+   "price": 1380,
+   "hint": "annotation='青山先生劇場版原画ver'",
+   "product_name": "宮本由美（青山先生劇場版原画ver）",
+   "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3135303037313732312e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.cardshop-waitv.net/product/10073",
+   "listing_count": 1,
+   "prices": [
+    1380
+   ]
+  },
   {
    "site": "カードラボ",
    "raw_key": "B03139SEC1",
@@ -256,20 +613,6 @@
    "listing_count": 1,
    "prices": [
     120
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A05078",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A05078 世良真純 C [ID:0578]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129623_ZfPmeUi.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012962/conan/page31/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
    ]
   },
   {
@@ -634,6 +977,34 @@
    "listing_count": 1,
    "prices": [
     160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A05105P",
+   "rarity": "CP",
+   "price": 160,
+   "hint": "",
+   "product_name": "バーボン",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU679303&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU679303",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A02070P",
+   "rarity": "CP",
+   "price": 400,
+   "hint": "",
+   "product_name": "降谷零",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956094&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956094",
+   "listing_count": 1,
+   "prices": [
+    400
    ]
   },
   {
