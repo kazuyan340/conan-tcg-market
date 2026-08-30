@@ -114,6 +114,28 @@ def parse_items(html: str) -> list[tuple[str, str, int | None, str | None, str |
     return results
 
 
+def resolve_card_num(
+    card_num: str, rarity: str | None, target_by_num: dict[str, int], rarity_by_num: dict[str, str]
+) -> str | None:
+    """商品の(card_num, rarity)から、target_by_numのキーとして使う正しいcard_numを
+    返す(見つからなければNone)。
+
+    素のcard_numがヒットしても、そのカードの実際のレアリティが商品の表示レアリティと
+    食い違う場合は誤爆(別カードとの衝突)とみなし、そのまま採用しない。パラレル系
+    レアリティで末尾"P"が欠けている表記揺れ(モジュールdocstring/コメント参照)の場合は
+    "P"を補った上でレアリティが一致することを確認してから採用する。どちらの条件も
+    満たさなければNoneを返し、呼び出し側でunresolvedとして扱う(誤ったカードに
+    価格を記録するより、記録しない方が安全なため)。
+    """
+    if card_num in target_by_num and rarity_by_num.get(card_num) == rarity:
+        return card_num
+    if rarity and not card_num.endswith("P"):
+        candidate = card_num + "P"
+        if candidate in target_by_num and rarity_by_num.get(candidate) == rarity:
+            return candidate
+    return None
+
+
 def parse_total_count(html: str) -> int:
     soup = BeautifulSoup(html, "html.parser")
     el = soup.select_one(".count_number .number")
@@ -138,6 +160,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
 
     target_rows = db.search_cards(conn, rarities=target_rarities)
     target_by_num = {row["card_num"]: row["id"] for row in target_rows}
+    rarity_by_num = {row["card_num"]: row["rarity"] for row in target_rows}
     logger.info("価格取得対象: %d件 (レアリティ: %s)", len(target_by_num), ", ".join(target_rarities))
 
     all_prices: dict[str, list[int]] = defaultdict(list)
@@ -163,20 +186,10 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
             for card_num, rarity, price, product_name, image_url, product_url in parse_items(html):
-                # 一部の商品(CT-P08弾等)は、レアリティが「RP」「CP」等パラレル系
-                # なのにカッコ内のカード番号だけ"P"が付いていない(ショップ側の表記漏れ、
-                # 実例多数で確認済み)。パラレル系レアリティで素のcard_numがヒットしない
-                # 場合に限り、末尾"P"を補って再照合する。
-                lookup_num = card_num
-                if (
-                    lookup_num not in target_by_num
-                    and rarity and rarity.endswith("P") and not lookup_num.endswith("P")
-                    and (lookup_num + "P") in target_by_num
-                ):
-                    lookup_num = lookup_num + "P"
+                lookup_num = resolve_card_num(card_num, rarity, target_by_num, rarity_by_num)
 
-                if lookup_num not in target_by_num or price is None:
-                    if lookup_num not in target_by_num and price is not None:
+                if lookup_num is None or price is None:
+                    if lookup_num is None and price is not None:
                         unresolved_entries.append({
                             "raw_key": card_num, "rarity": rarity, "price": price, "hint": "",
                             "product_name": product_name, "image_url": image_url, "product_url": product_url,
