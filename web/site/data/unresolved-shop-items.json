@@ -374,6 +374,403 @@
      "hint": ""
     }
    ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P046",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 1192,
+     "card_num": "PR111",
+     "name": "大和敢助＆諸伏高明＆上原由衣",
+     "rarity": "PR",
+     "pack": "名探偵コナンスタンプラリー",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1743742688670687.jpg"
+    },
+    {
+     "id": 1194,
+     "card_num": "PR113",
+     "name": "大和敢助＆諸伏高明＆上原由衣",
+     "rarity": "PR",
+     "pack": "名探偵コナンスタンプラリー",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1743742688680560.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/3037",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313734333734323638383638303536302e6a706700323430000074006669745f686569676874.jpg",
+     "price": 3280,
+     "product_name": "大和敢助＆諸伏高明＆上原由衣",
+     "hint": "pack_tag='名探偵コナンスタンプラリー' variant=FOIL"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P045",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 1191,
+     "card_num": "PR110",
+     "name": "江戸川コナン＆毛利蘭＆毛利小五郎",
+     "rarity": "PR",
+     "pack": "名探偵コナンスタンプラリー",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1743742688663362.jpg"
+    },
+    {
+     "id": 1193,
+     "card_num": "PR112",
+     "name": "江戸川コナン＆毛利蘭＆毛利小五郎",
+     "rarity": "PR",
+     "pack": "名探偵コナンスタンプラリー",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1743742688675981.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/3036",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313734333734323638383637353938312e6a706700323430000074006669745f686569676874.jpg",
+     "price": 2280,
+     "product_name": "江戸川コナン＆毛利蘭＆毛利小五郎",
+     "hint": "pack_tag='名探偵コナンスタンプラリー'"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P001",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 241,
+     "card_num": "PR001",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "PRカード（週刊少年サンデー 2024年9号）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177219458.jpg"
+    },
+    {
+     "id": 242,
+     "card_num": "PR002",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "PRカード",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177224386.jpg"
+    },
+    {
+     "id": 247,
+     "card_num": "PR007",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "PRカード（セブン‐イレブンキャンペーン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177238498.jpg"
+    },
+    {
+     "id": 262,
+     "card_num": "PR022",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "PRカード（月刊コロコロコミック 2024年6月号付録）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013186086470.jpg"
+    },
+    {
+     "id": 1436,
+     "card_num": "PR119",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "【CT-P05】BOX特典プロモーションパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1747874027754868.jpg"
+    },
+    {
+     "id": 1459,
+     "card_num": "PR069",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551165355.jpg"
+    },
+    {
+     "id": 1460,
+     "card_num": "PR070",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551173026.jpg"
+    },
+    {
+     "id": 1461,
+     "card_num": "PR071",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551181773.jpg"
+    },
+    {
+     "id": 1462,
+     "card_num": "PR072",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551188457.jpg"
+    },
+    {
+     "id": 1464,
+     "card_num": "PR074",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551201127.jpg"
+    },
+    {
+     "id": 1997,
+     "card_num": "PR214",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ2026",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159335977415.jpg"
+    },
+    {
+     "id": 1998,
+     "card_num": "PR215",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ2026",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159335983073.jpg"
+    },
+    {
+     "id": 1999,
+     "card_num": "PR216",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ2026",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159335989323.jpg"
+    },
+    {
+     "id": 2000,
+     "card_num": "PR217",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "探偵マスターズ2026",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159335995115.jpg"
+    },
+    {
+     "id": 2008,
+     "card_num": "PR225",
+     "name": "江戸川コナン",
+     "rarity": "PR",
+     "pack": "サプライズパートナーパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336043509.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/194",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333138363038363437302e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1280,
+     "product_name": "江戸川コナン",
+     "hint": "pack_tag='月刊コロコロコミック付録'"
+    },
+    {
+     "product_url": "https://www.torecabirth.jp/product/152",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333137373233383439382e6a706700323430000074006669745f686569676874.jpg",
+     "price": 780,
+     "product_name": "江戸川コナン",
+     "hint": "pack_tag='セブンイレブンキャンペーン'"
+    },
+    {
+     "product_url": "https://www.torecabirth.jp/product/56",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333137373232343338362e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1980,
+     "product_name": "江戸川コナン",
+     "hint": "pack_tag='先行体験会PR'"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P005",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 250,
+     "card_num": "PR010",
+     "name": "赤井秀一",
+     "rarity": "PR",
+     "pack": "PRカード（セブン‐イレブンキャンペーン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177246309.jpg"
+    },
+    {
+     "id": 1443,
+     "card_num": "PR126",
+     "name": "赤井秀一",
+     "rarity": "PR",
+     "pack": "【CT-P05】BOX特典プロモーションパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1747874027802408.jpg"
+    },
+    {
+     "id": 1467,
+     "card_num": "PR077",
+     "name": "赤井秀一",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551221914.jpg"
+    },
+    {
+     "id": 2011,
+     "card_num": "PR228",
+     "name": "赤井秀一",
+     "rarity": "PR",
+     "pack": "サプライズパートナーパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336060752.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/156",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333137373234363330392e6a706700323430000074006669745f686569676874.jpg",
+     "price": 780,
+     "product_name": "赤井秀一",
+     "hint": "pack_tag='セブンイレブンキャンペーン'"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P004",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 249,
+     "card_num": "PR009",
+     "name": "怪盗キッド",
+     "rarity": "PR",
+     "pack": "PRカード（セブン‐イレブンキャンペーン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177243803.jpg"
+    },
+    {
+     "id": 1442,
+     "card_num": "PR125",
+     "name": "怪盗キッド",
+     "rarity": "PR",
+     "pack": "【CT-P05】BOX特典プロモーションパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1747874027795564.jpg"
+    },
+    {
+     "id": 1466,
+     "card_num": "PR076",
+     "name": "怪盗キッド",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551214754.jpg"
+    },
+    {
+     "id": 2010,
+     "card_num": "PR227",
+     "name": "怪盗キッド",
+     "rarity": "PR",
+     "pack": "サプライズパートナーパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336054768.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/155",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333137373234333830332e6a706700323430000074006669745f686569676874.jpg",
+     "price": 780,
+     "product_name": "怪盗キッド",
+     "hint": "pack_tag='セブンイレブンキャンペーン'"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P003",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 248,
+     "card_num": "PR008",
+     "name": "服部平次",
+     "rarity": "PR",
+     "pack": "PRカード（セブン‐イレブンキャンペーン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177240817.jpg"
+    },
+    {
+     "id": 1441,
+     "card_num": "PR124",
+     "name": "服部平次",
+     "rarity": "PR",
+     "pack": "【CT-P05】BOX特典プロモーションパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1747874027788719.jpg"
+    },
+    {
+     "id": 1465,
+     "card_num": "PR075",
+     "name": "服部平次",
+     "rarity": "PR",
+     "pack": "探偵マスターズ",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1753702551208685.jpg"
+    },
+    {
+     "id": 2009,
+     "card_num": "PR226",
+     "name": "服部平次",
+     "rarity": "PR",
+     "pack": "サプライズパートナーパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336048094.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/153",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333137373234303831372e6a706700323430000074006669745f686569676874.jpg",
+     "price": 780,
+     "product_name": "服部平次",
+     "hint": "pack_tag='セブンイレブンキャンペーン'"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P014",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 244,
+     "card_num": "PR004",
+     "name": "江戸川コナン＆工藤新一",
+     "rarity": "PR",
+     "pack": "PRカード（CT-P01 Case-Booster 01 探偵たちの切札（ジョーカー）BOX封入特典）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177230927.jpg"
+    },
+    {
+     "id": 245,
+     "card_num": "PR005",
+     "name": "江戸川コナン＆工藤新一",
+     "rarity": "PR",
+     "pack": "PRカード（CT-D01～CT-D05 Case-StartDeck 購入特典）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013177232657.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/150",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333137373233323635372e6a706700323430000074006669745f686569676874.jpg",
+     "price": 220,
+     "product_name": "江戸川コナン＆工藤新一",
+     "hint": "pack_tag='デッキ特典'"
+    },
+    {
+     "product_url": "https://www.torecabirth.jp/product/149",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313731343031333137373233303932372e6a706700323430000074006669745f686569676874.jpg",
+     "price": 980,
+     "product_name": "江戸川コナン＆工藤新一",
+     "hint": "pack_tag='ボックス特典 ホイル'"
+    }
+   ]
   }
  ],
  "missing": [
@@ -469,7 +866,7 @@
    "hint": "",
    "product_name": "A01087 風見裕也 C [ID:0075]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000128983_khqUMql.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -483,7 +880,7 @@
    "hint": "",
    "product_name": "A02088 犯人 C [ID:0249]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129133_kiJIH79.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -497,7 +894,7 @@
    "hint": "",
    "product_name": "A03005 工藤新一 R [ID:0263]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129233_aXDKDBq.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012923/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012923/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -511,7 +908,7 @@
    "hint": "",
    "product_name": "A03036 越水七槻 C [ID:0293]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -525,7 +922,7 @@
    "hint": "",
    "product_name": "A04008 灰原哀 C [ID:0413]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129363_roXTiii.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012936/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012936/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -539,7 +936,7 @@
    "hint": "",
    "product_name": "A04032 白馬探 R [ID:0430]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129383_I4XF8Kt.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012938/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012938/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -553,7 +950,7 @@
    "hint": "",
    "product_name": "A04056 アンドレ・キャメル C [ID:0448]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129403_va6euPC.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -567,7 +964,7 @@
    "hint": "",
    "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]【キラ仕様】【FVP】【金箔】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     2480
@@ -581,7 +978,7 @@
    "hint": "",
    "product_name": "A05009 毛利蘭 R [ID:0515]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129573_eJvzJYG.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012957/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012957/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -595,7 +992,7 @@
    "hint": "",
    "product_name": "A05030 遠山銀司郎 R [ID:0534]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129593_iilBCTS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -609,7 +1006,7 @@
    "hint": "",
    "product_name": "A05069 ジェイムズ・ブラック R [ID:0569]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012961/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012961/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -623,7 +1020,7 @@
    "hint": "",
    "product_name": "A05101 毛利小五郎 C [ID:0599]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129643_0yzw7tB.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012964/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012964/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -637,7 +1034,7 @@
    "hint": "",
    "product_name": "A06041 服部静華 C [ID:0664]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129753_p4D9PL8.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012975/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012975/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -651,7 +1048,7 @@
    "hint": "",
    "product_name": "A06066 怪盗キッド＆白馬探 MR [ID:0687]【キラ仕様】【FVP】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129763_a1gMyxE.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012976/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012976/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     1780
