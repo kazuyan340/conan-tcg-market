@@ -87,7 +87,11 @@ def parse_items(html: str) -> list[tuple[str, str, int | None, str | None, str |
         m = NAME_PATTERN.search(name_text)
         if not m:
             continue
-        rarity, card_num = m.group(1), LEADING_ID_PATTERN.sub("", m.group(2))
+        rarity_raw, card_num = m.group(1), LEADING_ID_PATTERN.sub("", m.group(2))
+        # レアリティ欄に"/ホイル""/ホロ""/サイン""/1""/2""/レンガ"等の注記が付くことが
+        # ある(例: "(PR/ホイル)(PR122)")。DB側のrarity列にはこの注記が無いため、
+        # "/"より前の本来のレアリティだけを取り出す。
+        rarity = rarity_raw.split("/")[0]
 
         name_m = PRODUCT_NAME_PATTERN.match(name_text)
         product_name = name_m.group(1) if name_m else None
@@ -115,7 +119,8 @@ def parse_items(html: str) -> list[tuple[str, str, int | None, str | None, str |
 
 
 def resolve_card_num(
-    card_num: str, rarity: str | None, target_by_num: dict[str, int], rarity_by_num: dict[str, str]
+    card_num: str, rarity: str | None, target_by_num: dict[str, int], rarity_by_num: dict[str, str],
+    target_by_num_ci: dict[str, str] | None = None,
 ) -> str | None:
     """商品の(card_num, rarity)から、target_by_numのキーとして使う正しいcard_numを
     返す(見つからなければNone)。
@@ -123,9 +128,14 @@ def resolve_card_num(
     素のcard_numがヒットしても、そのカードの実際のレアリティが商品の表示レアリティと
     食い違う場合は誤爆(別カードとの衝突)とみなし、そのまま採用しない。パラレル系
     レアリティで末尾"P"が欠けている表記揺れ(モジュールdocstring/コメント参照)の場合は
-    "P"を補った上でレアリティが一致することを確認してから採用する。どちらの条件も
-    満たさなければNoneを返し、呼び出し側でunresolvedとして扱う(誤ったカードに
-    価格を記録するより、記録しない方が安全なため)。
+    "P"を補った上でレアリティが一致することを確認してから採用する。
+
+    SECレアリティの一部商品はcard_numの大文字小文字がDBと食い違う(例: サイト側
+    "B04001SEC2"、DB側"B04001Sec2")。target_by_num_ci(大文字化キー -> 正しい表記の
+    card_num)が渡されていれば、これも試す(こちらもレアリティ一致を必須にする)。
+
+    どの条件も満たさなければNoneを返し、呼び出し側でunresolvedとして扱う(誤った
+    カードに価格を記録するより、記録しない方が安全なため)。
     """
     if card_num in target_by_num and rarity_by_num.get(card_num) == rarity:
         return card_num
@@ -133,6 +143,10 @@ def resolve_card_num(
         candidate = card_num + "P"
         if candidate in target_by_num and rarity_by_num.get(candidate) == rarity:
             return candidate
+    if target_by_num_ci is not None:
+        real_num = target_by_num_ci.get(card_num.upper())
+        if real_num is not None and rarity_by_num.get(real_num) == rarity:
+            return real_num
     return None
 
 
@@ -161,6 +175,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
     target_rows = db.search_cards(conn, rarities=target_rarities)
     target_by_num = {row["card_num"]: row["id"] for row in target_rows}
     rarity_by_num = {row["card_num"]: row["rarity"] for row in target_rows}
+    target_by_num_ci = {row["card_num"].upper(): row["card_num"] for row in target_rows}
     logger.info("価格取得対象: %d件 (レアリティ: %s)", len(target_by_num), ", ".join(target_rarities))
 
     all_prices: dict[str, list[int]] = defaultdict(list)
@@ -186,7 +201,7 @@ def sync_prices(conn=None, delay: float = REQUEST_DELAY_SEC, progress_callback=N
                 last_page = max(1, -(-total // PAGE_SIZE))  # 切り上げ除算
 
             for card_num, rarity, price, product_name, image_url, product_url in parse_items(html):
-                lookup_num = resolve_card_num(card_num, rarity, target_by_num, rarity_by_num)
+                lookup_num = resolve_card_num(card_num, rarity, target_by_num, rarity_by_num, target_by_num_ci)
 
                 if lookup_num is None or price is None:
                     if lookup_num is None and price is not None:
