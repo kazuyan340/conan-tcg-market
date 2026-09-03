@@ -294,38 +294,6 @@ def _resolve_if_pair(candidates: list[int], card_num_by_id: dict[int, str], vari
     return if_pk if variant == "IF" else base_pk
 
 
-_TRAILING_NUM = re.compile(r"(\d+)$")
-
-
-def _consecutive_card_nums(num_a: str, num_b: str) -> bool:
-    """card_numの接頭辞(英字部分)が一致し、末尾の数字部分がちょうど1違いの連番かどうか。
-    例: D08019/D08020 -> True。同じcard_idが別デッキに再録されているケース
-    (例: D01002/D08022)はFalseになる。
-    """
-    m_a, m_b = _TRAILING_NUM.search(num_a), _TRAILING_NUM.search(num_b)
-    if not m_a or not m_b:
-        return False
-    if num_a[: m_a.start()] != num_b[: m_b.start()]:
-        return False
-    return abs(int(m_a.group(1)) - int(m_b.group(1))) == 1
-
-
-def _resolve_foil_pair(candidates: list[int], card_num_by_id: dict[int, str]) -> int | None:
-    """テーマデッキのDレアリティは、通常版とホイル(キラ)加工版が連番のcard_numで
-    別カードとして登録されているが、わいTVの商品名にはどちらか判別できる注記が
-    一切無い(トレカバースの「キラ加工」・メルカードの「ホイル版」に相当する表記が
-    無いことを確認済み)。候補がちょうど2件かつ実際に連番の場合に限り、判別材料が
-    無い以上は安全側として常に大きい方(通常版)とみなす(メルカードで注記が無い
-    場合に無印側とみなす方針と同じ)。それ以外はNoneを返す。
-    """
-    if len(candidates) != 2:
-        return None
-    ordered = sorted(candidates, key=lambda pk: card_num_by_id.get(pk, ""))
-    if not _consecutive_card_nums(card_num_by_id.get(ordered[0], ""), card_num_by_id.get(ordered[1], "")):
-        return None
-    return ordered[1]
-
-
 def resolve_candidate(model_number, rarity, pack, variant, annotation, lookup_with_pack, lookup_by_promo_pack, lookup, card_num_by_id, pack_text_by_id):
     """(内部ID, レアリティ, 収録パック表記, SEC/IF判別用の注記, 名前の注釈) から、
     1枚に絞り込めればそのcards.idを、絞り込めなければNoneを返す。
@@ -364,10 +332,10 @@ def resolve_candidate(model_number, rarity, pack, variant, annotation, lookup_wi
     if_resolved = _resolve_if_pair(base_candidates, card_num_by_id, variant)
     if if_resolved is not None:
         return if_resolved
-    if rarity == "D":
-        foil_resolved = _resolve_foil_pair(pack_candidates if pack_candidates else base_candidates, card_num_by_id)
-        if foil_resolved is not None:
-            return foil_resolved
+    # テーマデッキのDレアリティ通常版/ホイル版の連番ペアは、わいTVの商品名に判別
+    # 材料が一切無いため自動では絞り込まない(以前は「材料が無ければ通常版とみなす」
+    # 決め打ちをしていたが、実際にはホイル版の方が出品されているケースがあり誤りだった。
+    # ユーザーが商品写真を見て管理ページのピッカーで選ぶ運用に変更)。
     # 候補が2件以上ある場合は1枚に絞り込めない(例: PRカードの絵違いが多数ある等)。
     # 誤った価格を割り当てるより、記録しない方が安全なためスキップする。
     if len(base_candidates) == 1:
