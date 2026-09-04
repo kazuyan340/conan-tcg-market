@@ -862,5 +862,419 @@
   "card_id": 1200,
   "card_num": "D09006",
   "name": "諸伏高明"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8838",
+  "site": "わいTV",
+  "raw_key": "0388",
+  "rarity": "D",
+  "card_id": 874,
+  "card_num": "D07003",
+  "name": "シェリー"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8837",
+  "site": "わいTV",
+  "raw_key": "0389",
+  "rarity": "D",
+  "card_id": 875,
+  "card_num": "D07004",
+  "name": "ジン"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8828",
+  "site": "わいTV",
+  "raw_key": "0490",
+  "rarity": "D",
+  "card_id": 1226,
+  "card_num": "D08005",
+  "name": "灰原哀"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6510",
+  "site": "わいTV",
+  "raw_key": "0490",
+  "rarity": "D",
+  "card_id": 1227,
+  "card_num": "D08006",
+  "name": "灰原哀"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8827",
+  "site": "わいTV",
+  "raw_key": "0491",
+  "rarity": "D",
+  "card_id": 1228,
+  "card_num": "D08007",
+  "name": "吉田歩美"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6509",
+  "site": "わいTV",
+  "raw_key": "0491",
+  "rarity": "D",
+  "card_id": 1229,
+  "card_num": "D08008",
+  "name": "吉田歩美"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8826",
+  "site": "わいTV",
+  "raw_key": "0494",
+  "rarity": "D",
+  "card_id": 1234,
+  "card_num": "D08013",
+  "name": "吉田歩美"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8825",
+  "site": "わいTV",
+  "raw_key": "0494",
+  "rarity": "D",
+  "card_id": 1235,
+  "card_num": "D08014",
+  "name": "吉田歩美"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8824",
+  "site": "わいTV",
+  "raw_key": "0496",
+  "rarity": "D",
+  "card_id": 1238,
+  "card_num": "D08017",
+  "name": "円谷光彦"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8823",
+  "site": "わいTV",
+  "raw_key": "0496",
+  "rarity": "D",
+  "card_id": 1239,
+  "card_num": "D08018",
+  "name": "円谷光彦"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8822",
+  "site": "わいTV",
+  "raw_key": "0497",
+  "rarity": "D",
+  "card_id": 1241,
+  "card_num": "D08020",
+  "name": "阿笠博士"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8759",
+  "site": "わいTV",
+  "raw_key": "0393",
+  "rarity": "D",
+  "card_id": 884,
+  "card_num": "D07013",
+  "name": "ウォッカ"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8511",
+  "site": "わいTV",
+  "raw_key": "0003",
+  "rarity": "D",
+  "card_id": 1718,
+  "card_num": "D10007",
+  "name": "毛利蘭"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7709",
+  "site": "わいTV",
+  "raw_key": "0003",
+  "rarity": "D",
+  "card_id": 1719,
+  "card_num": "D10008",
+  "name": "毛利蘭"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8516",
+  "site": "わいTV",
+  "raw_key": "0493",
+  "rarity": "D",
+  "card_id": 1233,
+  "card_num": "D08012",
+  "name": "円谷光彦"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6506",
+  "site": "わいTV",
+  "raw_key": "0493",
+  "rarity": "D",
+  "card_id": 1232,
+  "card_num": "D08011",
+  "name": "円谷光彦"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8515",
+  "site": "わいTV",
+  "raw_key": "0495",
+  "rarity": "D",
+  "card_id": 1237,
+  "card_num": "D08016",
+  "name": "小嶋元太"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6505",
+  "site": "わいTV",
+  "raw_key": "0495",
+  "rarity": "D",
+  "card_id": 1236,
+  "card_num": "D08015",
+  "name": "小嶋元太"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8464",
+  "site": "わいTV",
+  "raw_key": "0391",
+  "rarity": "D",
+  "card_id": 880,
+  "card_num": "D07009",
+  "name": "ベルモット"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8140",
+  "site": "わいTV",
+  "raw_key": "0015",
+  "rarity": "D",
+  "card_id": 1729,
+  "card_num": "D10018",
+  "name": "毛利蘭"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6478",
+  "site": "わいTV",
+  "raw_key": "0015",
+  "rarity": "D",
+  "card_id": 1730,
+  "card_num": "D10019",
+  "name": "毛利蘭"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8164",
+  "site": "わいTV",
+  "raw_key": "0838",
+  "rarity": "D",
+  "card_id": 1715,
+  "card_num": "D10004",
+  "name": "黒衣の騎士・スペイド（工藤新一）"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7710",
+  "site": "わいTV",
+  "raw_key": "0838",
+  "rarity": "D",
+  "card_id": 1714,
+  "card_num": "D10003",
+  "name": "黒衣の騎士・スペイド（工藤新一）"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8163",
+  "site": "わいTV",
+  "raw_key": "0411",
+  "rarity": "D",
+  "card_id": 1728,
+  "card_num": "D10017",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7362",
+  "site": "わいTV",
+  "raw_key": "0411",
+  "rarity": "D",
+  "card_id": 1727,
+  "card_num": "D10016",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/8045",
+  "site": "わいTV",
+  "raw_key": "0263",
+  "rarity": "D",
+  "card_id": 1731,
+  "card_num": "D10020",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6477",
+  "site": "わいTV",
+  "raw_key": "0263",
+  "rarity": "D",
+  "card_id": 1732,
+  "card_num": "D10021",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7735",
+  "site": "わいTV",
+  "raw_key": "0390",
+  "rarity": "D",
+  "card_id": 878,
+  "card_num": "D07007",
+  "name": "バーボン"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7722",
+  "site": "わいTV",
+  "raw_key": "0489",
+  "rarity": "D",
+  "card_id": 1224,
+  "card_num": "D08003",
+  "name": "江戸川コナン"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6511",
+  "site": "わいTV",
+  "raw_key": "0489",
+  "rarity": "D",
+  "card_id": 1225,
+  "card_num": "D08004",
+  "name": "江戸川コナン"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7708",
+  "site": "わいTV",
+  "raw_key": "0840",
+  "rarity": "D",
+  "card_id": 1720,
+  "card_num": "D10009",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7427",
+  "site": "わいTV",
+  "raw_key": "0840",
+  "rarity": "D",
+  "card_id": 1721,
+  "card_num": "D10010",
+  "name": "工藤新一"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7705",
+  "site": "わいTV",
+  "raw_key": "0516",
+  "rarity": "D",
+  "card_id": 1724,
+  "card_num": "D10013",
+  "name": "江戸川コナン"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7693",
+  "site": "わいTV",
+  "raw_key": "0936",
+  "rarity": "D",
+  "card_id": 2577,
+  "card_num": "D11003",
+  "name": "萩原千速"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7692",
+  "site": "わいTV",
+  "raw_key": "0936",
+  "rarity": "D",
+  "card_id": 2578,
+  "card_num": "D11004",
+  "name": "萩原千速"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7691",
+  "site": "わいTV",
+  "raw_key": "0937",
+  "rarity": "D",
+  "card_id": 2579,
+  "card_num": "D11005",
+  "name": "横溝重悟"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7690",
+  "site": "わいTV",
+  "raw_key": "0937",
+  "rarity": "D",
+  "card_id": 2580,
+  "card_num": "D11006",
+  "name": "横溝重悟"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7688",
+  "site": "わいTV",
+  "raw_key": "0938",
+  "rarity": "D",
+  "card_id": 2582,
+  "card_num": "D11008",
+  "name": "松田陣平"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7687",
+  "site": "わいTV",
+  "raw_key": "0939",
+  "rarity": "D",
+  "card_id": 2583,
+  "card_num": "D11009",
+  "name": "萩原研二"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7686",
+  "site": "わいTV",
+  "raw_key": "0939",
+  "rarity": "D",
+  "card_id": 2584,
+  "card_num": "D11010",
+  "name": "萩原研二"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7387",
+  "site": "わいTV",
+  "raw_key": "0394",
+  "rarity": "D",
+  "card_id": 885,
+  "card_num": "D07014",
+  "name": "ライ"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/7428",
+  "site": "わいTV",
+  "raw_key": "0839",
+  "rarity": "D",
+  "card_id": 1717,
+  "card_num": "D10006",
+  "name": "ハート姫（毛利蘭）"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6479",
+  "site": "わいTV",
+  "raw_key": "0839",
+  "rarity": "D",
+  "card_id": 1716,
+  "card_num": "D10005",
+  "name": "ハート姫（毛利蘭）"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6508",
+  "site": "わいTV",
+  "raw_key": "0492",
+  "rarity": "D",
+  "card_id": 1230,
+  "card_num": "D08009",
+  "name": "小嶋元太"
+ },
+ {
+  "product_url": "https://www.cardshop-waitv.net/product/6507",
+  "site": "わいTV",
+  "raw_key": "0492",
+  "rarity": "D",
+  "card_id": 1231,
+  "card_num": "D08010",
+  "name": "小嶋元太"
+ },
+ {
+  "product_url": "https://www.torecabirth.jp/product/167",
+  "site": "トレカバース",
+  "raw_key": "P006",
+  "rarity": "PR",
+  "card_id": 251,
+  "card_num": "PR011",
+  "name": "安室透"
  }
 ]
