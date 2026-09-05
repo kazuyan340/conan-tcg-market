@@ -163,7 +163,7 @@
    "hint": "",
    "product_name": "A03036 越水七槻 C [ID:0293]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page29/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -177,7 +177,7 @@
    "hint": "",
    "product_name": "A04008 灰原哀 C [ID:0413]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129363_roXTiii.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012936/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012936/conan/page29/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -191,7 +191,7 @@
    "hint": "",
    "product_name": "A04032 白馬探 R [ID:0430]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129383_I4XF8Kt.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012938/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012938/conan/page29/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -205,7 +205,7 @@
    "hint": "",
    "product_name": "A04056 アンドレ・キャメル C [ID:0448]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129403_va6euPC.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page29/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -219,7 +219,7 @@
    "hint": "",
    "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]【キラ仕様】【FVP】【金箔】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page29/recommend/",
    "listing_count": 1,
    "prices": [
     2480
@@ -233,7 +233,7 @@
    "hint": "",
    "product_name": "A05009 毛利蘭 R [ID:0515]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129573_eJvzJYG.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012957/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012957/conan/page29/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -247,7 +247,7 @@
    "hint": "",
    "product_name": "A05030 遠山銀司郎 R [ID:0534]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129593_iilBCTS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page30/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page29/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -604,6 +604,20 @@
    ]
   },
   {
+   "site": "竜のしっぽ",
+   "raw_key": "金箔",
+   "rarity": "B09090P2",
+   "price": 2200,
+   "hint": "",
+   "product_name": "風の女神(CP)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5030392f3234303236353131362e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/94019",
+   "listing_count": 1,
+   "prices": [
+    2200
+   ]
+  },
+  {
    "site": "駿河屋",
    "raw_key": "A03094",
    "rarity": "C",
@@ -663,14 +677,84 @@
    "site": "駿河屋",
    "raw_key": "A02070P",
    "rarity": "CP",
-   "price": 400,
+   "price": 360,
    "hint": "",
    "product_name": "降谷零",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956094&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GN956094",
    "listing_count": 1,
    "prices": [
-    400
+    360
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A03113",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "シェリー",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427094&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427094",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A04049",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "沖矢昴",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427106&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427106",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A03004",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "江戸川コナン",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427084&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427084",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A03030",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "伊織無我",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427087&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427087",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A03089",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "黒田兵衛",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427090&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427090",
+   "listing_count": 1,
+   "prices": [
+    160
    ]
   },
   {
