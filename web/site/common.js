@@ -531,32 +531,57 @@ function fetchFresh(url) {
   return fetch(`${url}?t=${Date.now()}`);
 }
 
+// data/meta.jsonには生成日時に加えて、サイトごとの直近取得日(YYYY-MM-DD、
+// ビルド時にexport_static.pyのdb全体を見て集計済み)も入っている。ページ内で
+// 複数回呼ばれても実際のfetchは1回だけで済むよう結果をキャッシュする。
+let cachedMeta = null;
+
+async function loadSiteMeta() {
+  if (cachedMeta) return cachedMeta;
+  const res = await fetchFresh("data/meta.json");
+  cachedMeta = await res.json();
+  siteLatestDay = cachedMeta.site_latest_day || {};
+  return cachedMeta;
+}
+
+// 一覧系ページ(トップ/ランキング/デッキ作成/お気に入り)向け。カードごとの
+// 価格全履歴(重い)ではなく、カードごとの最新相場だけをまとめた軽量ファイル
+// (data/prices_latest.json)を読む。全履歴が必要なモーダル/カード詳細ページは
+// 別途fetchPriceHistory()でカード単位に遅延取得する。
 async function loadCardData() {
   const [cardsRes, pricesRes] = await Promise.all([
     fetchFresh("data/cards.json"),
-    fetchFresh("data/prices.json"),
+    fetchFresh("data/prices_latest.json"),
+    loadSiteMeta(),
   ]);
   const cards = await cardsRes.json();
   commonPrices = await pricesRes.json();
-  siteLatestDay = computeSiteLatestDay(commonPrices);
   return cards;
 }
 
-// サイトごとに「直近正常に巡回できたのはいつか」を、全カード横断で集計する。
-// カード単位ではなくサイト単位の基準にすることで、他サイトに一度もデータが無い
-// カードでも「このサイトの最新巡回でこのカードが見つからなかった(売り切れ等)」を
-// 正しく判定できる(以前はカード自身の履歴だけを見ていたため、他サイトの比較対象が
-// 無いカードで古いデータがそのまま「最新」扱いされてしまっていた)。
-function computeSiteLatestDay(prices) {
-  const result = {};
-  for (const points of Object.values(prices)) {
-    for (const p of points) {
-      const base = baseSiteName(p.site);
-      const day = dayKey(p.recorded_at);
-      if (!result[base] || day > result[base]) result[base] = day;
-    }
+// 一覧タイルの相場表示用。data/prices_latest.jsonはビルド時点で既に
+// 「サイト自身の直近取得日に記録が無ければ除外」まで済ませた値なので、
+// ここではそのまま読むだけでよい(モーダル/詳細ページの生履歴からの
+// 計算はpooledAveragePriceを使う。cf. avgHighlightHtml)。
+function pooledAveragePriceFromLatest(cardId) {
+  const entry = commonPrices[String(cardId)];
+  return entry ? entry.pooled_avg : null;
+}
+
+// カード1枚分の価格履歴全件(data/prices/{id}.json)をクリック時に遅延取得する。
+// 同じカードを同じページ内で何度開いてもfetchは1回だけで済むようキャッシュする。
+const priceHistoryCache = new Map();
+
+function fetchPriceHistory(cardId) {
+  if (!priceHistoryCache.has(cardId)) {
+    priceHistoryCache.set(
+      cardId,
+      fetchFresh(`data/prices/${cardId}.json`)
+        .then((res) => (res.ok ? res.json() : []))
+        .catch(() => [])
+    );
   }
-  return result;
+  return priceHistoryCache.get(cardId);
 }
 
 // ヘッダーに「最終更新: 2026/7/29 3:05」を表示する(自動更新がいつ効いたか一目で分かるように)。
@@ -565,8 +590,7 @@ async function renderLastUpdated() {
   const el = document.getElementById("last-updated");
   if (!el) return;
   try {
-    const res = await fetchFresh("data/meta.json");
-    const meta = await res.json();
+    const meta = await loadSiteMeta();
     el.textContent = `最終更新: ${formatDateTimeFull(meta.generated_at)}`;
   } catch {
     // meta.jsonが無い/読めない場合は何も表示しない
@@ -619,7 +643,7 @@ function createCardTile(card, onFavoriteToggle) {
 
   const sub = document.createElement("div");
   sub.className = "sub";
-  const price = pooledAveragePrice(commonPrices[String(card.id)] || []);
+  const price = pooledAveragePriceFromLatest(card.id);
   const priceText = price !== null ? `${price.toLocaleString()}円` : "-";
   sub.innerHTML = `<span class="sub-meta">${escapeHtml(card.rarity || "")} / ${escapeHtml(card.color || "")}</span><span class="sub-price">${escapeHtml(priceText)}</span>`;
 
@@ -678,7 +702,14 @@ function openModal(card) {
   document.getElementById("modal-overlay").classList.remove("hidden");
   document.body.classList.add("modal-open");
 
-  renderPriceSection(card.id, card.card_num, card.name, card.rarity, card.card_id);
+  // 価格履歴(全期間分)はカード単位のファイルをここで初めて取得する(一覧読み込み時に
+  // 全カード分をまとめて持っておくと重すぎるため)。取得が終わるまでの間、直前に
+  // 別カードを開いていた場合の古い表示が一瞬残らないよう読み込み中の表示にしておく。
+  const statsEl = document.getElementById("modal-price-stats");
+  if (statsEl) statsEl.textContent = "読み込み中...";
+  fetchPriceHistory(card.id).then((history) => {
+    renderPriceSection(card.id, card.card_num, card.name, card.rarity, card.card_id, history);
+  });
 
   // モーダル右上のお気に入り星。カード一覧タイルの星と同じ登録先(localStorage)を使う。
   // お気に入り一覧(compare.html)側では、モーダルから解除したら一覧にも反映したいので、
@@ -716,10 +747,10 @@ function bindModalEvents() {
 }
 
 // サイトごとの最新の最安値を返す。{ site: {price, recorded_at, sample_count}|null }
-// そのサイト自身の直近の巡回日(siteLatestDay、全カード横断で集計済み)に、この
-// カードの記録が無ければ、売り切れ等でその回は対象から外れたとみなし結果から除く
-// (-表示になる)。サイト単位の基準なので、他サイトに一度もデータが無いカードでも
-// 正しく判定できる(cf. computeSiteLatestDay)。
+// そのサイト自身の直近の巡回日(siteLatestDay、data/meta.jsonでビルド時点に
+// 全カード横断で集計済み・"YYYY-MM-DD"形式)に、このカードの記録が無ければ、
+// 売り切れ等でその回は対象から外れたとみなし結果から除く(-表示になる)。
+// サイト単位の基準なので、他サイトに一度もデータが無いカードでも正しく判定できる。
 function latestPriceBySite(history) {
   const bySite = {};
   for (const h of history) {
@@ -730,7 +761,7 @@ function latestPriceBySite(history) {
   }
   for (const base of Object.keys(bySite)) {
     const latestDay = siteLatestDay[base];
-    if (latestDay && dayKey(bySite[base].recorded_at) !== latestDay) {
+    if (latestDay && bySite[base].recorded_at.slice(0, 10) !== latestDay) {
       delete bySite[base];
     }
   }
@@ -817,8 +848,8 @@ function buildPriceStatsHtml(history, cardNum, cardName, cardRarity, cardBusines
   return `${avgHighlightHtml(history)}${latestDateHtml(history)}${table}${buttons}`;
 }
 
-function renderPriceSection(cardPk, cardNum, cardName, cardRarity, cardBusinessId) {
-  const history = commonPrices[String(cardPk)] || [];
+function renderPriceSection(cardPk, cardNum, cardName, cardRarity, cardBusinessId, history) {
+  history = history || [];
   const statsEl = document.getElementById("modal-price-stats");
   const tableEl = document.getElementById("modal-price-table");
   const canvas = document.getElementById("price-chart");

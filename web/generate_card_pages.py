@@ -8,11 +8,12 @@
 ヒットできるようにする。
 
 現在の相場(相場推移セクション)は、common.jsのlatestPriceBySite/
-pooledAveragePriceと同じロジックをPythonで再実装し(compute_current_prices)、
-ビルド時点の値をHTMLに直接埋め込む(JavaScript実行に依存せず検索エンジンが
-読み取れるようにするため)。ページ読み込み後はcard-detail.jsが同じ内容を
-common.jsのrenderPriceSection()で上書きし、期間切り替えタブ付きの
-インタラクティブなグラフに差し替える(値そのものは一致する)。
+pooledAveragePriceと同じロジックをPythonで再実装したcompute_current_prices
+(export_static.pyと共有)で、ビルド時点の値をHTMLに直接埋め込む(JavaScript実行に
+依存せず検索エンジンが読み取れるようにするため)。ページ読み込み後はcard-detail.jsが
+このカード1枚分の価格履歴(data/prices/{id}.json、クリック時に遅延取得)を使って
+common.jsのrenderPriceSection()で上書きし、期間切り替えタブ付きのインタラクティブな
+グラフに差し替える(値そのものは一致する)。
 
 サイト内の他ページ(一覧のカードタイル等)は従来どおりクリックでモーダルを
 開く挙動のままにし、モーダル内に「詳細ページを見る」リンクを追加して
@@ -21,17 +22,17 @@ common.jsのrenderPriceSection()で上書きし、期間切り替えタブ付き
 import html
 import json
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
+from export_static import compute_current_prices
 
 SITE_BASE_URL = "https://kazuyan340.github.io/conan-tcg-market"
 CARD_PAGE_DIR = Path(__file__).parent / "site" / "card"
 SITE_DIR = Path(__file__).parent / "site"
 
-ASSET_VERSION = "43"
+ASSET_VERSION = "44"
 
 NAV_LINKS = [
     ("index.html", "📋 一覧"),
@@ -67,56 +68,10 @@ def _e(value) -> str:
     return html.escape(str(value), quote=True)
 
 
-def _base_site_name(site: str) -> str:
-    suffix = "(平均)"
-    return site[: -len(suffix)] if site.endswith(suffix) else site
-
-
-def _site_latest_day(conn) -> dict[str, str]:
-    """サイトごとの直近取得日(YYYY-MM-DD)。common.jsのcomputeSiteLatestDayに対応する。"""
-    rows = conn.execute(
-        "SELECT site, recorded_at FROM price_history WHERE site NOT LIKE '%(平均)'"
-    ).fetchall()
-    latest: dict[str, str] = {}
-    for row in rows:
-        site = _base_site_name(row["site"])
-        day = row["recorded_at"][:10]
-        if site not in latest or day > latest[site]:
-            latest[site] = day
-    return latest
-
-
-def compute_current_prices(conn) -> dict[int, dict]:
-    """card_id -> {"pooled_avg": int|None, "by_site": {site: {"price", "recorded_at"}}}
-
-    common.jsのlatestPriceBySite()・pooledAveragePrice()と同じロジック
-    (そのサイト自身の直近取得日に記録が無ければ、売り切れ等で対象から除外する)。
-    """
-    site_latest_day = _site_latest_day(conn)
-    rows = conn.execute(
-        "SELECT card_id, site, price, recorded_at FROM price_history "
-        "WHERE site NOT LIKE '%(平均)' ORDER BY card_id, recorded_at"
-    ).fetchall()
-
-    latest_by_card_site: dict[int, dict[str, dict]] = defaultdict(dict)
-    for row in rows:
-        site = _base_site_name(row["site"])
-        existing = latest_by_card_site[row["card_id"]].get(site)
-        if not existing or row["recorded_at"] > existing["recorded_at"]:
-            latest_by_card_site[row["card_id"]][site] = {
-                "price": row["price"], "recorded_at": row["recorded_at"],
-            }
-
-    result: dict[int, dict] = {}
-    for card_id, by_site in latest_by_card_site.items():
-        kept = {
-            site: v for site, v in by_site.items()
-            if site_latest_day.get(site) and v["recorded_at"][:10] == site_latest_day[site]
-        }
-        prices = [v["price"] for v in kept.values()]
-        pooled_avg = round(sum(prices) / len(prices)) if prices else None
-        result[card_id] = {"pooled_avg": pooled_avg, "by_site": kept}
-    return result
+def _json_script(data) -> str:
+    """<script>タグの中にそのまま埋め込めるJSON文字列を返す。カード名等に"</script>"が
+    含まれていた場合にタグが早期に閉じてしまわないよう、"</"をエスケープする。"""
+    return json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 
 
 def _nav_links_html() -> str:
@@ -211,6 +166,17 @@ def _card_page_html(card: dict, current: dict) -> str:
     price_table_static = _static_price_table_html(current)
     price_empty_hidden = "hidden" if current["pooled_avg"] is not None else ""
 
+    # card-detail.jsはこのカード1枚のインタラクティブなグラフ描画にしか使わないため、
+    # 全カード分のcards.json(数MB)を読み込ませる必要は無い。renderPriceSection()が
+    # 必要とする5フィールドだけをビルド時にHTMLへ直接埋め込む。
+    card_detail_json = _json_script({
+        "id": card["id"],
+        "card_num": card.get("card_num"),
+        "name": card["name"],
+        "rarity": card.get("rarity"),
+        "card_id": card.get("card_id"),
+    })
+
     ld_json = {
         "@context": "https://schema.org",
         "@type": "Product",
@@ -254,7 +220,7 @@ def _card_page_html(card: dict, current: dict) -> str:
 <title>{_e(title)}</title>
 <link rel="stylesheet" href="style.css?v={ASSET_VERSION}">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080305842487680" crossorigin="anonymous"></script>
-<script type="application/ld+json">{json.dumps(ld_json, ensure_ascii=False)}</script>
+<script type="application/ld+json">{_json_script(ld_json)}</script>
 </head>
 <body>
 <header class="toolbar">
@@ -309,7 +275,7 @@ def _card_page_html(card: dict, current: dict) -> str:
   <p><a href="about.html">運営者情報</a>　<a href="privacy.html">プライバシーポリシー・お問い合わせ</a></p>
 </footer>
 
-<script>window.CARD_DETAIL_ID = {card['id']};</script>
+<script>window.CARD_DETAIL = {card_detail_json};</script>
 <script src="common.js?v={ASSET_VERSION}"></script>
 <script src="card-detail.js?v={ASSET_VERSION}"></script>
 </body>

@@ -83,7 +83,10 @@ function applyThresholdHighlight(box, price, over, under) {
   }
 }
 
-function render() {
+// お気に入りは通常ごく少数(数枚〜数十枚)のため、カードごとの価格履歴全件
+// (data/prices/{id}.json)をこのページを開いたタイミングでまとめて先読みする。
+// 一覧系ページのように全カード分をまとめて持っておく必要は無い。
+async function render() {
   const grid = document.getElementById("price-check-grid");
   const emptyMessage = document.getElementById("empty-message");
   grid.innerHTML = "";
@@ -95,13 +98,16 @@ function render() {
   emptyMessage.classList.add("hidden");
 
   const thresholds = loadThresholds();
+  const historyByCardId = new Map(
+    await Promise.all(checkedCards.map(async (card) => [card.id, await fetchPriceHistory(card.id)]))
+  );
 
   for (const card of checkedCards) {
     const box = document.createElement("div");
     box.className = "price-check-card";
 
-    const history = commonPrices[String(card.id)] || [];
-    const price = pooledAveragePrice(history);
+    const history = historyByCardId.get(card.id) || [];
+    const price = pooledAveragePriceFromLatest(card.id);
     const entry = thresholds[card.id] || {};
     const live = { over: entry.over ?? null, under: entry.under ?? null };
 

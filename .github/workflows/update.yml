@@ -178,7 +178,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add web/site/data/cards.json web/site/data/prices.json web/site/data/trends.json web/site/data/movers.json web/site/data/meta.json web/site/data/goods.json web/site/data/unofficial-cards.json web/site/data/unresolved-shop-items.json web/site/card/ web/site/sitemap.xml
+          git add web/site/data/cards.json web/site/data/prices/ web/site/data/prices_latest.json web/site/data/trends.json web/site/data/movers.json web/site/data/meta.json web/site/data/goods.json web/site/data/unofficial-cards.json web/site/data/unresolved-shop-items.json web/site/card/ web/site/sitemap.xml
           git diff --cached --quiet || git commit -m "chore: daily card/price update"
           # このジョブは駿河屋取得(30秒間隔のクロール遅延込み)のせいで50〜90分かかることがあり、
           # その間に他のpush(手動でのコード修正など)が入ると素のgit pushは

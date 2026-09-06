@@ -5,12 +5,12 @@
 async function init() {
   const [cardsRes, pricesRes, unresolvedRes] = await Promise.all([
     fetchFresh("data/unofficial-cards.json"),
-    fetchFresh("data/prices.json"),
+    fetchFresh("data/prices_latest.json"),
     fetchFresh("data/unresolved-shop-items.json"),
+    loadSiteMeta(),
   ]);
   const cards = await cardsRes.json();
   commonPrices = await pricesRes.json();
-  siteLatestDay = computeSiteLatestDay(commonPrices);
 
   bindModalEvents();
   renderLastUpdated();

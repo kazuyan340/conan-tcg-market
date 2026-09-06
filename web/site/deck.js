@@ -497,8 +497,8 @@ function loadDeckFromUrlOrStorage() {
 
 // デッキ一覧バー(保存済みデッキをカードで並べ、クリックで切り替え・削除できる)を描画する。
 // 指定したデッキ(deckList中の1件)の合計金額を計算する。現在編集中でないデッキも含めて
-// 一覧に金額を出すための共通ヘルパー(ページを開くたびに最新のprices.jsonから計算するので、
-// 毎晩の自動更新結果がそのまま反映される)。
+// 一覧に金額を出すための共通ヘルパー(ページを開くたびに最新のdata/prices_latest.jsonから
+// 計算するので、毎晩の自動更新結果がそのまま反映される)。
 function computeDeckTotal(d) {
   let total = 0;
   if (includePartnerCaseInTotal) {
@@ -574,7 +574,7 @@ function shareDeckUrl() {
 }
 
 function cardPrice(card) {
-  return pooledAveragePrice(commonPrices[String(card.id)] || []);
+  return pooledAveragePriceFromLatest(card.id);
 }
 
 function mainDeckCount() {

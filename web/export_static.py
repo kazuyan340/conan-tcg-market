@@ -1,7 +1,15 @@
 """SQLite (cards / price_history) を静的サイト用のJSONに書き出すスクリプト。
 
-web/site/data/cards.json  … カード一覧全件
-web/site/data/prices.json … card_id をキーにした価格履歴(データがあるカードのみ)
+web/site/data/cards.json         … カード一覧全件
+web/site/data/prices/{id}.json   … カード1枚分の価格履歴全件(データがあるカードのみ)。
+                                    以前は全カード分をprices.json 1本(数十MB)に
+                                    まとめていたが、一覧系ページも個別カードページも
+                                    表示のたびにこれを丸ごと取得しており、サイト全体が
+                                    重くなる主因になっていた。カードごとに分割し、
+                                    そのカードの詳細/モーダルを開いた時だけ取得する形にする。
+web/site/data/prices_latest.json … card_id -> {pooled_avg, by_site} のカードごと
+                                    最新相場のみのファイル(軽量)。一覧系ページの
+                                    価格表示・並び替えはこれだけで足りる。
 web/site/data/trends.json … 価格が直近上昇/上昇傾向しているカードのランキング
 web/site/data/goods.json  … 拡張パック/構築済みデッキ/周辺グッズの商品一覧
 
@@ -136,6 +144,70 @@ def export_prices(conn) -> dict[str, list[dict]]:
             "sample_count": row["sample_count"],
         })
     return prices
+
+
+def write_prices_per_card(prices: dict[str, list[dict]], out_dir: Path) -> int:
+    """カードごとの価格履歴全件を data/prices/{card_id}.json に1枚1ファイルで書き出す。
+
+    個別カードページ・モーダルは自分のカード1枚分の履歴しか使わないため、
+    以前の「全カード分を1本のJSONにまとめる」方式(prices.json)だと、1枚のカードを
+    見るためだけに全カード分(数十MB)を毎回ダウンロードすることになっていた。
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for card_id, points in prices.items():
+        with open(out_dir / f"{card_id}.json", "w", encoding="utf-8") as f:
+            json.dump(points, f, ensure_ascii=False, separators=(",", ":"))
+    return len(prices)
+
+
+def _site_latest_day(conn) -> dict[str, str]:
+    """サイトごとの直近取得日(YYYY-MM-DD)。フロントエンドのsiteLatestDay(meta.json
+    経由で渡す)に対応する。"""
+    rows = conn.execute(
+        "SELECT site, recorded_at FROM price_history WHERE site NOT LIKE '%(平均)'"
+    ).fetchall()
+    latest: dict[str, str] = {}
+    for row in rows:
+        site = row["site"]
+        day = row["recorded_at"][:10]
+        if site not in latest or day > latest[site]:
+            latest[site] = day
+    return latest
+
+
+def compute_current_prices(conn) -> dict[int, dict]:
+    """card_id -> {"pooled_avg": int|None, "by_site": {site: {"price", "recorded_at"}}}
+
+    common.jsのlatestPriceBySite()・pooledAveragePrice()と同じロジック
+    (そのサイト自身の直近取得日に記録が無ければ、売り切れ等で対象から除外する)。
+    一覧系ページの価格表示・並び替え用の軽量ファイル(prices_latest.json)と、
+    カード個別ページに埋め込む静的な価格表示の両方で使う。
+    """
+    site_latest_day = _site_latest_day(conn)
+    rows = conn.execute(
+        "SELECT card_id, site, price, recorded_at FROM price_history "
+        "WHERE site NOT LIKE '%(平均)' ORDER BY card_id, recorded_at"
+    ).fetchall()
+
+    latest_by_card_site: dict[int, dict[str, dict]] = defaultdict(dict)
+    for row in rows:
+        site = row["site"]
+        existing = latest_by_card_site[row["card_id"]].get(site)
+        if not existing or row["recorded_at"] > existing["recorded_at"]:
+            latest_by_card_site[row["card_id"]][site] = {
+                "price": row["price"], "recorded_at": row["recorded_at"],
+            }
+
+    result: dict[int, dict] = {}
+    for card_id, by_site in latest_by_card_site.items():
+        kept = {
+            site: v for site, v in by_site.items()
+            if site_latest_day.get(site) and v["recorded_at"][:10] == site_latest_day[site]
+        }
+        prices = [v["price"] for v in kept.values()]
+        pooled_avg = round(sum(prices) / len(prices)) if prices else None
+        result[card_id] = {"pooled_avg": pooled_avg, "by_site": kept}
+    return result
 
 
 def _price_points_by_card_site(conn) -> dict[tuple[int, str], list[tuple[str, int]]]:
@@ -345,8 +417,11 @@ def main():
         json.dump(cards, f, ensure_ascii=False, separators=(",", ":"))
 
     prices = export_prices(conn)
-    with open(OUTPUT_DIR / "prices.json", "w", encoding="utf-8") as f:
-        json.dump(prices, f, ensure_ascii=False, separators=(",", ":"))
+    per_card_count = write_prices_per_card(prices, OUTPUT_DIR / "prices")
+
+    current_prices = compute_current_prices(conn)
+    with open(OUTPUT_DIR / "prices_latest.json", "w", encoding="utf-8") as f:
+        json.dump(current_prices, f, ensure_ascii=False, separators=(",", ":"))
 
     all_series = _all_price_series(conn)
 
@@ -366,12 +441,16 @@ def main():
     with open(OUTPUT_DIR / "unofficial-cards.json", "w", encoding="utf-8") as f:
         json.dump(unofficial_cards, f, ensure_ascii=False, separators=(",", ":"))
 
-    meta = {"generated_at": datetime.now(timezone.utc).isoformat()}
+    meta = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "site_latest_day": _site_latest_day(conn),
+    }
     with open(OUTPUT_DIR / "meta.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, separators=(",", ":"))
 
     print(f"cards.json: {len(cards)}件")
-    print(f"prices.json: {len(prices)}カード分の価格履歴")
+    print(f"prices/{{id}}.json: {per_card_count}カード分の価格履歴")
+    print(f"prices_latest.json: {len(current_prices)}カード分の最新相場")
     print(
         f"trends.json: 直近上昇{len(trends['recent_up'])}件 / 上昇傾向{len(trends['trend_up'])}件 / "
         f"直近下降{len(trends['recent_down'])}件 / 下降傾向{len(trends['trend_down'])}件"

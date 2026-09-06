@@ -160,7 +160,7 @@ function debounce(fn, ms) {
 
 // ランキング用のカード代表価格(各サイト最安値の単純平均)。データが無ければnull。
 function cardPrice(card) {
-  return pooledAveragePrice(commonPrices[String(card.id)] || []);
+  return pooledAveragePriceFromLatest(card.id);
 }
 
 function applyFilters() {
