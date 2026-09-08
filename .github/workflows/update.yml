@@ -35,7 +35,7 @@ jobs:
       # セルフホストランナー(このPC)にはPython 3.12が既に入っているため、
       # actions/setup-pythonは使わない(NETWORK SERVICEアカウントにレジストリ変更権限が無く失敗するため)。
       - name: Install dependencies
-        run: ${{ env.PYTHON }} -m pip install -r requirements.txt
+        run: '& "${{ env.PYTHON }}" -m pip install -r requirements.txt'
 
       # 以前はactions/cacheのrestore-keys(前方一致でその時点の最新キャッシュを復元)を
       # 使っていたが、7/31頃から常に同じ古いキャッシュキーだけが復元され続けるという
@@ -78,10 +78,10 @@ jobs:
             conan-tcg-db-
 
       - name: Sync card list (diff update)
-        run: ${{ env.PYTHON }} scraper_cards.py
+        run: '& "${{ env.PYTHON }}" scraper_cards.py'
 
       - name: Fetch high-rarity prices from Suruga-ya
-        run: ${{ env.PYTHON }} web/scraper_prices_surugaya.py
+        run: '& "${{ env.PYTHON }}" web/scraper_prices_surugaya.py'
 
       # ジョブ間のDB引き継ぎはcacheではなくartifactを使う。cacheのsave/restoreは
       # 同一run内でも保存直後に別ジョブから読めない(反映の時間差がある)ことがあり、
