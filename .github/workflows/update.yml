@@ -23,7 +23,7 @@ jobs:
       # セルフホストランナー(このPC)のPython 3.12への絶対パス。ランナーサービスは
       # NETWORK SERVICEアカウントで動作しており、PCのPATH変更がサービスに反映されるのは
       # 次回OS再起動後のため、PATHに頼らずフルパスで直接指定する。
-      PYTHON: C:\Users\kazuya.tohara\AppData\Local\Programs\Python\Python312\python.exe
+      PYTHON: C:\Users\kazuyan\AppData\Local\Programs\Python\Python312\python.exe
       # Windows既定のコードページ(cp932)だとログ内の日本語が文字化けするため、
       # Pythonの標準出力/エラー出力を明示的にUTF-8に固定する。
       PYTHONIOENCODING: utf-8
