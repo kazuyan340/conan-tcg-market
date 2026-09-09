@@ -23,7 +23,9 @@ jobs:
       # セルフホストランナー(このPC)のPython 3.12への絶対パス。ランナーサービスは
       # NETWORK SERVICEアカウントで動作しており、PCのPATH変更がサービスに反映されるのは
       # 次回OS再起動後のため、PATHに頼らずフルパスで直接指定する。
-      PYTHON: C:\Users\kazuya.tohara\AppData\Local\Programs\Python\Python312\python.exe
+      # 個人用インストール(ユーザープロファイル配下)だとNETWORK SERVICEから
+      # アクセスできずpip installが失敗するため、全ユーザー向けインストールが必須。
+      PYTHON: C:\Program Files\Python312\python.exe
       # Windows既定のコードページ(cp932)だとログ内の日本語が文字化けするため、
       # Pythonの標準出力/エラー出力を明示的にUTF-8に固定する。
       PYTHONIOENCODING: utf-8
@@ -33,7 +35,7 @@ jobs:
       # セルフホストランナー(このPC)にはPython 3.12が既に入っているため、
       # actions/setup-pythonは使わない(NETWORK SERVICEアカウントにレジストリ変更権限が無く失敗するため)。
       - name: Install dependencies
-        run: ${{ env.PYTHON }} -m pip install -r requirements.txt
+        run: '& "${{ env.PYTHON }}" -m pip install -r requirements.txt'
 
       # 以前はactions/cacheのrestore-keys(前方一致でその時点の最新キャッシュを復元)を
       # 使っていたが、7/31頃から常に同じ古いキャッシュキーだけが復元され続けるという
@@ -76,10 +78,10 @@ jobs:
             conan-tcg-db-
 
       - name: Sync card list (diff update)
-        run: ${{ env.PYTHON }} scraper_cards.py
+        run: '& "${{ env.PYTHON }}" scraper_cards.py'
 
       - name: Fetch high-rarity prices from Suruga-ya
-        run: ${{ env.PYTHON }} web/scraper_prices_surugaya.py
+        run: '& "${{ env.PYTHON }}" web/scraper_prices_surugaya.py'
 
       # ジョブ間のDB引き継ぎはcacheではなくartifactを使う。cacheのsave/restoreは
       # 同一run内でも保存直後に別ジョブから読めない(反映の時間差がある)ことがあり、
