@@ -1,5 +1,38 @@
 {
- "ambiguous": [],
+ "ambiguous": [
+  {
+   "site": "トレカバース",
+   "raw_key": "P032",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2003,
+     "card_num": "PR220",
+     "name": "遠山和葉",
+     "rarity": "PR",
+     "pack": "探偵マスターズ2026",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336013168.jpg"
+    },
+    {
+     "id": 2597,
+     "card_num": "PR249",
+     "name": "遠山和葉",
+     "rarity": "PR",
+     "pack": "【CT-P09】BOX特典プロモーションパック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1776333828559436.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/6193",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313736393135393333363031333136382e6a706700323430000074006669745f686569676874.jpg",
+     "price": 799980,
+     "product_name": "遠山和葉",
+     "hint": "pack_tag='探偵マスターズ2026 各ブロック緑1位'"
+    }
+   ]
+  }
+ ],
  "missing": [
   {
    "site": "わいTV",
@@ -339,20 +372,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A02023",
-   "rarity": "R",
-   "price": 170,
-   "hint": "",
-   "product_name": "遠山和葉",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
-   "listing_count": 1,
-   "prices": [
-    170
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "A01065",
    "rarity": "R",
    "price": 180,
@@ -363,6 +382,20 @@
    "listing_count": 1,
    "prices": [
     180
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A02023",
+   "rarity": "R",
+   "price": 170,
+   "hint": "",
+   "product_name": "遠山和葉",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
+   "listing_count": 1,
+   "prices": [
+    170
    ]
   },
   {
@@ -542,20 +575,6 @@
    "product_name": "山村ミサオ",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU604565&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU604565",
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "A05067",
-   "rarity": "SR",
-   "price": 160,
-   "hint": "",
-   "product_name": "メアリー",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU679307&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU679307",
    "listing_count": 1,
    "prices": [
     160
