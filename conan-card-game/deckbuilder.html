@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>デッキ作成 - 名探偵コナンTCG</title>
+<style>
+  :root{
+    --bg1:#2c3550; --bg2:#232a42; --bg3:#3a3226; --bg4:#4a3d28;
+    --band-fill:#e8e4d8; --ink-dark:#2b2438; --outline:#ffffff; --gold:#e0b34f;
+    --navy1:#3d4f88; --navy2:#1b2340;
+    --shadow-sm:0 3px 7px rgba(27,20,45,.22);
+    --shadow-md:0 8px 16px rgba(27,20,45,.28);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif; color:#fff;
+    background:linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 38%, var(--bg3) 60%, var(--bg4) 100%);
+    min-height:100vh;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; background:rgba(0,0,0,.25); box-shadow:var(--shadow-md);
+    position:sticky; top:0; z-index:50;
+  }
+  header h1{ font-size:20px; letter-spacing:.04em; }
+  .back-btn, .save-btn{
+    background:var(--gold); color:#2b2438; border:none; border-radius:20px;
+    padding:9px 20px; font-weight:800; font-size:13px; cursor:pointer;
+    box-shadow:var(--shadow-sm);
+  }
+  .back-btn{ background:rgba(255,255,255,.15); color:#fff; }
+  .save-btn:hover, .back-btn:hover{ filter:brightness(1.08); }
+  .save-btn:disabled{ opacity:.4; cursor:default; filter:none; }
+
+  .layout{ display:flex; gap:18px; padding:20px 28px 40px; align-items:flex-start; }
+
+  .pool-panel{ flex:1; min-width:0; }
+  .tab-row{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+  .tab-btn{
+    background:rgba(255,255,255,.10); color:#fff; border:1px solid rgba(255,255,255,.25);
+    border-radius:16px; padding:8px 16px; font-size:13px; cursor:pointer; font-weight:800;
+  }
+  .tab-btn.active{ background:var(--gold); color:#2b2438; border-color:var(--gold); }
+  .tab-hint{ font-size:12px; opacity:.7; margin-bottom:14px; }
+  .search-input{
+    display:block; width:100%; max-width:320px; margin-bottom:10px;
+    padding:8px 12px; border-radius:16px; border:none; font-size:13px;
+    background:rgba(255,255,255,.12); color:#fff;
+  }
+  .search-input::placeholder{ color:rgba(255,255,255,.55); }
+
+  .filter-panel{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;
+    padding:10px 12px; background:rgba(0,0,0,.18); border-radius:14px;
+  }
+  .filter-group{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.06); border-radius:10px; padding:6px 10px;
+  }
+  .filter-label{ font-size:11px; font-weight:900; opacity:.85; letter-spacing:.03em; }
+  .color-filter{ display:flex; gap:6px; }
+  .color-btn{
+    width:24px; height:24px; border-radius:50%; border:2px solid rgba(255,255,255,.35);
+    cursor:pointer; box-shadow:var(--shadow-sm); padding:0;
+  }
+  .color-btn.active{ border-color:#fff; box-shadow:0 0 0 2px var(--gold); }
+  .range-group input{
+    width:52px; border-radius:8px; border:none; padding:5px 8px; font-size:12px; text-align:center;
+  }
+  .range-group .range-sep{ font-size:11px; opacity:.6; }
+  .value-filter{ display:flex; gap:4px; }
+  .value-chip{
+    width:24px; height:24px; border-radius:6px; border:2px solid rgba(255,255,255,.3);
+    background:rgba(255,255,255,.08); color:#fff; font-size:11px; font-weight:800;
+    cursor:pointer; box-shadow:var(--shadow-sm); padding:0;
+  }
+  /* 1クリック目: 含む(この値だけ表示) / 2クリック目: 除外(この値を除いて表示) の二段階トグル */
+  .value-chip.included{ border-color:#fff; background:var(--gold); color:#2b2438; box-shadow:0 0 0 2px var(--gold); }
+  .value-chip.excluded{ border-color:#fff; background:#c0392b; color:#fff; box-shadow:0 0 0 2px #c0392b; }
+  .filter-clear-btn{
+    margin-left:auto;
+    background:rgba(255,255,255,.10); color:#fff; border:1px solid rgba(255,255,255,.25);
+    border-radius:14px; padding:6px 14px; font-size:11.5px; cursor:pointer; font-weight:700;
+  }
+  .filter-clear-btn:hover{ background:rgba(255,255,255,.18); }
+
+  .card-grid{
+    display:grid; grid-template-columns:repeat(10, 1fr); /* JSでウィンドウ幅に応じて列数を調整(最大10列) */
+    gap:6px;
+  }
+  .pool-card{
+    background:linear-gradient(160deg,var(--navy1),var(--navy2));
+    border:2px solid var(--outline); border-radius:9px; overflow:hidden;
+    box-shadow:var(--shadow-sm); cursor:pointer; position:relative;
+    aspect-ratio:124/174; display:flex; flex-direction:column; user-select:none;
+    transition:transform .12s;
+  }
+  .pool-card.landscape{ aspect-ratio:174/124; } /* 事件カードは横向きの絵柄なので */
+  .pool-card:hover{ transform:translateY(-4px); }
+  .pool-card.selected{ box-shadow:0 0 0 3px var(--gold), var(--shadow-md); }
+  .pool-card.maxed{ opacity:.45; cursor:default; }
+  .pool-card.maxed:hover{ transform:none; }
+  .pool-card .art{
+    flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:11px; font-weight:700; padding:4px; line-height:1.3; overflow:hidden;
+    position:relative;
+  }
+  .pool-card .art img{ width:100%; height:100%; object-fit:cover; }
+  /* 縦向き絵柄の事件カードを横向きタイルに収める時、左右の余白を同じ画像のぼかしで埋める */
+  .pool-card .art .blur-bg{
+    position:absolute; inset:0; object-fit:cover; filter:blur(8px) brightness(.55); transform:scale(1.15);
+  }
+  .pool-card .art .fg-img{
+    position:relative; width:100%; height:100%; object-fit:contain; z-index:1;
+  }
+  .pool-card .in-deck-count{
+    position:absolute; top:4px; left:4px; min-width:18px; height:18px; padding:0 4px; border-radius:9px;
+    background:#fff; color:var(--ink-dark); font-weight:900; font-size:10px;
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm);
+  }
+  .pool-card .selected-check{
+    position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%;
+    background:var(--gold); color:#2b2438; font-weight:900; font-size:13px;
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm);
+  }
+
+  .deck-panel{
+    width:640px; flex:none; background:var(--band-fill); border-radius:20px; padding:18px;
+    box-shadow:var(--shadow-md); color:var(--ink-dark); position:sticky; top:80px;
+    max-height:calc(100vh - 110px); overflow-y:auto; display:flex; flex-direction:column; gap:16px;
+  }
+  .summary-block h2{ font-size:14px; margin-bottom:8px; }
+  .slot-row-group{ display:flex; gap:16px; }
+  .slot-row{ display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+  .slot-row .slot-info{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .slot-thumb{
+    width:44px; height:62px; border-radius:6px; overflow:hidden; flex:0 0 auto; position:relative;
+    background:#ddd; display:flex; align-items:center; justify-content:center;
+    font-size:9px; color:#888; text-align:center; border:2px solid #fff; box-shadow:var(--shadow-sm);
+  }
+  .slot-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .slot-thumb .blur-bg{
+    position:absolute; inset:0; object-fit:cover; filter:blur(6px) brightness(.55); transform:scale(1.15);
+  }
+  .slot-thumb .fg-img{ position:relative; width:100%; height:100%; object-fit:contain; z-index:1; }
+  .slot-thumb.landscape{ width:62px; height:44px; }
+  .slot-thumb.small.landscape{ width:39px; height:28px; }
+  .slot-info{ font-size:12.5px; font-weight:700; flex:1; }
+  .slot-info .empty{ opacity:.5; font-weight:500; }
+  .check{ font-weight:900; font-size:14px; }
+  .check.ok{ color:#2f8a4b; }
+  .check.ng{ color:#b23b3b; }
+
+  .deck-count-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .deck-count{ font-size:13px; font-weight:800; }
+  .sort-btn{
+    background:rgba(255,255,255,.35); color:var(--ink-dark); border:none;
+    border-radius:12px; padding:5px 12px; font-size:11.5px; cursor:pointer; font-weight:800;
+  }
+  .sort-btn:hover{ background:rgba(255,255,255,.5); }
+  .filter-panel .sort-btn{ background:rgba(255,255,255,.15); color:#fff; }
+  .filter-panel .sort-btn:hover{ background:rgba(255,255,255,.25); }
+  .deck-count.full{ color:#2f8a4b; }
+  .deck-count.over{ color:#b23b3b; }
+  .deck-list{
+    overflow-y:auto; max-height:420px; padding-right:4px;
+    display:grid; grid-template-columns:repeat(10, 1fr); gap:2px;
+  }
+  .deck-tile{
+    position:relative; aspect-ratio:124/174; border-radius:3px; overflow:hidden;
+    box-shadow:none; cursor:pointer; background:#ddd; transition:transform .1s;
+  }
+  .deck-tile:hover{ transform:translateY(-2px); box-shadow:0 0 0 2px #b23b3b; z-index:1; }
+  .deck-tile img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .deck-tile .no-image{
+    display:flex; align-items:center; justify-content:center; width:100%; height:100%;
+    font-size:8px; text-align:center; padding:2px; color:#555; background:#eee;
+  }
+  .deck-tile.placeholder{
+    background:#fff; border:1px solid #ccc; cursor:default;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .deck-tile.placeholder:hover{ transform:none; box-shadow:none; }
+  .deck-tile.placeholder .placeholder-label{
+    font-size:9px; color:#999; text-align:center; line-height:1.5; font-weight:700;
+  }
+  .empty-hint{ font-size:12px; opacity:.6; padding:14px 0; text-align:center; }
+  .save-row{ display:flex; gap:8px; }
+  .save-row input{
+    flex:1; border-radius:10px; border:1px solid #ccc; padding:8px 10px; font-size:13px;
+  }
+  .save-hint{ font-size:11px; color:#b23b3b; min-height:14px; }
+
+  .saved-decks{ border-top:1px solid rgba(43,36,56,.15); padding-top:12px; }
+  .saved-decks h3{ font-size:13px; margin-bottom:8px; }
+  .saved-deck-row{
+    display:flex; align-items:center; gap:8px; background:#fff; border-radius:10px;
+    padding:6px 10px; box-shadow:var(--shadow-sm); font-size:12px; margin-bottom:6px;
+  }
+  .slot-thumb.small{ width:28px; height:39px; font-size:7px; border-width:1px; }
+  .saved-deck-row .name{ flex:1; font-weight:700; }
+  .saved-deck-row .count{ font-size:11px; opacity:.6; }
+  .saved-deck-row button{
+    border:none; border-radius:14px; padding:4px 10px; font-weight:800; font-size:11px; cursor:pointer;
+  }
+  .saved-deck-row .load-btn{ background:var(--navy1); color:#fff; }
+  .saved-deck-row .delete-btn{ background:#eee; color:#b23b3b; }
+</style>
+<script src="data/cards-data.js"></script>
+<script src="js/deck-storage.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>🔍 デッキ作成</h1>
+  <div style="display:flex; gap:10px;">
+    <button class="back-btn" onclick="location.href='index.html'">← ホームに戻る</button>
+    <button class="save-btn" id="saveBtn">デッキを保存</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="pool-panel">
+    <div class="tab-row" id="tabRow"></div>
+    <input type="text" id="searchInput" class="search-input" placeholder="カード名で検索">
+    <div class="filter-panel">
+      <div class="filter-group">
+        <span class="filter-label">色</span>
+        <div class="color-filter" id="colorFilter"></div>
+      </div>
+      <div class="filter-group" id="levelFilter">
+        <span class="filter-label">Lv</span>
+        <div class="value-filter" id="levelValueFilter"></div>
+      </div>
+      <div class="filter-group range-group" id="apFilter">
+        <span class="filter-label">AP</span>
+        <input type="number" id="apMin" min="0" placeholder="下限">
+        <span class="range-sep">〜</span>
+        <input type="number" id="apMax" min="0" placeholder="上限">
+      </div>
+      <div class="filter-group" id="lpFilter">
+        <span class="filter-label">LP</span>
+        <div class="value-filter" id="lpValueFilter"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">並び順</span>
+        <button class="sort-btn" id="poolSortBtn">ID順</button>
+      </div>
+      <button class="filter-clear-btn" id="filterClearBtn">✕ 絞り込み解除</button>
+    </div>
+    <div class="tab-hint" id="tabHint"></div>
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
+
+  <div class="deck-panel">
+    <div class="save-row">
+      <input type="text" id="deckName" placeholder="デッキ名を入力" value="名探偵デッキ">
+    </div>
+
+    <div class="summary-block">
+      <h2>デッキ構成 (42枚セット)</h2>
+      <div class="slot-row-group">
+        <div class="slot-row">
+          <div class="slot-thumb" id="partnerThumb"></div>
+          <div class="slot-info" id="partnerInfo"></div>
+          <span class="check" id="partnerCheck"></span>
+        </div>
+        <div class="slot-row">
+          <div class="slot-thumb" id="caseThumb"></div>
+          <div class="slot-info" id="caseInfo"></div>
+          <span class="check" id="caseCheck"></span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="deck-count-row">
+        <span class="deck-count" id="deckCount">0 / 40 枚</span>
+        <button class="sort-btn" id="deckSortBtn">ID順</button>
+      </div>
+      <div class="deck-list" id="deckList">
+        <div class="empty-hint">「デッキ40枚」タブでキャラ・イベントを選んでください</div>
+      </div>
+    </div>
+
+    <div class="save-hint" id="saveHint"></div>
+
+    <div class="saved-decks">
+      <h3>保存済みデッキ</h3>
+      <div id="savedDeckList"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const MAX_DECK = 40;
+  const MAX_COPIES = 3;
+
+  // ---- 実データ(data/cards-data.js の window.CARD_DATA)からカードプールを構築する ----
+  const COLOR_MAP = {
+    '青':'#5c8ad9', '赤':'#e0684f', '黄':'#ffc107', '緑':'#3a8f6d',
+    '白':'#cfcbe4', '黒':'#4a4560',
+  };
+  // DB側のcolor表記が「青,赤」のようにカンマ区切りの場合と「青赤」のように区切り無しで
+  // 連結されている場合が混在しているため、カンマを外した上で1文字ずつに分解して判定する
+  // (色名はすべて漢字1文字なので、この分解方法で両方の表記に対応できる)。
+  function parseColors(colorText){
+    if (!colorText) return [];
+    return colorText.replace(/,/g, '').split('').filter(ch => COLOR_MAP[ch]);
+  }
+  function colorFor(colorText){
+    const first = parseColors(colorText)[0];
+    return COLOR_MAP[first] || '#3d4f88';
+  }
+  const CARD_POOL = (window.CARD_DATA || []).map(c => ({
+    id: c.id,
+    groupKey: c.card_id || String(c.id), // 同一カード判定(絵柄違い含む)は公式カードIDでグルーピングする
+    name: c.name,
+    type: c.card_type,
+    level: c.level != null ? c.level : null,
+    ap: c.ap != null ? c.ap : null,
+    lp: c.lp != null ? c.lp : null,
+    colors: parseColors(c.color), // 2色以上のカードは複数持つ("緑,白"/"緑白"どちらの表記も対応)
+    color: colorFor(c.color),
+    image: c.image_url ? `data/images/${c.image_url}` : null,
+  }));
+  const CARD_BY_ID = new Map(CARD_POOL.map(c => [c.id, c]));
+
+  // ---- タブ(パートナー/事件/デッキ40枚)ごとの対象カード種別・見出し ----
+  const TABS = [
+    { key: 'partner', label: 'パートナー(1枚)', types: ['パートナー'], hint: 'パートナーを1枚選んでください。クリックで選択が切り替わります。' },
+    { key: 'case', label: '事件(1枚)', types: ['事件'], hint: '事件カードを1枚選んでください。クリックで選択が切り替わります。' },
+    { key: 'deck', label: 'デッキ40枚(キャラ・イベント)', types: ['キャラ', 'イベント'], hint: 'キャラ・イベントカードから合計40枚選んでください。同じカード(公式カードID基準)は3枚まで。' },
+  ];
+  let currentTab = 'partner';
+
+  // ---- 選択状態 ----
+  let partnerId = null;
+  let caseId = null;
+  const deck = {}; // id -> qty (キャラ・イベントのみ)
+
+  function deckTotal(){
+    return Object.values(deck).reduce((a, b) => a + b, 0);
+  }
+  function copiesInGroup(groupKey){
+    return Object.entries(deck).reduce((sum, [id, qty]) => {
+      const c = CARD_BY_ID.get(Number(id));
+      return c && c.groupKey === groupKey ? sum + qty : sum;
+    }, 0);
+  }
+
+  function renderTabs(){
+    const row = document.getElementById('tabRow');
+    row.innerHTML = '';
+    TABS.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (t.key === currentTab ? ' active' : '');
+      btn.textContent = t.label;
+      btn.onclick = () => { currentTab = t.key; renderTabs(); renderPool(); };
+      row.appendChild(btn);
+    });
+    document.getElementById('tabHint').textContent = TABS.find(t => t.key === currentTab).hint;
+    // レベル・APはキャラ・イベント(デッキ40枚タブ)のみ、LPはパートナー・キャラにある項目なので
+    // タブに応じて意味のある絞り込みだけを表示する
+    document.getElementById('levelFilter').style.display = currentTab === 'deck' ? 'flex' : 'none';
+    document.getElementById('apFilter').style.display = currentTab === 'deck' ? 'flex' : 'none';
+    document.getElementById('lpFilter').style.display = (currentTab === 'deck' || currentTab === 'partner') ? 'flex' : 'none';
+  }
+
+  // ---- 絞り込み(色・レベル・AP・LP・検索) ----
+  const ALL_COLORS = ['青', '赤', '黄', '緑', '白', '黒'];
+  const selectedColors = new Set();
+  const LEVEL_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const LP_VALUES = [0, 1, 2, 3];
+  const includedLevels = new Set();
+  const excludedLevels = new Set();
+  const includedLp = new Set();
+  const excludedLp = new Set();
+  let apMin = null;
+  let apMax = null;
+
+  // ---- 並び替え(レベル昇順/降順、同レベルはID順) ----
+  // 'id'(ID順) -> 'level-asc'(レベル昇順) -> 'level-desc'(レベル降順) を順に切り替える
+  const SORT_MODES = ['id', 'level-asc', 'level-desc'];
+  const SORT_LABELS = { 'id': 'ID順', 'level-asc': 'Lv 昇順 ▲', 'level-desc': 'Lv 降順 ▼' };
+  let poolSortMode = 'id';
+  let deckSortMode = 'id';
+
+  function sortComparator(mode){
+    if (mode === 'id') return (a, b) => a.id - b.id;
+    const dir = mode === 'level-asc' ? 'asc' : 'desc';
+    return (a, b) => {
+      const av = a.level, bv = b.level;
+      if (av == null && bv == null) return a.id - b.id;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (av !== bv) return dir === 'asc' ? av - bv : bv - av;
+      return a.id - b.id; // 同じ場合はID順
+    };
+  }
+
+  function renderColorFilter(){
+    const row = document.getElementById('colorFilter');
+    row.innerHTML = '';
+    ALL_COLORS.forEach(color => {
+      const btn = document.createElement('button');
+      btn.className = 'color-btn' + (selectedColors.has(color) ? ' active' : '');
+      btn.style.background = COLOR_MAP[color];
+      btn.title = color;
+      btn.onclick = () => {
+        if (selectedColors.has(color)) selectedColors.delete(color); else selectedColors.add(color);
+        renderColorFilter();
+        renderPool();
+      };
+      row.appendChild(btn);
+    });
+  }
+
+  function applyRangeFilter(list, field, min, max){
+    if (min == null && max == null) return list;
+    return list.filter(c => {
+      if (c[field] == null) return false;
+      if (min != null && c[field] < min) return false;
+      if (max != null && c[field] > max) return false;
+      return true;
+    });
+  }
+
+  // 含む(included)を指定した場合はその値のみ、除外(excluded)を指定した場合はその値以外を表示する
+  function applyValueFilter(list, field, included, excluded){
+    if (excluded.size > 0) list = list.filter(c => c[field] == null || !excluded.has(c[field]));
+    if (included.size > 0) list = list.filter(c => c[field] != null && included.has(c[field]));
+    return list;
+  }
+
+  function clearFilters(){
+    searchQuery = '';
+    document.getElementById('searchInput').value = '';
+    selectedColors.clear();
+    includedLevels.clear();
+    excludedLevels.clear();
+    includedLp.clear();
+    excludedLp.clear();
+    apMin = apMax = null;
+    ['apMin', 'apMax'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    renderColorFilter();
+    renderLevelFilter();
+    renderLpFilter();
+    renderPool();
+  }
+
+  // 未選択→含む(枠色/選択色)→除外(赤)→未選択、の三段階を1クリックずつ切り替える
+  function renderValueFilter(containerId, values, included, excluded, onChange){
+    const row = document.getElementById(containerId);
+    row.innerHTML = '';
+    values.forEach(v => {
+      const btn = document.createElement('button');
+      btn.className = 'value-chip' + (included.has(v) ? ' included' : excluded.has(v) ? ' excluded' : '');
+      btn.textContent = v;
+      btn.onclick = () => {
+        if (included.has(v)) { included.delete(v); excluded.add(v); }
+        else if (excluded.has(v)) { excluded.delete(v); }
+        else { included.add(v); }
+        onChange();
+      };
+      row.appendChild(btn);
+    });
+  }
+  function renderLevelFilter(){
+    renderValueFilter('levelValueFilter', LEVEL_VALUES, includedLevels, excludedLevels, () => { renderLevelFilter(); renderPool(); });
+  }
+  function renderLpFilter(){
+    renderValueFilter('lpValueFilter', LP_VALUES, includedLp, excludedLp, () => { renderLpFilter(); renderPool(); });
+  }
+
+  let searchQuery = '';
+
+  function renderPool(){
+    const grid = document.getElementById('cardGrid');
+    grid.innerHTML = '';
+    const tab = TABS.find(t => t.key === currentTab);
+    let list = CARD_POOL.filter(c => tab.types.includes(c.type));
+    if (searchQuery) {
+      list = list.filter(c => c.name.toLowerCase().includes(searchQuery));
+    }
+    if (selectedColors.size > 0) {
+      list = list.filter(c => c.colors.some(col => selectedColors.has(col)));
+    }
+    if (currentTab === 'deck') {
+      list = applyValueFilter(list, 'level', includedLevels, excludedLevels);
+      list = applyRangeFilter(list, 'ap', apMin, apMax);
+    }
+    if (currentTab === 'deck' || currentTab === 'partner') {
+      list = applyValueFilter(list, 'lp', includedLp, excludedLp);
+    }
+    list = list.slice().sort(sortComparator(poolSortMode));
+
+    if (list.length === 0) {
+      grid.innerHTML = '<div class="empty-hint">該当するカードがありません</div>';
+      return;
+    }
+
+    list.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'pool-card';
+      if (currentTab === 'case') div.classList.add('landscape');
+      div.style.background = `linear-gradient(160deg, ${c.color}, #1b2340)`;
+
+      let badgeHtml = '';
+      if (currentTab === 'partner') {
+        if (partnerId === c.id) { div.classList.add('selected'); badgeHtml = '<div class="selected-check">✓</div>'; }
+      } else if (currentTab === 'case') {
+        if (caseId === c.id) { div.classList.add('selected'); badgeHtml = '<div class="selected-check">✓</div>'; }
+      } else {
+        const qty = deck[c.id] || 0;
+        if (qty > 0) badgeHtml = `<div class="in-deck-count">${qty}</div>`;
+        // 同じグループが既に3枚(上限)なら、そのカード自身が3枚目を持っている場合も含めて
+        // 「これ以上は追加できない」ことが分かるようグレーにする(qtyの有無で区別しない)
+        if (copiesInGroup(c.groupKey) >= MAX_COPIES) div.classList.add('maxed');
+        if (deckTotal() >= MAX_DECK) div.classList.add('maxed');
+      }
+
+      div.title = c.name;
+      const artHtml = currentTab === 'case'
+        ? landscapeArtHtml(c.image, c.name)
+        : (c.image ? `<img src="${c.image}" alt="${c.name}">` : c.name.replace('\n', '<br>'));
+      div.innerHTML = `
+        ${badgeHtml}
+        <div class="art">${artHtml}</div>
+      `;
+      div.onclick = () => onPoolCardClick(c);
+      grid.appendChild(div);
+    });
+  }
+
+  // 事件カードは横向き画像がほとんどだが、縦向きの絵柄のカードも一部ある。
+  // 縦向きの場合は左右が余るので、同じ画像をぼかして背景に敷いて埋める。
+  function landscapeArtHtml(image, alt){
+    if (!image) return alt.replace('\n', '<br>');
+    return `<img class="blur-bg" src="${image}" alt="" aria-hidden="true"><img class="fg-img" src="${image}" alt="${alt}">`;
+  }
+
+  function onPoolCardClick(c){
+    if (currentTab === 'partner') {
+      partnerId = (partnerId === c.id) ? null : c.id;
+    } else if (currentTab === 'case') {
+      caseId = (caseId === c.id) ? null : c.id;
+    } else {
+      addToDeck(c);
+      renderDeckList();
+      return;
+    }
+    renderPool();
+    renderSummary();
+  }
+
+  function addToDeck(c){
+    const cur = deck[c.id] || 0;
+    if (deckTotal() >= MAX_DECK) { flashCount(); return; }
+    if (copiesInGroup(c.groupKey) >= MAX_COPIES) { flashCount(); return; }
+    deck[c.id] = cur + 1;
+    renderPool();
+  }
+
+  function removeFromDeck(id){
+    if (!deck[id]) return;
+    deck[id] -= 1;
+    if (deck[id] <= 0) delete deck[id];
+    renderPool();
+    renderDeckList();
+  }
+
+  function flashCount(){
+    const el = document.getElementById('deckCount');
+    el.style.color = '#b23b3b';
+    setTimeout(() => { el.style.color = ''; }, 400);
+  }
+
+  function slotThumbHtml(card, landscape){
+    if (!card) return '';
+    if (landscape) return landscapeArtHtml(card.image, card.name);
+    return card.image ? `<img src="${card.image}" alt="${card.name}">` : card.name.slice(0, 4);
+  }
+
+  function renderSummary(){
+    const partner = partnerId != null ? CARD_BY_ID.get(partnerId) : null;
+    const caseCard = caseId != null ? CARD_BY_ID.get(caseId) : null;
+
+    document.getElementById('partnerThumb').innerHTML = slotThumbHtml(partner);
+    document.getElementById('partnerInfo').innerHTML = partner ? partner.name : '<span class="empty">未選択</span>';
+    document.getElementById('partnerCheck').textContent = partner ? '✓' : '✕';
+    document.getElementById('partnerCheck').className = 'check ' + (partner ? 'ok' : 'ng');
+
+    document.getElementById('caseThumb').classList.add('landscape');
+    document.getElementById('caseThumb').innerHTML = slotThumbHtml(caseCard, true);
+    document.getElementById('caseInfo').innerHTML = caseCard ? caseCard.name : '<span class="empty">未選択</span>';
+    document.getElementById('caseCheck').textContent = caseCard ? '✓' : '✕';
+    document.getElementById('caseCheck').className = 'check ' + (caseCard ? 'ok' : 'ng');
+
+    updateSaveState();
+  }
+
+  function renderDeckList(){
+    const listEl = document.getElementById('deckList');
+    const countEl = document.getElementById('deckCount');
+    const total = deckTotal();
+    countEl.textContent = `${total} / ${MAX_DECK} 枚`;
+    countEl.classList.toggle('full', total === MAX_DECK);
+    countEl.classList.toggle('over', total > MAX_DECK);
+
+    // 選んだカードを1枚ずつタイル展開し、残りは「未選択」のプレースホルダーで
+    // MAX_DECK枚ぶん埋める(常に40マスのグリッドとして表示する)
+    const instances = [];
+    Object.keys(deck).forEach(id => {
+      for (let i = 0; i < deck[id]; i++) instances.push(Number(id));
+    });
+    instances.sort((a, b) => sortComparator(deckSortMode)(CARD_BY_ID.get(a), CARD_BY_ID.get(b)));
+
+    listEl.innerHTML = '';
+    for (let i = 0; i < MAX_DECK; i++) {
+      const tile = document.createElement('div');
+      if (i < instances.length) {
+        const id = instances[i];
+        const card = CARD_BY_ID.get(id);
+        tile.className = 'deck-tile';
+        tile.title = `${card.name}（クリックで1枚減らす）`;
+        tile.innerHTML = card.image
+          ? `<img src="${card.image}" alt="${card.name}">`
+          : `<div class="no-image">${card.name}</div>`;
+        tile.onclick = () => removeFromDeck(id);
+      } else {
+        tile.className = 'deck-tile placeholder';
+        tile.innerHTML = '<div class="placeholder-label">キャラ<br>イベント</div>';
+      }
+      listEl.appendChild(tile);
+    }
+    updateSaveState();
+  }
+
+  function updateSaveState(){
+    const total = deckTotal();
+    const ok = partnerId != null && caseId != null && total === MAX_DECK;
+    document.getElementById('saveBtn').disabled = !ok;
+    const hint = document.getElementById('saveHint');
+    if (ok) { hint.textContent = ''; return; }
+    const missing = [];
+    if (partnerId == null) missing.push('パートナー未選択');
+    if (caseId == null) missing.push('事件未選択');
+    if (total !== MAX_DECK) missing.push(`デッキ${total}/40枚`);
+    hint.textContent = missing.join(' ・ ');
+  }
+
+  document.getElementById('saveBtn').onclick = () => {
+    const name = document.getElementById('deckName').value || '無題のデッキ';
+    if (document.getElementById('saveBtn').disabled) return;
+    saveDeck(name, deck, partnerId, caseId);
+    renderSavedDecks();
+    alert(`「${name}」を保存しました（パートナー1・事件1・デッキ40枚）`);
+  };
+
+  function renderSavedDecks(){
+    const listEl = document.getElementById('savedDeckList');
+    const decks = loadSavedDecks();
+    if (decks.length === 0) {
+      listEl.innerHTML = '<div class="empty-hint">まだ保存したデッキはありません</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    decks.slice().reverse().forEach(d => {
+      const total = d.cards.reduce((a, c) => a + c.qty, 0);
+      const partner = d.partnerCardId != null ? CARD_BY_ID.get(d.partnerCardId) : null;
+      const caseCard = d.caseCardId != null ? CARD_BY_ID.get(d.caseCardId) : null;
+      const row = document.createElement('div');
+      row.className = 'saved-deck-row';
+      row.innerHTML = `
+        <div class="slot-thumb small">${slotThumbHtml(partner)}</div>
+        <div class="slot-thumb small landscape">${slotThumbHtml(caseCard, true)}</div>
+        <span class="name">${d.name}</span>
+        <span class="count">${total}枚</span>
+        <button class="load-btn">読込</button>
+        <button class="delete-btn">削除</button>
+      `;
+      row.querySelector('.load-btn').onclick = () => loadDeckIntoBuilder(d);
+      row.querySelector('.delete-btn').onclick = () => {
+        if (!confirm(`「${d.name}」を削除しますか？`)) return;
+        deleteDeck(d.id);
+        renderSavedDecks();
+      };
+      listEl.appendChild(row);
+    });
+  }
+
+  function loadDeckIntoBuilder(savedDeck){
+    Object.keys(deck).forEach(id => delete deck[id]);
+    savedDeck.cards.forEach(c => { deck[c.id] = c.qty; });
+    partnerId = savedDeck.partnerCardId != null ? savedDeck.partnerCardId : null;
+    caseId = savedDeck.caseCardId != null ? savedDeck.caseCardId : null;
+    document.getElementById('deckName').value = savedDeck.name;
+    renderPool();
+    renderDeckList();
+    renderSummary();
+  }
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim().toLowerCase();
+    renderPool();
+  });
+  document.getElementById('apMin').addEventListener('input', (e) => {
+    apMin = e.target.value === '' ? null : Number(e.target.value);
+    renderPool();
+  });
+  document.getElementById('apMax').addEventListener('input', (e) => {
+    apMax = e.target.value === '' ? null : Number(e.target.value);
+    renderPool();
+  });
+  document.getElementById('filterClearBtn').addEventListener('click', clearFilters);
+
+  function nextSortMode(mode){
+    return SORT_MODES[(SORT_MODES.indexOf(mode) + 1) % SORT_MODES.length];
+  }
+  document.getElementById('poolSortBtn').addEventListener('click', () => {
+    poolSortMode = nextSortMode(poolSortMode);
+    document.getElementById('poolSortBtn').textContent = SORT_LABELS[poolSortMode];
+    renderPool();
+  });
+  document.getElementById('deckSortBtn').addEventListener('click', () => {
+    deckSortMode = nextSortMode(deckSortMode);
+    document.getElementById('deckSortBtn').textContent = SORT_LABELS[deckSortMode];
+    renderDeckList();
+  });
+
+  // 左のカード一覧は、ウィンドウが広い時は最大10列、狭くなったら自動で列数を減らす
+  const MAX_POOL_COLUMNS = 10;
+  const MIN_TILE_WIDTH = 76;
+  function updatePoolGridColumns(){
+    const grid = document.getElementById('cardGrid');
+    const width = grid.clientWidth || grid.parentElement.clientWidth;
+    const columns = Math.max(1, Math.min(MAX_POOL_COLUMNS, Math.floor(width / MIN_TILE_WIDTH)));
+    grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+  }
+  window.addEventListener('resize', updatePoolGridColumns);
+
+  renderTabs();
+  renderColorFilter();
+  renderLevelFilter();
+  renderLpFilter();
+  renderPool();
+  renderDeckList();
+  renderSummary();
+  renderSavedDecks();
+  updatePoolGridColumns();
+</script>
+</body>
+</html>

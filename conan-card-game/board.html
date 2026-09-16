@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>名探偵コナンTCG AI観戦ビューア - 盤面モックv3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Kaisei+Decol:wght@700&display=swap');
+
+  :root{
+    --purple-top:#2c3550;
+    --purple-top2:#232a42;
+    --pink-mid:#3a3226;
+    --pink-bottom:#4a3d28;
+    --brick-line:rgba(255,255,255,.10);
+    --band-fill:#e8e4d8;
+    --band-fill-pink:#efe6d0;
+    --ink-dark:#2b2438;
+    --outline:#ffffff;
+    --gold:#e0b34f;
+    --file-stripe1:#a86a3d;
+    --file-stripe2:#8a5330;
+    --card-w:124px;
+    --card-h:174px;
+    --navy1:#3d4f88;
+    --navy2:#1b2340;
+    --shadow-sm:0 3px 7px rgba(27,20,45,.22);
+    --shadow-md:0 8px 16px rgba(27,20,45,.28);
+    --shadow-lg:0 14px 26px rgba(27,20,45,.34);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Zen Kaku Gothic New', sans-serif; color:var(--ink-dark);}
+
+  /* 1920x1080 fixed output canvas: content is scaled down to fit */
+  .canvas-1080{
+    width:1080px; height:1920px; overflow:hidden; position:relative;
+    background:linear-gradient(180deg, #2c3550 0%, #232a42 38%, #3a3226 60%, #4a3d28 100%);
+  }
+  .canvas-1080 .table{
+    position:absolute; top:50%; left:50%;
+    transform-origin: center center;
+  }
+
+  .table{
+    position:relative;
+    width:max-content;
+    margin:0 auto;
+    padding:70px 60px 90px 60px;
+    display:flex; flex-direction:column; gap:10px;
+    background:linear-gradient(180deg, var(--purple-top) 0%, var(--purple-top2) 38%, var(--pink-mid) 60%, var(--pink-bottom) 100%);
+    overflow:hidden;
+  }
+  .table::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, var(--brick-line) 0 2px, transparent 2px 46px),
+      repeating-linear-gradient(90deg, var(--brick-line) 0 2px, transparent 2px 92px);
+    mix-blend-mode:overlay; opacity:.5; pointer-events:none;
+  }
+  .table::after{
+    content:'';
+    position:absolute; left:50%; top:44%;
+    width:1400px; height:520px;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.15), rgba(255,255,255,0) 62%);
+    pointer-events:none;
+  }
+  .watermark{
+    position:absolute; z-index:1; pointer-events:none; opacity:.07;
+  }
+  .watermark.wm1{ top:-60px; left:-70px; width:340px; transform:rotate(-18deg); }
+  .watermark.wm2{ bottom:-70px; right:-60px; width:300px; transform:rotate(162deg); }
+
+  .row{position:relative; z-index:2; display:flex; align-items:center;}
+  .row.between{justify-content:space-between;}
+  .row.center{justify-content:center;}
+  .row.tri{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; }
+  .row.tri > *:last-child{ justify-self:end; }
+  .row.tri > *:first-child{ justify-self:start; }
+  .row.tri > *:nth-child(2){ justify-self:center; }
+
+  /* ---- zone layout: case+evidence | field, then centered partner -> file -> hand ---- */
+  .zone{ display:flex; flex-direction:column; gap:14px; }
+  .zone.mirrored{ flex-direction:column-reverse; }
+
+  .case-field-row{ display:flex; gap:20px; align-items:flex-start; margin-bottom:14px; justify-content:center; }
+  .case-col{ position:relative; flex:0 0 230px; width:230px; display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+  .evi-block{ position:absolute; top:100%; left:0; margin-top:8px; display:flex; flex-direction:column; align-items:flex-start; gap:6px; z-index:5; }
+  
+  /* 現場バンド：5枚のカードがちょうど配置できるサイズ */
+  .field-band-wrap{ display:flex; max-width:720px; }
+  .field-band-wrap .band{ flex:0 1 auto; }
+
+  /* FILE row reuses the same spacer + gap so its width lines up exactly with the field band above */
+  .file-align-row{ display:flex; gap:20px; align-items:flex-start; }
+  .file-align-row .spacer{ flex:0 0 230px; width:230px; }
+  .file-align-row .file-fill{ flex:1; display:flex; justify-content:center; }
+
+  .center-col{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+
+  .label{font-size:11px; color:#fff; font-weight:700; text-shadow:0 1px 3px rgba(0,0,0,.5); margin-top:6px; letter-spacing:.02em;}
+  .stack{display:flex; flex-direction:column; align-items:center;}
+  .stack.left{align-items:flex-start;}
+  .stack.right{align-items:flex-end;}
+
+  /* ---- generic number badge ---- */
+  .num-badge{
+    width:46px; height:46px; border-radius:12px; background:#fffdf8; border:3px solid var(--outline);
+    display:flex; align-items:center; justify-content:center; font-weight:900; font-size:21px; color:var(--ink-dark);
+    box-shadow:var(--shadow-sm), inset 0 -3px 0 rgba(27,23,48,.12); flex:0 0 auto;
+    font-variant-numeric:tabular-nums;
+  }
+  .num-badge.lg{width:58px; height:58px; font-size:26px; border-radius:14px;}
+
+  /* ---- Master Duel style hand fan ---- */
+  .handfan{
+    display:flex; justify-content:center; align-items:flex-end;
+    height:214px; position:relative;
+  }
+  .handfan.top{ align-items:flex-start; }
+  .handfan .hcard{
+    width:150px; height:210px; margin-left:-64px; border-radius:9px;
+    border:3px solid #fff; box-shadow:var(--shadow-lg);
+    flex:0 0 auto; position:relative; transition:transform .15s;
+    transform-origin:center bottom;
+  }
+  .handfan.top .hcard{ transform-origin:center top; }
+  .handfan .hcard:first-child{margin-left:0;}
+  .handfan .hcard:hover{ transform:translateY(-18px) rotate(0deg) !important; z-index:20 !important; }
+
+  .handfan .hcard.face{
+    overflow:hidden; background:linear-gradient(160deg,var(--navy1),var(--navy2));
+    display:flex; flex-direction:column;
+  }
+  .handfan .hcard.face .mini-tag{ background:rgba(10,12,26,.6); color:#fff; font-size:10px; font-weight:800; padding:4px 7px; }
+  .handfan .hcard.face .mini-art{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    color:#e6ebff; font-size:11.5px; text-align:center; padding:6px; line-height:1.3;
+    overflow:hidden;
+  }
+
+  .handfan .hcard.back{
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,.10) 0 26px, transparent 27px),
+      repeating-linear-gradient(135deg, #3f52a0 0 7px, #2e3c78 7px 14px);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .handfan .hcard.back::after{
+    content:'🔍'; font-size:20px; opacity:.5; filter:grayscale(1) brightness(2);
+  }
+
+  .hand-tray{
+    position:absolute; left:50%; bottom:-14px; transform:translateX(-50%);
+    width:640px; height:34px; border-radius:50%;
+    background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.28), transparent 72%);
+    z-index:-1;
+  }
+  .handfan.top .hand-tray{ bottom:auto; top:-14px; }
+
+  /* ---- shared card-back face (real Conan TCG back design) ---- */
+  .cardback-face{
+    position:relative; border-radius:8px; border:2.5px solid #16324a;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px),
+      linear-gradient(160deg,#1c3a5e,#0d1f38);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    box-shadow:var(--shadow-md);
+  }
+  .cardback-face .logo-wrap{ display:flex; align-items:center; justify-content:center; }
+  .cardback-face svg.arclogo{ width:76%; height:76%; }
+  .cardback-face .pile-count{
+    position:absolute; bottom:5px; left:50%; transform:translateX(-50%);
+    background:rgba(255,255,255,.92); color:var(--ink-dark); font-weight:900; font-size:11px;
+    padding:1px 9px; border-radius:20px; border:2px solid #16324a; white-space:nowrap;
+  }
+  .cardback-sliver{
+    position:absolute; border-radius:6px; border:2px solid #16324a;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px),
+      linear-gradient(160deg,#1c3a5e,#0d1f38);
+  }
+
+  /* file & evidence piles: BOTH use landscape (sideways) cards, differ only in fan direction */
+  .file-fan, .evi-fan{ position:relative; flex:0 0 auto; }
+  .file-fan .cardback-face, .evi-fan .cardback-face{
+    width:var(--card-h); height:var(--card-w); position:absolute;
+    border:3px solid var(--outline); border-radius:6px; box-shadow:var(--shadow-md);
+    background:repeating-linear-gradient(135deg, #3f52a0 0 7px, #2e3c78 7px 14px);
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+  }
+  .file-fan .cardback-face .logo-wrap, .evi-fan .cardback-face .logo-wrap{ transform:rotate(90deg); width:var(--card-w); }
+  .file-fan .cardback-face .pile-count, .evi-fan .cardback-face .pile-count{
+    color:#fff; font-weight:900; font-size:10px; margin-top:4px; text-align:center;
+  }
+  .file-fan .cardback-sliver, .evi-fan .cardback-sliver{ 
+    width:var(--card-h); height:var(--card-w); position:absolute;
+    border:3px solid var(--outline); border-radius:6px;
+    background:repeating-linear-gradient(135deg, #3f52a0 0 7px, #2e3c78 7px 14px);
+  }
+  .file-fan .cardback-face{ top:0; }
+  .evi-fan .cardback-face{ left:0; }
+
+  /* ---- opponent case card ---- */
+  .case-card, .partner-card{
+    width:var(--card-w); height:var(--card-h); border-radius:9px; overflow:hidden; position:relative;
+    border:3px solid var(--outline); box-shadow:var(--shadow-lg);
+    background:linear-gradient(160deg,#3a3a5c,#1c1c34);
+    display:flex; flex-direction:column; flex:0 0 auto;
+  }
+  .case-card::before, .partner-card::before{
+    content:''; position:absolute; top:0; left:0; width:100%; height:3px;
+    background:linear-gradient(90deg, var(--gold), transparent 70%);
+  }
+  .case-card .tag{background:#1b1730; color:#fff; font-size:10.5px; font-weight:800; padding:4px 7px; display:flex; justify-content:space-between; align-items:center;}
+  .case-card .art{flex:1; display:flex; align-items:center; justify-content:center; color:#cfcbe4; font-size:10.5px; text-align:center; padding:6px; position:relative; overflow:hidden;}
+  .case-card .art::after{
+    content:'🔍'; position:absolute; font-size:46px; opacity:.09; filter:grayscale(1) brightness(3);
+  }
+  .case-card .state{background:#f4efff; color:#1b1730; font-size:10.5px; font-weight:800; padding:4px 7px; text-align:center; letter-spacing:.04em;}
+
+  .partner-card{
+    align-items:center; justify-content:center;
+    color:#cfcbe4; font-size:9.5px; text-align:center; padding:6px; overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(255,255,255,.08), transparent 60%),
+      linear-gradient(160deg,#333,#111);
+  }
+
+  /* ---- bands ---- */
+  .band{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:14px;
+    background:var(--band-fill); border-radius:26px; box-shadow:inset 0 2px 8px rgba(27,20,45,.08), var(--shadow-sm);
+    padding:16px 20px; margin:0 12px; position:relative;
+  }
+  .band.pink{background:var(--band-fill-pink);}
+  .band-tag{
+    position:absolute; top:-11px; left:22px; background:#1b1730; color:#fff;
+    font-size:10.5px; font-weight:800; padding:3px 12px; border-radius:20px; letter-spacing:.03em;
+    box-shadow:var(--shadow-sm);
+  }
+
+  /* ---- character card ---- */
+  .char-card{
+    width:var(--card-w); height:var(--card-h); border-radius:9px; overflow:hidden; flex:0 0 auto; position:relative;
+    border:3px solid var(--outline); box-shadow:var(--shadow-md);
+    background:linear-gradient(160deg,var(--navy1),var(--navy2));
+    display:flex; flex-direction:column;
+  }
+  .char-card::before{
+    content:''; position:absolute; top:0; left:0; width:6px; height:100%; z-index:2;
+    background:var(--pip-color, var(--gold));
+  }
+  .char-card.glow{ box-shadow:0 0 0 3px var(--gold), 0 0 16px rgba(224,179,79,.55), var(--shadow-md); }
+  .char-card .tag{
+    background:rgba(10,12,26,.72); color:#fff; font-size:10px; font-weight:800; padding:4px 6px 4px 10px;
+    display:flex; justify-content:space-between; align-items:center; position:relative; z-index:1;
+  }
+  .char-card .tag .idnum{
+    background:#fff; color:var(--ink-dark); border-radius:50%; width:18px; height:18px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:900;
+  }
+  .char-card .art{
+    flex:1; display:flex; align-items:center; justify-content:center; color:#e6ebff;
+    font-size:10.5px; text-align:center; padding:6px 8px; line-height:1.3; position:relative; z-index:1;
+    overflow:hidden;
+  }
+  .char-card .art img, .case-card .art img, .partner-card img, .hcard.face .mini-art img{
+    width:100%; height:100%; object-fit:cover;
+  }
+  .char-card .bottom{
+    background:#f4f6ff; color:#1b1730; font-size:10px; font-weight:800; padding:4px 8px 4px 10px;
+    display:flex; justify-content:space-between; align-items:center; position:relative; z-index:1;
+  }
+  .char-card .bottom .stat{display:inline-flex; align-items:center; gap:3px;}
+
+  .char-card-slot.empty{
+    width:var(--card-w); height:var(--card-h); border-radius:9px; flex:0 0 auto;
+    border:2px dashed rgba(43,36,56,.32); background:rgba(255,255,255,.28);
+    display:flex; align-items:center; justify-content:center;
+    color:rgba(43,36,56,.28); font-size:26px; font-weight:300;
+  }
+
+  /* ---- stamp text ---- */
+  .stamp-row{ padding:4px 34px 4px 64px; }
+  .stamp{
+    font-family:'Kaisei Decol', serif; font-weight:700; color:var(--ink-dark);
+    -webkit-text-stroke:2.5px #fff; paint-order:stroke fill;
+    filter:drop-shadow(0 3px 3px rgba(0,0,0,.22));
+  }
+  .stamp.status-block{ display:flex; flex-direction:column; gap:4px; transform:rotate(-4deg); }
+  .stamp.status-block .st1{ font-size:38px; }
+  .stamp.status-block .st1 .accent{color:#c0392b; -webkit-text-stroke:2.5px #fff;}
+  .stamp.status-block .st2{ font-size:32px; display:flex; align-items:center; gap:9px;}
+  .stamp.status-block .st2 .circ{
+    -webkit-text-stroke:0; color:var(--ink-dark); background:#fff; border:4px solid var(--outline);
+    width:46px; height:46px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:24px;
+  }
+  .stamp.turn{ font-size:40px; transform:rotate(3deg); }
+
+  .commentary{ display:none; }
+
+  .turn-divider{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 40px; position:relative; z-index:2;
+  }
+  .turn-divider::before{
+    content:''; position:absolute; left:0; right:0; top:50%; height:2px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  }
+
+  /* single (unfanned) deck card */
+  .deck-single{ position:relative; flex:0 0 auto; }
+  .deck-single .cardback-face{ width:var(--card-w); height:var(--card-h); position:absolute; left:0; top:0; }
+  /* ---- official playmat grid layout ---- */
+  .playmat-grid{
+    display:grid;
+    grid-template-columns: 200px 720px 200px;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "case   field   deck"
+      "evi    partner remove"
+      "evi    file    remove";
+    gap:14px;
+    align-items:stretch;
+    width:max-content;
+    margin:0 auto;
+  }
+  .pm-case{ grid-area:case; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; position:relative; }
+  .pm-case .band-tag, .pm-field .band-tag, .pm-deck .band-tag, .pm-partner .band-tag, .pm-file .band-tag{ position:static; }
+  .pm-field{ grid-area:field; display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; }
+  .pm-field .band{ width:100%; }
+  .pm-deck{ grid-area:deck; display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; }
+  .pm-evidence{ grid-area:evi; display:flex; flex-direction:column; align-items:center; gap:8px; background:var(--band-fill); border-radius:20px; padding:14px 16px; box-shadow:inset 0 2px 8px rgba(27,20,45,.08), var(--shadow-sm); justify-content:flex-start; }
+  .pm-evidence .evi-header{ display:flex; align-items:center; gap:8px; }
+  .pm-evidence .band-tag{ position:static; }
+  .pm-partner{ grid-area:partner; display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; }
+  .pm-partner .band{ width:100%; height:100%; }
+  .pm-remove{ grid-area:remove; display:flex; flex-direction:column; align-items:center; gap:8px; background:var(--band-fill); border-radius:20px; padding:14px 8px; box-shadow:inset 0 2px 8px rgba(27,20,45,.08), var(--shadow-sm); justify-content:flex-start; }
+  .pm-remove .band-tag{ position:static; margin-bottom:6px; }
+  .pm-file{ grid-area:file; display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; }
+  .pm-file .band{ width:100%; }
+  .playmat-grid.mirrored{
+    grid-template-areas:
+      "remove file    evi"
+      "remove partner evi"
+      "deck   field    case";
+  }
+</style>
+<script src="data/cards-data.js"></script>
+<script>
+  function arcLogoSVG(id){
+    return `<svg class="arclogo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs><path id="${id}" d="M22,66 A38,38 0 0 1 98,66" /></defs>
+      <circle cx="60" cy="62" r="46" fill="none" stroke="rgba(255,255,255,.30)" stroke-width="2"/>
+      <text font-size="12.5" font-weight="800" fill="#dbe7ff" letter-spacing="1.5">
+        <textPath href="#${id}" startOffset="50%" text-anchor="middle">DETECTIVE</textPath>
+      </text>
+      <text x="60" y="86" text-anchor="middle" font-size="19" font-weight="900" fill="#f2f6ff">CONAN</text>
+    </svg>`;
+  }
+  // build a directional "fan" of card-back slivers + one full face card
+  function buildFan(container, direction, sliverCount, step, cardW, cardH, badgeText, arcId){
+    const front = document.createElement('div');
+    front.className = 'cardback-face';
+    front.style.zIndex = sliverCount + 1;
+    front.style.width = cardH+'px';
+    front.style.height = cardW+'px';
+    front.innerHTML = `<div class="logo-wrap">${arcLogoSVG(arcId)}</div>${badgeText ? `<div class="pile-count">${badgeText}</div>` : ''}`;
+
+    if(direction==='right'){
+      // newest card sits at the far right; older slivers trail toward the left
+      front.style.left = (sliverCount*step)+'px'; front.style.top = '0';
+      for(let i=1;i<=sliverCount;i++){
+        const sl = document.createElement('div');
+        sl.className = 'cardback-sliver';
+        sl.style.left = ((sliverCount-i)*step)+'px';
+        sl.style.width = cardH+'px';
+        sl.style.height = cardW+'px';
+        sl.style.zIndex = sliverCount - i + 1;
+        container.appendChild(sl);
+      }
+      container.style.width = (cardH + sliverCount*step)+'px'; container.style.height = cardW+'px';
+    } else if(direction==='up'){
+      // mirrored version of 'down': newest card sits at the BOTTOM, older slivers trail upward.
+      // Used for the opponent's evidence pile so, from the opponent's perspective (180° rotated),
+      // the newest evidence is still placed nearest their case card.
+      front.style.top = (sliverCount*step)+'px'; front.style.left = '0';
+      for(let i=1;i<=sliverCount;i++){
+        const sl = document.createElement('div');
+        sl.className = 'cardback-sliver';
+        sl.style.top = ((sliverCount-i)*step)+'px';
+        sl.style.width = cardH+'px';
+        sl.style.height = cardW+'px';
+        sl.style.zIndex = sliverCount - i + 1;
+        container.appendChild(sl);
+      }
+      container.style.width = cardH+'px'; container.style.height = (cardW + sliverCount*step)+'px';
+    } else {
+      // newest card sits at the top; older slivers trail downward (still a landscape/sideways card)
+      front.style.top = '0'; front.style.left = '0';
+      for(let i=1;i<=sliverCount;i++){
+        const sl = document.createElement('div');
+        sl.className = 'cardback-sliver';
+        sl.style.top = (i*step)+'px';
+        sl.style.width = cardH+'px';
+        sl.style.height = cardW+'px';
+        sl.style.zIndex = sliverCount - i + 1;
+        container.appendChild(sl);
+      }
+      container.style.width = cardH+'px'; container.style.height = (cardW + sliverCount*step)+'px';
+    }
+    container.appendChild(front);
+  }
+  // 盤面上のカード名プレースホルダー([data-card]属性)を、実データ(window.CARD_DATA)の
+  // 画像に差し替える。対応するカードが見つからない場合はテキスト表示のまま残る。
+  function applyCardArt(){
+    const cards = window.CARD_DATA || [];
+    const byName = new Map();
+    cards.forEach(c => { if (!byName.has(c.name)) byName.set(c.name, c); });
+
+    document.querySelectorAll('[data-card]').forEach(el => {
+      const card = byName.get(el.dataset.card);
+      if (!card || !card.image_url) return;
+      const img = document.createElement('img');
+      img.src = `data/images/${card.image_url}`;
+      img.alt = card.name;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      el.textContent = '';
+      el.appendChild(img);
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    applyCardArt();
+    const CW = 124, CH = 174, STEP = 15;
+    const EVI_CW = 108, EVI_CH = 152, EVI_STEP = 26;
+    buildFan(document.getElementById('self-evi-fan'), 'up', 7, EVI_STEP, EVI_CW, EVI_CH, '', 'arcC');
+    // opponent evidence fan is mirrored (grows downward) since their whole zone is rotated 180°
+    buildFan(document.getElementById('opp-evi-fan'), 'down', 4, EVI_STEP, EVI_CW, EVI_CH, '', 'arcG');
+
+    // FILE stack: container width is fixed regardless of count; spacing is
+    // calculated against MAX_FILE(10) so the visual density stays consistent
+    // no matter how many FILE cards are currently placed (8 here).
+    // reverse=true mirrors the stack from the right edge instead of the left,
+    // for the opponent's 180°-rotated zone.
+    function buildFileStack(containerId, count, maxCount, cardW, reverse){
+      const container = document.getElementById(containerId);
+      if(!container) return;
+      const containerWidth = container.getBoundingClientRect().width;
+      const step = (containerWidth - cardW) / (maxCount - 1);
+      for(let i=0;i<count;i++){
+        const div = document.createElement('div');
+        div.style.position = 'absolute';
+        div.style.left = (reverse ? (containerWidth - cardW - i*step) : (i*step)) + 'px';
+        div.style.top = '0px';
+        div.style.width = cardW + 'px';
+        div.style.height = '130px';
+        div.style.border = '3px solid #ffffff';
+        div.style.borderRadius = '6px';
+        div.style.background = 'repeating-linear-gradient(135deg, #3f52a0 0 7px, #2e3c78 7px 14px)';
+        div.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+        div.style.zIndex = i;
+        container.appendChild(div);
+      }
+    }
+    buildFileStack('self-file-stack', 5, 10, 174);
+    buildFileStack('opp-file-stack', 4, 10, 174, true);
+
+    // scale the whole board to fit within the fixed 1080x1920 output canvas.
+    // We scale to fill the WIDTH fully (minimizing side padding); any vertical
+    // overflow beyond 1920 is simply cropped by the canvas's overflow:hidden.
+    function fitToCanvas(){
+      const table = document.querySelector('.table');
+      const canvas = document.querySelector('.canvas-1080');
+      if(!table || !canvas) return;
+      table.style.transform = 'translate(-50%, -50%) scale(1)';
+      const rect = table.getBoundingClientRect();
+      const scale = 1080 / rect.width;
+      table.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+    fitToCanvas();
+  });
+</script>
+</head>
+<body>
+<a href="index.html" style="position:fixed; top:14px; left:14px; z-index:999; background:rgba(255,255,255,.15); color:#fff; text-decoration:none; padding:8px 16px; border-radius:16px; font-size:12px; font-weight:800; box-shadow:0 3px 8px rgba(0,0,0,.3);">← ホームに戻る</a>
+
+
+<div class="canvas-1080">
+<div class="table">
+  <svg class="watermark wm1" viewBox="0 0 100 100"><circle cx="38" cy="38" r="26" fill="none" stroke="#1b1730" stroke-width="7"/><line x1="58" y1="58" x2="88" y2="88" stroke="#1b1730" stroke-width="9" stroke-linecap="round"/></svg>
+  <svg class="watermark wm2" viewBox="0 0 100 100"><circle cx="38" cy="38" r="26" fill="none" stroke="#1b1730" stroke-width="7"/><line x1="58" y1="58" x2="88" y2="88" stroke="#1b1730" stroke-width="9" stroke-linecap="round"/></svg>
+
+  <!-- ============ OPPONENT ZONE (top, mirrored) ============ -->
+  <div class="zone" style="margin-bottom:24px;">
+
+    <!-- opponent hand: face-down, same visual orientation as self hand, placed above FILE without overlap -->
+    <div class="center-col" style="position:relative; z-index:30; margin-bottom:34px;">
+      <div class="handfan">
+        <div class="hcard back" style="transform:rotate(-18deg) translateY(25px); z-index:1;"></div>
+        <div class="hcard back" style="transform:rotate(-9deg) translateY(12px); z-index:2;"></div>
+        <div class="hcard back" style="transform:rotate(0deg) translateY(6px); z-index:3;"></div>
+        <div class="hcard back" style="transform:rotate(9deg) translateY(12px); z-index:4;"></div>
+        <div class="hcard back" style="transform:rotate(18deg) translateY(25px); z-index:5;"></div>
+      </div>
+    </div>
+
+    <div class="playmat-grid mirrored">
+      <div class="pm-case">
+        <span class="band-tag">事件</span>
+        <div class="case-card">
+          <div class="tag"><span>事件</span><span>Lv.5</span></div>
+          <div class="art" data-card="そして人魚はいなくなった">そして人魚は<br>いなくなった</div>
+          <div class="state">事件編</div>
+        </div>
+      </div>
+
+      <div class="pm-field">
+        <span class="band-tag">現場</span>
+        <div class="band pink">
+          <div class="char-card" style="--pip-color:#5c8ad9;">
+            <div class="tag"><span class="idnum">3</span><span>LP1</span></div>
+            <div class="art" data-card="遠山和葉">遠山和葉</div>
+            <div class="bottom"><span class="stat">⚡ 2000</span><span>Lv1</span></div>
+          </div>
+          <div class="char-card glow" style="--pip-color:#e0684f;">
+            <div class="tag"><span class="idnum">7</span><span>LP2</span></div>
+            <div class="art" data-card="服部平次">服部平次</div>
+            <div class="bottom"><span class="stat">⚡ 7000</span><span>Lv2</span></div>
+          </div>
+          <div class="char-card" style="--pip-color:#5c8ad9;">
+            <div class="tag"><span class="idnum">2</span><span>LP1</span></div>
+            <div class="art" data-card="服部静華">服部静華</div>
+            <div class="bottom"><span class="stat">⚡ 1000</span><span>Lv1</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pm-deck">
+        <span class="band-tag">デッキ</span>
+        <div class="num-badge">29</div>
+        <div class="deck-single">
+          <div class="cardback-face" style="position:relative; width:124px; height:174px; border:3px solid #ffffff; border-radius:8px; background:repeating-linear-gradient(135deg, #3f52a0 0 7px, #2e3c78 7px 14px);">
+          </div>
+        </div>
+      </div>
+
+      <!-- Right strip (mirrored): 証拠エリア — label stays top, cards anchor to bottom (near case card), blank space at top of the card area -->
+      <div class="pm-evidence">
+        <div class="evi-header">
+          <span class="band-tag">証拠エリア</span>
+          <div class="num-badge">4</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="evi-fan" id="opp-evi-fan"></div>
+      </div>
+
+      <div class="pm-partner">
+        <span class="band-tag">パートナー</span>
+        <div class="band pink" style="display:flex; justify-content:center; align-items:center;">
+          <div class="partner-card" data-card="服部平次">服部平次</div>
+        </div>
+      </div>
+
+      <!-- Left strip (mirrored): リムーブエリア -->
+      <div class="pm-remove">
+        <span class="band-tag">リムーブエリア</span>
+        <div class="num-badge">1</div>
+        <div style="position:relative; width:124px; height:174px;">
+          <div class="art" data-card="大岡紅葉" style="position:absolute; left:0; top:0; width:124px; height:174px; border:3px solid #ffffff; border-radius:8px; background:linear-gradient(160deg,#3a3a5c,#1c1c34); display:flex; align-items:center; justify-content:center; color:#cfcbe4; font-size:10px; overflow:hidden;">大岡紅葉</div>
+          <div style="position:absolute; left:10px; top:10px; width:124px; height:174px; border:3px solid #ffffff; border-radius:8px; background:linear-gradient(160deg,#3a3a5c,#1c1c34); z-index:-1;"></div>
+        </div>
+      </div>
+
+      <div class="pm-file">
+        <span class="band-tag">FILEエリア</span>
+        <div class="band pink" style="display:flex; align-items:center; gap:8px;">
+          <div class="num-badge">4</div>
+          <div id="opp-file-stack" style="position:relative; flex:1; height:130px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SELF ZONE (bottom) ============ -->
+  <div class="zone">
+
+    <div class="playmat-grid">
+      <!-- Top row: 事件(left) / 現場(center) / デッキ(right) -->
+      <div class="pm-case">
+        <span class="band-tag">事件</span>
+        <div class="case-card">
+          <div class="tag"><span>事件</span><span>Lv.6</span></div>
+          <div class="art" data-card="ピアノソナタ「月光」殺人事件">ピアノソナタ<br>「月光」殺人事件</div>
+          <div class="state">事件編</div>
+        </div>
+      </div>
+
+      <div class="pm-field">
+        <span class="band-tag">現場</span>
+        <div class="band pink">
+          <div class="char-card glow" style="--pip-color:#e0b34f;">
+            <div class="tag"><span class="idnum">9</span><span>LP2</span></div>
+            <div class="art">灰原哀<br>&amp;江戸川コナン</div>
+            <div class="bottom"><span class="stat">⚡ 8000</span><span>Lv2</span></div>
+          </div>
+          <div class="char-card" style="--pip-color:#5c8ad9;">
+            <div class="tag"><span class="idnum">2</span><span>LP1</span></div>
+            <div class="art" data-card="吉田歩美">吉田歩美</div>
+            <div class="bottom"><span class="stat">⚡ 1000</span><span>Lv1</span></div>
+          </div>
+          <div class="char-card" style="--pip-color:#5c8ad9;">
+            <div class="tag"><span class="idnum">4</span><span>AP3000</span></div>
+            <div class="art" data-card="円谷光彦">円谷光彦</div>
+            <div class="bottom"><span class="stat">⚡ 3000</span><span>Lv1</span></div>
+          </div>
+          <div class="char-card" style="--pip-color:#e0684f;">
+            <div class="tag"><span class="idnum">8</span><span>LP2</span></div>
+            <div class="art" data-card="江戸川コナン">江戸川コナン</div>
+            <div class="bottom"><span class="stat">⚡ 7000</span><span>Lv2</span></div>
+          </div>
+          <div class="char-card" style="--pip-color:#ffc107;">
+            <div class="tag"><span class="idnum">7</span><span>LP2</span></div>
+            <div class="art" data-card="毛利蘭">毛利蘭</div>
+            <div class="bottom"><span class="stat">⚡ 5000</span><span>Lv2</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pm-deck">
+        <span class="band-tag">デッキ</span>
+        <div class="num-badge">32</div>
+        <div class="deck-single">
+          <div class="cardback-face" style="position:relative; width:124px; height:174px; border:3px solid #ffffff; border-radius:8px; background:repeating-linear-gradient(135deg, #3f52a0 0 7px, #2e3c78 7px 14px);">
+          </div>
+        </div>
+      </div>
+
+      <!-- Left strip: 証拠エリア (full height) -->
+      <div class="pm-evidence">
+        <div class="evi-header">
+          <span class="band-tag">証拠エリア</span>
+          <div class="num-badge">7</div>
+        </div>
+        <div class="evi-fan" id="self-evi-fan"></div>
+      </div>
+
+      <!-- Center-mid: パートナー -->
+      <div class="pm-partner">
+        <span class="band-tag">パートナー</span>
+        <div class="band pink" style="display:flex; justify-content:center; align-items:center;">
+          <div class="partner-card" data-card="毛利小五郎">毛利小五郎</div>
+        </div>
+      </div>
+
+      <!-- Right strip: リムーブエリア (full height) -->
+      <div class="pm-remove">
+        <span class="band-tag">リムーブエリア</span>
+        <div class="num-badge">2</div>
+        <div style="position:relative; width:124px; height:174px;">
+          <div class="art" data-card="江戸川コナン" style="position:absolute; left:0; top:0; width:124px; height:174px; border:3px solid #ffffff; border-radius:8px; background:linear-gradient(160deg,#3a3a5c,#1c1c34); display:flex; align-items:center; justify-content:center; color:#cfcbe4; font-size:10px; overflow:hidden;">江戸川コナン</div>
+          <div style="position:absolute; left:10px; top:10px; width:124px; height:174px; border:3px solid #ffffff; border-radius:8px; background:linear-gradient(160deg,#3a3a5c,#1c1c34); z-index:-1;"></div>
+        </div>
+      </div>
+
+      <!-- Center-bottom: FILE -->
+      <div class="pm-file">
+        <span class="band-tag">FILEエリア</span>
+        <div class="band pink" style="display:flex; align-items:center; gap:8px;">
+          <div class="num-badge">5</div>
+          <div id="self-file-stack" style="position:relative; flex:1; height:130px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- hand (below everything, nearest the outer edge) — slightly overlaps FILE area, like holding cards -->
+    <div class="center-col" style="margin-top:-70px; position:relative; z-index:30;">
+      <div class="handfan">
+        <div class="hand-tray"></div>
+        <div class="hcard face" style="transform:rotate(-18deg) translateY(25px); z-index:1;">
+          <div class="mini-tag">8 ・ Lv2</div>
+          <div class="mini-art" data-card="江戸川コナン">江戸川<br>コナン</div>
+        </div>
+        <div class="hcard face" style="transform:rotate(-9deg) translateY(12px); z-index:2;">
+          <div class="mini-tag">2 ・ Lv1</div>
+          <div class="mini-art" data-card="吉田歩美">吉田歩美</div>
+        </div>
+        <div class="hcard face" style="transform:rotate(0deg) translateY(6px); z-index:3;">
+          <div class="mini-tag">6 ・ Lv2</div>
+          <div class="mini-art" data-card="灰原哀">灰原哀</div>
+        </div>
+        <div class="hcard face" style="transform:rotate(9deg) translateY(12px); z-index:4;">
+          <div class="mini-tag">1 ・ Lv1</div>
+          <div class="mini-art">DETECTIVE<br>CONAN</div>
+        </div>
+        <div class="hcard face" style="transform:rotate(18deg) translateY(25px); z-index:5;">
+          <div class="mini-tag">3 ・ Lv1</div>
+          <div class="mini-art" data-card="毛利蘭">毛利蘭</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>

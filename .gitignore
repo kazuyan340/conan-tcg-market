@@ -10,3 +10,11 @@ web/__pycache__/
 web/site/data/unresolved_raw/
 .claude/
 actions-runner/
+
+# conan-card-game (Electron AI対戦ビューア)
+conan-card-game/node_modules/
+# card_data_lib/build_app_data.py が生成する、公式サイトの版権画像とカードデータ。
+# 再配布しないためコミット対象外(手元で再生成する)。
+conan-card-game/data/
+# electron-packagerが生成するビルド成果物(数百MB)。npm run packageで再生成する。
+conan-card-game/dist/

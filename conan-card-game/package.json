@@ -1,0 +1,16 @@
+{
+  "name": "conan-tcg-viewer",
+  "productName": "ConanTCGViewer",
+  "description": "Conan TCG AI Battle Viewer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager . ConanTCGViewer --platform=win32 --arch=x64 --out=dist --overwrite --ignore=\"^/dist\" --ignore=\"^/project_notes.md\" --ignore=\"^/claude_code_instructions.md\""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^30.5.1",
+    "electron-packager": "^17.1.2"
+  }
+}
