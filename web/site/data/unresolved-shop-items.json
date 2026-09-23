@@ -2,33 +2,56 @@
  "ambiguous": [
   {
    "site": "トレカバース",
-   "raw_key": "P032",
-   "rarity": "PR",
+   "raw_key": "0169",
+   "rarity": "D",
    "candidates": [
     {
-     "id": 2003,
-     "card_num": "PR220",
-     "name": "遠山和葉",
-     "rarity": "PR",
-     "pack": "探偵マスターズ2026",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1769159336013168.jpg"
+     "id": 274,
+     "card_num": "D06010",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176820249.jpg"
     },
     {
-     "id": 2597,
-     "card_num": "PR249",
-     "name": "遠山和葉",
-     "rarity": "PR",
-     "pack": "【CT-P09】BOX特典プロモーションパック",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1776333828559436.jpg"
+     "id": 275,
+     "card_num": "D06011",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176827920.jpg"
+    },
+    {
+     "id": 286,
+     "card_num": "D06022",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902798752.jpg"
+    },
+    {
+     "id": 288,
+     "card_num": "D06024",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902804096.jpg"
     }
    ],
    "listings": [
     {
-     "product_url": "https://www.torecabirth.jp/product/6193",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313736393135393333363031333136382e6a706700323430000074006669745f686569676874.jpg",
-     "price": 799980,
-     "product_name": "遠山和葉",
-     "hint": "pack_tag='探偵マスターズ2026 各ブロック緑1位'"
+     "product_url": "https://www.torecabirth.jp/product/147",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f53542f434f4e414e5f5354303632352e6a706700323430000074006669745f686569676874.jpg",
+     "price": 1080,
+     "product_name": "怪盗キッド",
+     "hint": "pack_tag='ボーナスカード'"
+    },
+    {
+     "product_url": "https://www.torecabirth.jp/product/146",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f53542f434f4e414e5f5354303632352e6a706700323430000074006669745f686569676874.jpg",
+     "price": 2580,
+     "product_name": "怪盗キッド",
+     "hint": "pack_tag='ボーナスカード ホイル'"
     }
    ]
   }
@@ -140,7 +163,7 @@
    "hint": "",
    "product_name": "A01087 風見裕也 C [ID:0075]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000128983_khqUMql.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -154,7 +177,7 @@
    "hint": "",
    "product_name": "A02088 犯人 C [ID:0249]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129133_kiJIH79.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -168,7 +191,7 @@
    "hint": "",
    "product_name": "A03005 工藤新一 R [ID:0263]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129233_aXDKDBq.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012923/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012923/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -182,7 +205,7 @@
    "hint": "",
    "product_name": "A03036 越水七槻 C [ID:0293]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -196,7 +219,7 @@
    "hint": "",
    "product_name": "A04056 アンドレ・キャメル C [ID:0448]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129403_va6euPC.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -210,7 +233,7 @@
    "hint": "",
    "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]【キラ仕様】【FVP】【金箔】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     2480
@@ -224,7 +247,7 @@
    "hint": "",
    "product_name": "A05009 毛利蘭 R [ID:0515]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129573_eJvzJYG.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012957/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012957/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -238,7 +261,7 @@
    "hint": "",
    "product_name": "A05030 遠山銀司郎 R [ID:0534]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129593_iilBCTS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -252,7 +275,7 @@
    "hint": "",
    "product_name": "A05069 ジェイムズ・ブラック R [ID:0569]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012961/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012961/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -266,7 +289,7 @@
    "hint": "",
    "product_name": "A05101 毛利小五郎 C [ID:0599]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129643_0yzw7tB.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012964/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012964/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -280,7 +303,7 @@
    "hint": "",
    "product_name": "A06041 服部静華 C [ID:0664]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129753_p4D9PL8.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012975/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012975/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -294,7 +317,7 @@
    "hint": "",
    "product_name": "A06101 キャンティ R [ID:0718]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129793_wrA3CQ8.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012979/conan/page32/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012979/conan/page31/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -578,20 +601,6 @@
    "listing_count": 1,
    "prices": [
     160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "A02023",
-   "rarity": "R",
-   "price": 170,
-   "hint": "",
-   "product_name": "遠山和葉",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
-   "listing_count": 1,
-   "prices": [
-    170
    ]
   },
   {
