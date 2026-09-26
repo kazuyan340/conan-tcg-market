@@ -700,20 +700,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A03030",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "伊織無我",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427087&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427087",
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "A04049",
    "rarity": "R",
    "price": 160,
@@ -721,6 +707,20 @@
    "product_name": "沖矢昴",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427106&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU427106",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A03030",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "伊織無我",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427087&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427087",
    "listing_count": 1,
    "prices": [
     160
