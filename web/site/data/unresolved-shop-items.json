@@ -84,13 +84,6 @@
      "price": 1080,
      "product_name": "怪盗キッド",
      "hint": "pack_tag='ボーナスカード'"
-    },
-    {
-     "product_url": "https://www.torecabirth.jp/product/146",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f53542f434f4e414e5f5354303632352e6a706700323430000074006669745f686569676874.jpg",
-     "price": 2580,
-     "product_name": "怪盗キッド",
-     "hint": "pack_tag='ボーナスカード ホイル'"
     }
    ]
   }
@@ -604,14 +597,14 @@
    "site": "駿河屋",
    "raw_key": "A03094",
    "rarity": "C",
-   "price": 500,
+   "price": 550,
    "hint": "",
    "product_name": "萩原千速",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427091&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU427091",
    "listing_count": 1,
    "prices": [
-    500
+    550
    ]
   },
   {
@@ -646,14 +639,14 @@
    "site": "駿河屋",
    "raw_key": "A02070P",
    "rarity": "CP",
-   "price": 360,
+   "price": 400,
    "hint": "",
    "product_name": "降谷零",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956094&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GN956094",
    "listing_count": 1,
    "prices": [
-    360
+    400
    ]
   },
   {
