@@ -105,6 +105,20 @@
   },
   {
    "site": "カードラボ",
+   "raw_key": "B03139SEC2",
+   "rarity": "SEC",
+   "price": 99800,
+   "hint": "",
+   "product_name": "赤井秀一(サイン版)",
+   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f32303234313132335f6632376439332e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.c-labo-online.jp/product/290144",
+   "listing_count": 1,
+   "prices": [
+    99800
+   ]
+  },
+  {
+   "site": "カードラボ",
    "raw_key": "B03139SEC1",
    "rarity": "SEC",
    "price": 18800,
@@ -119,13 +133,13 @@
   },
   {
    "site": "カードラボ",
-   "raw_key": "B03139SEC2",
+   "raw_key": "B07028SEC2",
    "rarity": "SEC",
    "price": 99800,
    "hint": "",
-   "product_name": "赤井秀一(サイン版)",
-   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f32303234313132335f6632376439332e6a706700323430000074006669745f686569676874.jpg",
-   "product_url": "https://www.c-labo-online.jp/product/290144",
+   "product_name": "中森青子(サイン版)",
+   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f637463675f6230375f303030322e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.c-labo-online.jp/product/351642",
    "listing_count": 1,
    "prices": [
     99800
@@ -143,20 +157,6 @@
    "listing_count": 1,
    "prices": [
     14800
-   ]
-  },
-  {
-   "site": "カードラボ",
-   "raw_key": "B07028SEC2",
-   "rarity": "SEC",
-   "price": 99800,
-   "hint": "",
-   "product_name": "中森青子(サイン版)",
-   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f637463675f6230375f303030322e6a706700323430000074006669745f686569676874.jpg",
-   "product_url": "https://www.c-labo-online.jp/product/351642",
-   "listing_count": 1,
-   "prices": [
-    99800
    ]
   },
   {
@@ -566,6 +566,20 @@
    ]
   },
   {
+   "site": "竜のしっぽ",
+   "raw_key": "金箔",
+   "rarity": "B09090P2",
+   "price": 2200,
+   "hint": "",
+   "product_name": "風の女神(CP)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5030392f3234303236353131362e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/94019",
+   "listing_count": 1,
+   "prices": [
+    2200
+   ]
+  },
+  {
    "site": "駿河屋",
    "raw_key": "A03094",
    "rarity": "C",
@@ -588,6 +602,20 @@
    "product_name": "鈴木園子",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU679320&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU679320",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A05030",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "遠山銀司郎",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU679312&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU679312",
    "listing_count": 1,
    "prices": [
     160
