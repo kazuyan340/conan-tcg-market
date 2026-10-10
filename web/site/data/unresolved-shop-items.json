@@ -147,20 +147,6 @@
   },
   {
    "site": "カードラボ",
-   "raw_key": "A06005P",
-   "rarity": "RP",
-   "price": 1480,
-   "hint": "",
-   "product_name": "阿笠博士(グミ仕様/A06)",
-   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f6374635f43542d5030365f303033332e6a706700323430000074006669745f686569676874.jpg",
-   "product_url": "https://www.c-labo-online.jp/product/386000",
-   "listing_count": 1,
-   "prices": [
-    1480
-   ]
-  },
-  {
-   "site": "カードラボ",
    "raw_key": "B07028SEC1",
    "rarity": "SEC",
    "price": 14800,
@@ -171,6 +157,20 @@
    "listing_count": 1,
    "prices": [
     14800
+   ]
+  },
+  {
+   "site": "カードラボ",
+   "raw_key": "A06005P",
+   "rarity": "RP",
+   "price": 1480,
+   "hint": "",
+   "product_name": "阿笠博士(グミ仕様/A06)",
+   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f6374635f43542d5030365f303033332e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.c-labo-online.jp/product/386000",
+   "listing_count": 1,
+   "prices": [
+    1480
    ]
   },
   {
@@ -569,14 +569,14 @@
    "site": "駿河屋",
    "raw_key": "A03094",
    "rarity": "C",
-   "price": 550,
+   "price": 500,
    "hint": "",
    "product_name": "萩原千速",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427091&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU427091",
    "listing_count": 1,
    "prices": [
-    550
+    500
    ]
   },
   {
@@ -651,20 +651,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A01065",
-   "rarity": "R",
-   "price": 180,
-   "hint": "",
-   "product_name": "沖矢昴",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956099&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GN956099",
-   "listing_count": 1,
-   "prices": [
-    180
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "A02023",
    "rarity": "R",
    "price": 170,
@@ -675,6 +661,20 @@
    "listing_count": 1,
    "prices": [
     170
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A01065",
+   "rarity": "R",
+   "price": 180,
+   "hint": "",
+   "product_name": "沖矢昴",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956099&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956099",
+   "listing_count": 1,
+   "prices": [
+    180
    ]
   },
   {
