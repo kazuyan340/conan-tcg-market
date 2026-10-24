@@ -2,6 +2,93 @@
  "ambiguous": [
   {
    "site": "わいTV",
+   "raw_key": "0197",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2165,
+     "card_num": "PR247",
+     "name": "伊織無我",
+     "rarity": "PR",
+     "pack": "チャレンジ戦 他",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1774884005638510.jpg"
+    },
+    {
+     "id": 2852,
+     "card_num": "PR332",
+     "name": "伊織無我",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.15",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1790763206828950.jpg"
+    },
+    {
+     "id": 2858,
+     "card_num": "PR338",
+     "name": "伊織無我",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.15（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1790763206871924.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10367",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f37393730393835332e6a706700323430000074006669745f686569676874.jpg",
+     "price": 4200,
+     "product_name": "※開封済　チャレンジ戦　伊織無我",
+     "hint": ""
+    },
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10358",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3136333230373531332e6a706700323430000074006669745f686569676874.jpg",
+     "price": 850,
+     "product_name": "伊織無我",
+     "hint": ""
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "0940",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 2613,
+     "card_num": "PR287",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "チャレンジ戦 他",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/19db9914eeb1a7.jpg"
+    },
+    {
+     "id": 2637,
+     "card_num": "PR278",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "ちゃお 2026年6月号付録",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1782441097692224.jpg"
+    },
+    {
+     "id": 2808,
+     "card_num": "PR306",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "サンデーS 2026年9月号付録",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1785395500805491.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10375",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f39303731333237362e6a706700323430000074006669745f686569676874.jpg",
+     "price": 8250,
+     "product_name": "※開封済　チャレンジ戦　萩原千速",
+     "hint": "pack='PROMO'"
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
    "raw_key": "0183",
    "rarity": "PR",
    "candidates": [
@@ -100,46 +187,6 @@
      "price": 38500,
      "product_name": "灰原哀",
      "hint": "pack='CT-P08'"
-    }
-   ]
-  },
-  {
-   "site": "わいTV",
-   "raw_key": "0197",
-   "rarity": "PR",
-   "candidates": [
-    {
-     "id": 2165,
-     "card_num": "PR247",
-     "name": "伊織無我",
-     "rarity": "PR",
-     "pack": "チャレンジ戦 他",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1774884005638510.jpg"
-    },
-    {
-     "id": 2852,
-     "card_num": "PR332",
-     "name": "伊織無我",
-     "rarity": "PR",
-     "pack": "プロモーションパックVol.15",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1790763206828950.jpg"
-    },
-    {
-     "id": 2858,
-     "card_num": "PR338",
-     "name": "伊織無我",
-     "rarity": "PR",
-     "pack": "プロモーションパックVol.15（キラバージョン）",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1790763206871924.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.cardshop-waitv.net/product/10358",
-     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3136333230373531332e6a706700323430000074006669745f686569676874.jpg",
-     "price": 850,
-     "product_name": "伊織無我",
-     "hint": ""
     }
    ]
   },
@@ -311,188 +358,6 @@
    "product_name": "阿笠博士(グミ仕様/A06)",
    "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f6374635f43542d5030365f303033332e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.c-labo-online.jp/product/386000",
-   "listing_count": 1,
-   "prices": [
-    1480
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A01087",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A01087 風見裕也 C [ID:0075]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000128983_khqUMql.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A02088",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A02088 犯人 C [ID:0249]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129133_kiJIH79.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A03036",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A03036 越水七槻 C [ID:0293]【キラ仕様】",
-   "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A04056",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A04056 アンドレ・キャメル C [ID:0448]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129403_va6euPC.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A04030P",
-   "rarity": null,
-   "price": 2480,
-   "hint": "",
-   "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]【キラ仕様】【FVP】【金箔】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    2480
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A05030",
-   "rarity": null,
-   "price": 120,
-   "hint": "",
-   "product_name": "A05030 遠山銀司郎 R [ID:0534]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129593_iilBCTS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    120
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A05069",
-   "rarity": null,
-   "price": 120,
-   "hint": "",
-   "product_name": "A05069 ジェイムズ・ブラック R [ID:0569]【キラ仕様】",
-   "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012961/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    120
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A05101",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A05101 毛利小五郎 C [ID:0599]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129643_0yzw7tB.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012964/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A06041",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A06041 服部静華 C [ID:0664]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129753_p4D9PL8.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012975/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A06101",
-   "rarity": null,
-   "price": 120,
-   "hint": "",
-   "product_name": "A06101 キャンティ R [ID:0718]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129793_wrA3CQ8.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012979/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    120
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A06102",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A06102 コルン C [ID:0719]【キラ仕様】",
-   "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012980/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A06005P",
-   "rarity": null,
-   "price": 1080,
-   "hint": "",
-   "product_name": "【パラレル】A06005P 阿笠博士 RP [ID:0630]【キラ仕様】【FVP】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129823_P6PhXff.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012982/conan/page36/recommend/",
-   "listing_count": 1,
-   "prices": [
-    1080
-   ]
-  },
-  {
-   "site": "フルアヘッド",
-   "raw_key": "A06077P",
-   "rarity": null,
-   "price": 1480,
-   "hint": "",
-   "product_name": "【パラレル】A06077P ジョディ・スターリング RP [ID:0697]【キラ仕様】【FVP】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129863_3AEvRIy.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012986/conan/page36/recommend/",
    "listing_count": 1,
    "prices": [
     1480
@@ -698,14 +563,14 @@
    "site": "駿河屋",
    "raw_key": "A03094",
    "rarity": "C",
-   "price": 550,
+   "price": 500,
    "hint": "",
    "product_name": "萩原千速",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427091&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU427091",
    "listing_count": 1,
    "prices": [
-    550
+    500
    ]
   },
   {
@@ -836,6 +701,20 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "A03030",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "伊織無我",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427087&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427087",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "B080077Sec1",
    "rarity": "SEC",
    "price": 11000,
@@ -860,20 +739,6 @@
    "listing_count": 1,
    "prices": [
     410
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "A01062",
-   "rarity": "SR",
-   "price": 630,
-   "hint": "",
-   "product_name": "赤井秀一",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956095&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GN956095",
-   "listing_count": 1,
-   "prices": [
-    630
    ]
   }
  ]
