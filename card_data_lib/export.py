@@ -17,6 +17,22 @@ APP_CARD_FIELDS = [
     "difficulty_first", "difficulty_second",
 ]
 
+# ability_text を組み立てる際に参照する、cards テーブルの能力系カラム(この順で連結する)。
+# 公式サイトAPIでは「登場時」等の通常能力(feature)と、ヒラメキ/カットイン/変装が
+# 別カラムに分かれて入っており、カードによってはfeatureが空でこれらのカラムにしか
+# テキストが無いことがある(例: id=1323 はfeatureがnullでcut_inのみ)。
+# この並び順は web/generate_card_pages.py (実サイトのカード詳細ページ)が採用している
+# 表示順に合わせてある。
+ABILITY_TEXT_SOURCE_COLUMNS = ["ability_text", "hirameki", "cut_in", "henso"]
+
+
+def _combined_ability_text(row: sqlite3.Row) -> str | None:
+    # 公式サイト側のデータに末尾の空行が混ざっていることがあるため、各パーツを
+    # trimしてから結合する(例: id=166は feature が「…する。\n\n」のように
+    # 余分な改行付きで返ってくる)
+    parts = [row[col].strip() for col in ABILITY_TEXT_SOURCE_COLUMNS if row[col] and row[col].strip()]
+    return "\n".join(parts) if parts else None
+
 
 class CardExportError(RuntimeError):
     pass
@@ -56,7 +72,11 @@ def export_cards(
                 " scraper_cards.py を実行してDBを最新化してください。"
             )
 
-        cards = [{field: row[field] for field in APP_CARD_FIELDS} for row in rows]
+        cards = []
+        for row in rows:
+            card = {field: row[field] for field in APP_CARD_FIELDS}
+            card["ability_text"] = _combined_ability_text(row)
+            cards.append(card)
     finally:
         conn.close()
 

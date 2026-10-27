@@ -100,6 +100,15 @@
   .pool-card.selected{ box-shadow:0 0 0 3px var(--gold), var(--shadow-md); }
   .pool-card.maxed{ opacity:.45; cursor:default; }
   .pool-card.maxed:hover{ transform:none; }
+  /* 対戦シミュレーター(battle.html)側で効果がまだ実装されていないカードは、
+     一覧でひと目で分かるよう灰色(グレースケール+薄暗く)にする */
+  .pool-card.not-implemented .art{ filter:grayscale(1) brightness(.65); }
+  .pool-card.not-implemented{ position:relative; }
+  .pool-card.not-implemented::after{
+    content:'効果未実装'; position:absolute; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.72); color:#fff; font-size:10px; font-weight:700;
+    text-align:center; padding:2px 0; letter-spacing:.05em; pointer-events:none;
+  }
   .pool-card .art{
     flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
     font-size:11px; font-weight:700; padding:4px; line-height:1.3; overflow:hidden;
@@ -204,9 +213,25 @@
     border:none; border-radius:14px; padding:4px 10px; font-weight:800; font-size:11px; cursor:pointer;
   }
   .saved-deck-row .load-btn{ background:var(--navy1); color:#fff; }
+  .saved-deck-row .rename-btn{ background:#eee; color:#333; }
   .saved-deck-row .delete-btn{ background:#eee; color:#b23b3b; }
+
+  /* カードを長押しすると大きく表示するプレビュー(タップ/クリックでの
+     追加・削除と区別するため、押している間だけ表示する) */
+  .card-zoom-overlay{
+    position:fixed; inset:0; z-index:9000; display:none;
+    align-items:center; justify-content:center;
+    background:rgba(10,12,20,.72); pointer-events:none;
+    animation:cardZoomFadeIn .12s ease-out;
+  }
+  @keyframes cardZoomFadeIn{ from{ opacity:0; } to{ opacity:1; } }
+  .card-zoom-overlay img{
+    max-width:min(86vw, 520px); max-height:86vh; border-radius:14px;
+    box-shadow:var(--shadow-md); border:4px solid var(--outline);
+  }
 </style>
 <script src="data/cards-data.js"></script>
+<script src="data/unimplemented-ids.js"></script>
 <script src="js/deck-storage.js"></script>
 </head>
 <body>
@@ -294,6 +319,10 @@
 
 </div>
 
+<div class="card-zoom-overlay" id="cardZoomOverlay">
+  <img id="cardZoomImg" src="" alt="">
+</div>
+
 <script>
   const MAX_DECK = 40;
   const MAX_COPIES = 3;
@@ -325,8 +354,13 @@
     colors: parseColors(c.color), // 2色以上のカードは複数持つ("緑,白"/"緑白"どちらの表記も対応)
     color: colorFor(c.color),
     image: c.image_url ? `data/images/${c.image_url}` : null,
+    // 犯人［ID：0627］等：「〜はデッキに何枚でも入れることができる。」を持つカードは枚数制限を受けない
+    unlimited: !!c.ability_text && c.ability_text.includes('［ID：' + c.card_id + '］はデッキに何枚でも入れることができる。'),
   }));
   const CARD_BY_ID = new Map(CARD_POOL.map(c => [c.id, c]));
+  // 対戦シミュレーター側で効果が未実装のカードID一覧(data/unimplemented-ids.js、
+  // tools/generate_unimplemented_ids.js で生成)。グレー表示の判定に使う
+  const UNIMPLEMENTED_CARD_ID_SET = new Set(window.UNIMPLEMENTED_CARD_IDS || []);
 
   // ---- タブ(パートナー/事件/デッキ40枚)ごとの対象カード種別・見出し ----
   const TABS = [
@@ -339,6 +373,7 @@
   // ---- 選択状態 ----
   let partnerId = null;
   let caseId = null;
+  let editingDeckId = null;
   const deck = {}; // id -> qty (キャラ・イベントのみ)
 
   function deckTotal(){
@@ -508,6 +543,9 @@
       const div = document.createElement('div');
       div.className = 'pool-card';
       if (currentTab === 'case') div.classList.add('landscape');
+      if (UNIMPLEMENTED_CARD_ID_SET.has(c.id)) {
+        div.classList.add('not-implemented');
+      }
       div.style.background = `linear-gradient(160deg, ${c.color}, #1b2340)`;
 
       let badgeHtml = '';
@@ -520,7 +558,7 @@
         if (qty > 0) badgeHtml = `<div class="in-deck-count">${qty}</div>`;
         // 同じグループが既に3枚(上限)なら、そのカード自身が3枚目を持っている場合も含めて
         // 「これ以上は追加できない」ことが分かるようグレーにする(qtyの有無で区別しない)
-        if (copiesInGroup(c.groupKey) >= MAX_COPIES) div.classList.add('maxed');
+        if (!c.unlimited && copiesInGroup(c.groupKey) >= MAX_COPIES) div.classList.add('maxed');
         if (deckTotal() >= MAX_DECK) div.classList.add('maxed');
       }
 
@@ -532,6 +570,7 @@
         ${badgeHtml}
         <div class="art">${artHtml}</div>
       `;
+      attachLongPressPreview(div, c.image, c.name);
       div.onclick = () => onPoolCardClick(c);
       grid.appendChild(div);
     });
@@ -544,10 +583,59 @@
     return `<img class="blur-bg" src="${image}" alt="" aria-hidden="true"><img class="fg-img" src="${image}" alt="${alt}">`;
   }
 
+  // 長押しでカードを大きく表示するプレビュー。タップ/クリックでの追加・削除とは
+  // 区別するため、長押しと判定された場合はクリック操作自体を打ち消す
+  const LONG_PRESS_MS = 420;
+  function showCardZoom(image, name){
+    if (!image) return;
+    const img = document.getElementById('cardZoomImg');
+    img.src = image;
+    img.alt = name || '';
+    document.getElementById('cardZoomOverlay').style.display = 'flex';
+  }
+  function hideCardZoom(){
+    document.getElementById('cardZoomOverlay').style.display = 'none';
+  }
+  // image/nameは固定値でも、押した瞬間の値を読む関数でもよい(パートナー/事件のように
+  // 要素自体は作り直さずinnerHTMLだけ更新され続ける箇所では、関数を渡して毎回再評価する)
+  function attachLongPressPreview(el, image, name){
+    let timer = null;
+    let triggered = false;
+    const start = () => {
+      const img = typeof image === 'function' ? image() : image;
+      if (!img) return;
+      triggered = false;
+      timer = setTimeout(() => {
+        triggered = true;
+        showCardZoom(img, typeof name === 'function' ? name() : name);
+      }, LONG_PRESS_MS);
+    };
+    const cancelTimer = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    const end = () => {
+      cancelTimer();
+      if (triggered) hideCardZoom();
+    };
+    el.addEventListener('mousedown', start);
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('mouseup', end);
+    el.addEventListener('mouseleave', end);
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', end);
+    // 長押しが発動していた場合は、離した瞬間に発火するclick(追加/削除)を打ち消す。
+    // このリスナーをonclickより先に登録しておくことで、同じ要素上では先に実行される
+    el.addEventListener('click', (e) => {
+      if (triggered) { e.preventDefault(); e.stopImmediatePropagation(); triggered = false; }
+    });
+  }
+
   function onPoolCardClick(c){
     if (currentTab === 'partner') {
       partnerId = (partnerId === c.id) ? null : c.id;
     } else if (currentTab === 'case') {
+      if ((c.ability_text || '').includes('この事件は指定されたイベントでのみ使用できる。')) {
+        alert('この事件は指定されたイベントでのみ使用できるため、デッキの事件としては選べません。');
+        return;
+      }
       caseId = (caseId === c.id) ? null : c.id;
     } else {
       addToDeck(c);
@@ -561,7 +649,7 @@
   function addToDeck(c){
     const cur = deck[c.id] || 0;
     if (deckTotal() >= MAX_DECK) { flashCount(); return; }
-    if (copiesInGroup(c.groupKey) >= MAX_COPIES) { flashCount(); return; }
+    if (!c.unlimited && copiesInGroup(c.groupKey) >= MAX_COPIES) { flashCount(); return; }
     deck[c.id] = cur + 1;
     renderPool();
   }
@@ -631,6 +719,7 @@
         tile.innerHTML = card.image
           ? `<img src="${card.image}" alt="${card.name}">`
           : `<div class="no-image">${card.name}</div>`;
+        attachLongPressPreview(tile, card.image, card.name);
         tile.onclick = () => removeFromDeck(id);
       } else {
         tile.className = 'deck-tile placeholder';
@@ -657,9 +746,15 @@
   document.getElementById('saveBtn').onclick = () => {
     const name = document.getElementById('deckName').value || '無題のデッキ';
     if (document.getElementById('saveBtn').disabled) return;
-    saveDeck(name, deck, partnerId, caseId);
-    renderSavedDecks();
-    alert(`「${name}」を保存しました（パートナー1・事件1・デッキ40枚）`);
+    if (editingDeckId != null && loadSavedDecks().some(d => d.id === editingDeckId)) {
+      editingDeckId = updateDeck(editingDeckId, name, deck, partnerId, caseId);
+      renderSavedDecks();
+      alert(`「${name}」を上書き保存しました（パートナー1・事件1・デッキ40枚）`);
+    } else {
+      editingDeckId = saveDeck(name, deck, partnerId, caseId);
+      renderSavedDecks();
+      alert(`「${name}」を保存しました（パートナー1・事件1・デッキ40枚）`);
+    }
   };
 
   function renderSavedDecks(){
@@ -682,9 +777,37 @@
         <span class="name">${d.name}</span>
         <span class="count">${total}枚</span>
         <button class="load-btn">読込</button>
+        <button class="rename-btn">名前変更</button>
         <button class="delete-btn">削除</button>
       `;
       row.querySelector('.load-btn').onclick = () => loadDeckIntoBuilder(d);
+      row.querySelector('.rename-btn').onclick = () => {
+        // Electronでは prompt() が使えないため、行内の入力欄で編集する
+        const nameEl = row.querySelector('.name');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = d.name;
+        input.style.cssText = 'flex:1; min-width:0; font:inherit; font-weight:700; padding:2px 6px;';
+        nameEl.replaceWith(input);
+        input.focus();
+        input.select();
+        let done = false;
+        const finish = (commit) => {
+          if (done) return;
+          done = true;
+          const trimmed = input.value.trim();
+          if (commit && trimmed && trimmed !== d.name) {
+            renameDeck(d.id, trimmed);
+            if (editingDeckId === d.id) document.getElementById('deckName').value = trimmed;
+          }
+          renderSavedDecks();
+        };
+        input.onkeydown = (e) => {
+          if (e.key === 'Enter') finish(true);
+          else if (e.key === 'Escape') finish(false);
+        };
+        input.onblur = () => finish(true);
+      };
       row.querySelector('.delete-btn').onclick = () => {
         if (!confirm(`「${d.name}」を削除しますか？`)) return;
         deleteDeck(d.id);
@@ -699,6 +822,7 @@
     savedDeck.cards.forEach(c => { deck[c.id] = c.qty; });
     partnerId = savedDeck.partnerCardId != null ? savedDeck.partnerCardId : null;
     caseId = savedDeck.caseCardId != null ? savedDeck.caseCardId : null;
+    editingDeckId = savedDeck.id;
     document.getElementById('deckName').value = savedDeck.name;
     renderPool();
     renderDeckList();
@@ -743,6 +867,19 @@
     grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
   }
   window.addEventListener('resize', updatePoolGridColumns);
+
+  // パートナー/事件のサムネは要素を作り直さず内容だけ更新され続けるため、
+  // 長押しの判定は押した瞬間の選択状態を読む関数として一度だけ登録する
+  attachLongPressPreview(
+    document.getElementById('partnerThumb'),
+    () => (partnerId != null ? CARD_BY_ID.get(partnerId).image : null),
+    () => (partnerId != null ? CARD_BY_ID.get(partnerId).name : '')
+  );
+  attachLongPressPreview(
+    document.getElementById('caseThumb'),
+    () => (caseId != null ? CARD_BY_ID.get(caseId).image : null),
+    () => (caseId != null ? CARD_BY_ID.get(caseId).name : '')
+  );
 
   renderTabs();
   renderColorFilter();

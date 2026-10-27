@@ -36,3 +36,29 @@ function saveDeck(name, deckCounts, partnerCardId, caseCardId) {
 function deleteDeck(id) {
   saveDecks(loadSavedDecks().filter(d => d.id !== id));
 }
+
+// id で指定した既存デッキの名前だけを変更する(カード構成はそのまま)
+function renameDeck(id, name) {
+  const decks = loadSavedDecks();
+  const idx = decks.findIndex(d => d.id === id);
+  if (idx === -1) return;
+  decks[idx] = { ...decks[idx], name };
+  saveDecks(decks);
+}
+
+// id で指定した既存デッキを上書き保存する。見つからなければ新規保存にフォールバックする。
+function updateDeck(id, name, deckCounts, partnerCardId, caseCardId) {
+  const decks = loadSavedDecks();
+  const idx = decks.findIndex(d => d.id === id);
+  if (idx === -1) return saveDeck(name, deckCounts, partnerCardId, caseCardId);
+  decks[idx] = {
+    ...decks[idx],
+    name,
+    partnerCardId,
+    caseCardId,
+    cards: Object.entries(deckCounts).map(([id, qty]) => ({ id: Number(id), qty })),
+    savedAt: new Date().toISOString(),
+  };
+  saveDecks(decks);
+  return decks[idx].id;
+}

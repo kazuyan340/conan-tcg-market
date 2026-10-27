@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>オンライン対戦 - 名探偵コナンTCG</title>
+<!-- このファイルから tools/build-online.js が online.html を作る(盤面のHTMLは battle.html から取り込む) -->
+<link rel="stylesheet" href="css/battle.css">
+<link rel="stylesheet" href="css/online.css">
+<script src="data/cards-data.js"></script>
+<script src="data/image-names.js"></script>
+<script src="js/card-images.js"></script>
+<script src="js/card-art.js"></script>
+<script src="js/card-detail.js"></script>
+<script src="data/text-fixes.js"></script>
+<script src="js/deck-storage.js"></script>
+<script src="js/replay-storage.js"></script>
+<script src="js/p2p.js"></script>
+<script src="js/signaling.js"></script>
+</head>
+<body class="online portrait">
+
+
+<header>
+  <h1>🌐 オンライン対戦</h1>
+  <div class="header-actions" id="headerActions">
+    <button class="btn ghost" onclick="location.href='index.html'">← ホームに戻る</button>
+  </div>
+  <div class="turn-bar" id="turnBar" style="display:none;"></div>
+</header>
+
+<div id="actionHintBar" style="visibility:hidden;"></div>
+
+<div class="setup" id="setupPanel">
+  <h2>デッキを選んで対戦開始</h2>
+  <div class="setup-row">
+    <label>左のデッキ</label>
+    <select id="selfDeckSelect"></select>
+  </div>
+  <div class="setup-row">
+    <label>右のデッキ</label>
+    <select id="oppDeckSelect"></select>
+  </div>
+  <div class="setup-row">
+    <label>先攻</label>
+    <select id="firstPlayerSelect">
+      <option value="self">左</option>
+      <option value="opponent">右</option>
+    </select>
+  </div>
+  <div class="setup-hint">各デッキから40枚をシャッフルし、5枚ずつ手札に配ります。パートナー・事件カードは自動でそれぞれのエリアに配置されます。</div>
+  <div class="setup-actions">
+    <button class="btn" id="startBtn">対戦開始</button>
+  </div>
+  <div class="divider">または</div>
+  <div class="file-row">
+    <input type="file" id="replayFileInput" accept="application/json">
+  </div>
+  <div class="setup-hint" style="text-align:center;">保存済みのリプレイファイル(.json)を読み込んで再生できます</div>
+</div>
+
+<div class="mulligan-overlay" id="mulliganPanel" style="display:none;">
+  <div class="mulligan-box">
+    <h2 id="mulliganTitle">マリガン</h2>
+    <p class="mulligan-hint">デッキに戻して引き直したいカードを選んでください（0枚でもOK）。</p>
+    <div class="mulligan-hand-grid" id="mulliganHandGrid"></div>
+    <button class="btn" id="mulliganConfirmBtn">引き直さずに進める</button>
+  </div>
+</div>
+
+<div class="mulligan-overlay" id="gameOverOverlay" style="display:none;">
+  <div class="mulligan-box" style="text-align:center;">
+    <h2 id="gameOverTitle">ゲーム終了</h2>
+    <p class="mulligan-hint" id="gameOverMessage"></p>
+    <p class="mulligan-hint">対戦を保存しますか？（保存すると、ホーム画面の「リプレイ再生」から後で見返せます）</p>
+    <div class="setup-actions" style="justify-content:center;">
+      <button class="btn" id="gameOverSaveBtn">💾 保存する</button>
+      <button class="btn ghost" id="gameOverCloseBtn">閉じる（そのまま観戦を続ける）</button>
+    </div>
+  </div>
+</div>
+
+<div class="mulligan-overlay" id="deckPeekOverlay" style="display:none;">
+  <div class="mulligan-box">
+    <h2 id="deckPeekTitle">登場時効果</h2>
+    <div class="deckpeek-body">
+      <div class="deckpeek-source" id="deckPeekSource" style="display:none;"></div>
+      <div class="deckpeek-main">
+        <p class="mulligan-hint" id="deckPeekHint"></p>
+        <div class="mulligan-hand-grid" id="deckPeekCards"></div>
+        <button class="btn" id="deckPeekSkipBtn">手札に加えない</button>
+        <div class="setup-actions" id="deckPeekYesNo" style="display:none;">
+          <button class="btn" id="deckPeekYesBtn">はい</button>
+          <button class="btn ghost" id="deckPeekNoBtn">いいえ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mulligan-overlay" id="choiceOverlay" style="display:none;">
+  <div class="mulligan-box">
+    <h2 id="choiceTitle">効果</h2>
+    <div class="deckpeek-body">
+      <div class="deckpeek-source" id="choiceSource" style="display:none;"></div>
+      <div class="deckpeek-main">
+        <p class="mulligan-hint" id="choiceHint"></p>
+        <div class="mulligan-hand-grid" id="choiceCards"></div>
+        <div class="setup-actions" id="choiceActions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cutin-effect" id="cutInEffect" style="display:none;">
+  <div class="cutin-stripes"></div>
+  <div class="cutin-amount" id="cutInEffectAmount" style="display:none;"></div>
+  <div class="cutin-card"><img id="cutInEffectImg" src="" alt=""></div>
+</div>
+
+<div class="clash-overlay" id="clashEffect" hidden>
+  <div class="clash-flash" id="clashFlash"></div>
+  <div class="clash-card clash-left" id="clashCardLeft">
+    <img id="clashImgLeft" src="" alt="">
+    <div class="clash-buffs clash-buffs-left" id="clashBuffsLeft"></div>
+  </div>
+  <div class="clash-card clash-right" id="clashCardRight">
+    <img id="clashImgRight" src="" alt="">
+    <div class="clash-buffs clash-buffs-right" id="clashBuffsRight"></div>
+  </div>
+</div>
+
+<svg id="actionArrowLayer" style="position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:90;">
+  <defs>
+    <filter id="actionArrowGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4.5" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<div class="board" id="board">
+<div class="card-spotlight" id="cardSpotlight" style="display:none;">
+  <img id="cardSpotlightImg" src="" alt="">
+  <div class="card-spotlight-name" id="cardSpotlightName"></div>
+  <div class="card-spotlight-text" id="cardSpotlightText"></div>
+</div>
+<div class="table-rotate-wrap">
+<div class="table">
+
+  <!-- ============ OPPONENT ZONE (top, mirrored) ============ -->
+  <div class="zone" data-side="opponent" style="margin-bottom:24px;">
+  <div class="rotate180">
+
+    <div class="playmat-grid">
+      <div class="pm-case">
+        <span class="band-tag">事件</span>
+        <div class="case-card case-slot"></div>
+      </div>
+      <div class="pm-field">
+        <span class="band-tag">現場</span>
+        <div class="band pink field-row"></div>
+      </div>
+      <div class="pm-deck">
+        <span class="band-tag">デッキ</span>
+        <div class="deck-pile-wrap">
+          <div class="cardback-face deck-pile-btn"></div>
+          <div class="num-badge deck-count deck-count-badge">0</div>
+          <div class="deck-menu" style="display:none;">
+            <button class="deck-menu-draw">1枚ドロー</button>
+            <button class="deck-menu-file">FILEに追加</button>
+            <button class="deck-menu-evidence">証拠に追加</button>
+          </div>
+        </div>
+      </div>
+      <div class="pm-evidence">
+        <div class="evi-header"><span class="band-tag">証拠エリア</span><div class="num-badge evidence-count">0</div></div>
+        <div class="evidence-stack"></div>
+      </div>
+      <div class="pm-partner">
+        <span class="band-tag">パートナー</span>
+        <div class="band pink" style="display:flex; justify-content:center; align-items:center; gap:8px;">
+          <div class="partner-card partner-mr-slot" style="display:none;"></div>
+          <div class="partner-card partner-slot"></div>
+          <div class="partner-jewel-stack"></div>
+        </div>
+      </div>
+      <div class="pm-remove remove-pile-btn">
+        <span class="band-tag">リムーブエリア</span>
+        <div class="num-badge remove-count">0</div>
+        <div class="remove-top"></div>
+        <div class="deck-menu remove-menu" style="display:none;">
+          <button class="remove-menu-list">一覧を表示</button>
+        </div>
+      </div>
+      <div class="pm-file">
+        <span class="band-tag">FILEエリア</span>
+        <div class="band pink file-band">
+          <div class="num-badge file-count">0</div>
+          <div class="file-stack"></div>
+          <div class="deck-menu file-menu" style="display:none;">
+            <button class="file-menu-nexthint">ネクストヒント</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="center-col" style="margin-top:24px;">
+      <div class="handfan top hand-row"></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ============ SELF ZONE (bottom) ============ -->
+  <div class="zone" data-side="self">
+    <div class="playmat-grid">
+      <div class="pm-case">
+        <span class="band-tag">事件</span>
+        <div class="case-card case-slot"></div>
+      </div>
+      <div class="pm-field">
+        <span class="band-tag">現場</span>
+        <div class="band pink field-row"></div>
+      </div>
+      <div class="pm-deck">
+        <span class="band-tag">デッキ</span>
+        <div class="deck-pile-wrap">
+          <div class="cardback-face deck-pile-btn"></div>
+          <div class="num-badge deck-count deck-count-badge">0</div>
+          <div class="deck-menu" style="display:none;">
+            <button class="deck-menu-draw">1枚ドロー</button>
+            <button class="deck-menu-file">FILEに追加</button>
+            <button class="deck-menu-evidence">証拠に追加</button>
+          </div>
+        </div>
+      </div>
+      <div class="pm-evidence">
+        <div class="evi-header"><span class="band-tag">証拠エリア</span><div class="num-badge evidence-count">0</div></div>
+        <div class="evidence-stack"></div>
+      </div>
+      <div class="pm-partner">
+        <span class="band-tag">パートナー</span>
+        <div class="band pink" style="display:flex; justify-content:center; align-items:center; gap:8px;">
+          <div class="partner-card partner-mr-slot" style="display:none;"></div>
+          <div class="partner-card partner-slot"></div>
+          <div class="partner-jewel-stack"></div>
+        </div>
+      </div>
+      <div class="pm-remove remove-pile-btn">
+        <span class="band-tag">リムーブエリア</span>
+        <div class="num-badge remove-count">0</div>
+        <div class="remove-top"></div>
+        <div class="deck-menu remove-menu" style="display:none;">
+          <button class="remove-menu-list">一覧を表示</button>
+        </div>
+      </div>
+      <div class="pm-file">
+        <span class="band-tag">FILEエリア</span>
+        <div class="band pink file-band">
+          <div class="num-badge file-count">0</div>
+          <div class="file-stack"></div>
+          <div class="deck-menu file-menu" style="display:none;">
+            <button class="file-menu-nexthint">ネクストヒント</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="center-col" style="position:relative; z-index:30;">
+      <div class="handfan hand-row"><div class="hand-tray"></div></div>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<div class="action-log" id="actionLog" style="display:none;">
+  <div class="empty-hint">まだアクションはありません</div>
+</div>
+<div class="replay-controls" id="replayControls" style="display:none;">
+  <button class="btn ghost small" id="replayResetBtn">⏮ 最初から</button>
+  <button class="btn small" id="replayPrevBtn">◀ 前へ</button>
+  <button class="btn small" id="replayPlayBtn">▶ 自動再生</button>
+  <button class="btn small" id="replayNextBtn">次へ ▶</button>
+  <span class="step-count" id="replayStepCount">0 / 0</span>
+</div>
+
+
+
+<div id="onlineBanner" class="hidden"></div>
+
+<div id="lobby">
+  <h2>🌐 オンライン対戦</h2>
+  <div class="panel">
+    <label for="lobbyName">あなたの名前(対戦中、お互いの画面にこの名前が表示されます)</label>
+    <input type="text" id="lobbyName" maxlength="12" autocomplete="off" placeholder="例: コナン">
+  </div>
+  <div class="panel">
+    <label for="lobbyDeck">使うデッキ</label>
+    <select id="lobbyDeck"></select>
+    <div class="note" id="deckNote"></div>
+  </div>
+  <div class="panel">
+    <label for="lobbyPass">パス(同じパスを入れた2人が対戦します)</label>
+    <input type="text" id="lobbyPass" maxlength="64" autocomplete="off" placeholder="例: conan-tonight-1234">
+    <div class="row">
+      <button class="btn" id="lobbyStart">対戦開始</button>
+      <button class="btn ghost" id="lobbyCancel" style="display:none;">キャンセル</button>
+      <button class="btn ghost" onclick="location.href='index.html'">← メニューへ戻る</button>
+    </div>
+    <div class="status" id="lobbyStatus"></div>
+    <div class="note">
+      パスは相手と同じ文字列にしてください(他の人に推測されにくいものを推奨)。<br>
+      <span id="imgNote">カード画像は、それぞれのPCの「画像設定」で指定したフォルダから読み込みます。画像が無いカードは文字のカード(レベル・AP)で表示されます。<br></span>
+      カードを長押し(PCは右クリック)すると、効果などの詳細が見られます。<br>
+      接続の取り次ぎには公開の無料サービス(ntfy.sh)を使い、対戦中の通信は2人のPCが直接やり取りします。会社・学校などのネットワークでは直接つながらないことがあります。
+    </div>
+  </div>
+</div>
+
+<script src="js/battle-engine.js"></script>
+<script src="js/online-layer.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+web-build/
+# 版権画像・カードデータは再配布しない(手元で再生成する)
+data/
