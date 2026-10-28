@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>デッキ作成 - 名探偵コナンTCG</title>
 <style>
   :root{
@@ -229,8 +230,29 @@
     max-width:min(86vw, 520px); max-height:86vh; border-radius:14px;
     box-shadow:var(--shadow-md); border:4px solid var(--outline);
   }
+  /* ---- スマホ幅: 一覧とデッキを縦に並べる ---- */
+  .jump-btn{ display:none; }
+  @media (max-width: 760px){
+    header{ padding:10px 12px; gap:8px; flex-wrap:wrap; }
+    header h1{ font-size:15px; }
+    .back-btn, .save-btn{ padding:7px 12px; font-size:12px; }
+    .layout{ flex-direction:column; align-items:stretch; padding:12px 10px 90px; gap:14px; }
+    .deck-panel{ width:100%; position:static; max-height:none; overflow:visible; padding:14px; }
+    .deck-list{ max-height:none; grid-template-columns:repeat(8, 1fr); }
+    .slot-row-group{ flex-direction:column; gap:8px; }
+    .search-input{ max-width:none; }
+    .jump-btn{
+      display:block; position:fixed; right:12px; bottom:14px; z-index:60; border:none; border-radius:22px;
+      padding:11px 18px; font-weight:800; font-size:13px; background:var(--gold); color:#2b2438; box-shadow:var(--shadow-md);
+    }
+  }
 </style>
 <script src="data/cards-data.js"></script>
+<script src="js/image-mode.js"></script>
+<script src="data/image-names.js"></script>
+<script src="js/card-images.js"></script>
+<script src="js/card-art.js"></script>
+<script src="js/card-detail.js"></script>
 <script src="data/unimplemented-ids.js"></script>
 <script src="js/deck-storage.js"></script>
 </head>
@@ -319,6 +341,8 @@
 
 </div>
 
+<button class="jump-btn" id="jumpBtn">デッキを見る ↓</button>
+
 <div class="card-zoom-overlay" id="cardZoomOverlay">
   <img id="cardZoomImg" src="" alt="">
 </div>
@@ -353,7 +377,7 @@
     lp: c.lp != null ? c.lp : null,
     colors: parseColors(c.color), // 2色以上のカードは複数持つ("緑,白"/"緑白"どちらの表記も対応)
     color: colorFor(c.color),
-    image: c.image_url ? `data/images/${c.image_url}` : null,
+    image: window.CardImages.url(c.id) || (window.CardArt ? window.CardArt.url(c.id) : null),
     // 犯人［ID：0627］等：「〜はデッキに何枚でも入れることができる。」を持つカードは枚数制限を受けない
     unlimited: !!c.ability_text && c.ability_text.includes('［ID：' + c.card_id + '］はデッキに何枚でも入れることができる。'),
   }));
@@ -599,6 +623,7 @@
   // image/nameは固定値でも、押した瞬間の値を読む関数でもよい(パートナー/事件のように
   // 要素自体は作り直さずinnerHTMLだけ更新され続ける箇所では、関数を渡して毎回再評価する)
   function attachLongPressPreview(el, image, name){
+    if (window.CardDetail) return;   // 共通のカード詳細(js/card-detail.js)が長押し/右クリックを処理する
     let timer = null;
     let triggered = false;
     const start = () => {
@@ -890,6 +915,23 @@
   renderSummary();
   renderSavedDecks();
   updatePoolGridColumns();
+
+  // スマホ: 画面右下のボタンで、カード一覧とデッキ(右の欄)を行き来する
+  (function(){
+    const btn = document.getElementById('jumpBtn');
+    const panel = document.querySelector('.deck-panel');
+    const countEl = document.getElementById('deckCount');
+    const label = () => (atDeck() ? '↑ カード一覧へ' : `デッキを見る(${countEl.textContent.replace(/\s/g, '')}) ↓`);
+    const atDeck = () => panel.getBoundingClientRect().top < window.innerHeight * 0.5;
+    const refresh = () => { btn.textContent = label(); };
+    btn.onclick = () => {
+      if (atDeck()) window.scrollTo({ top: 0, behavior: 'smooth' });
+      else panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    window.addEventListener('scroll', refresh, { passive: true });
+    new MutationObserver(refresh).observe(countEl, { childList: true, characterData: true, subtree: true });
+    refresh();
+  })();
 </script>
 </body>
 </html>

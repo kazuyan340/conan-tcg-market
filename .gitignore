@@ -18,3 +18,6 @@ conan-card-game/node_modules/
 conan-card-game/data/
 # electron-packagerが生成するビルド成果物(数百MB)。npm run packageで再生成する。
 conan-card-game/dist/
+# 配布用ビルド(tools/build-friend.js が作る一時フォルダと exe)
+conan-card-game/build-friend/
+conan-card-game/dist-friend/

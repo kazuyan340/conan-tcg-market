@@ -1,0 +1,12 @@
+<!DOCTYPE html><meta charset="utf-8"><body>
+<script src="../../js/p2p.js"></script>
+<script src="../../js/signaling.js"></script>
+<script>
+const pass = new URLSearchParams(location.search).get('pass');
+const name = new URLSearchParams(location.search).get('n');
+OnlineMatch.findOpponent(pass, { onStatus: s => console.log(name, 'status:', s) }).then(({conn, role}) => {
+  console.log(name, 'CONNECTED as', role);
+  conn.onMessage = m => { console.log(name, 'GOT', JSON.stringify(m)); if (m.hi) { console.log('RESULT_OK'); } };
+  conn.send({ hi: name, big: 'x'.repeat(30000) });
+}).catch(e => console.log(name, 'FAILED', e.message));
+</script>

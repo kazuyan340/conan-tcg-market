@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>名探偵コナンTCG AIビューア</title>
 <style>
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -24,6 +25,7 @@
   .menu-card .label{ font-size:16px; font-weight:800; letter-spacing:.03em; }
   .menu-card .desc{ font-size:11px; opacity:.7; text-align:center; padding:0 20px; }
 </style>
+<script src="js/image-mode.js"></script>
 </head>
 <body>
   <h1>🔍 DETECTIVE CONAN CARD GAME</h1>
@@ -43,6 +45,17 @@
       <div class="label">リプレイ再生</div>
       <div class="desc">保存した過去の対戦を選んで再生</div>
     </div>
+    <div class="menu-card" onclick="location.href='online.html'">
+      <div class="icon">🌐</div>
+      <div class="label">オンライン対戦</div>
+      <div class="desc">同じパスを入れて友達と対戦(縦向き画面)</div>
+    </div>
+    <div class="menu-card" id="menuImages" onclick="location.href='images.html'">
+      <div class="icon">🖼️</div>
+      <div class="label">画像設定</div>
+      <div class="desc">カード画像を置いたフォルダを指定する</div>
+    </div>
   </div>
+<script>if (window.BUNDLED_IMAGES) { var mi = document.getElementById('menuImages'); if (mi) mi.style.display = 'none'; }</script>
 </body>
 </html>
