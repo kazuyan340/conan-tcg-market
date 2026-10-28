@@ -1,5 +1,26 @@
-const { app, BrowserWindow, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+// ---- カード画像フォルダの設定 ----
+// 画像はアプリに同梱せず、ユーザーが公式サイトからダウンロードして置いたフォルダを指定して読み込む。
+// フォルダの場所は userData/settings.json に保存する。
+const IMAGE_EXT = /\.(jpe?g|png|webp|gif)$/i;
+function settingsPath(){ return path.join(app.getPath('userData'), 'settings.json'); }
+function readSettings(){
+  try { return JSON.parse(fs.readFileSync(settingsPath(), 'utf8')); } catch (e) { return {}; }
+}
+function writeSettings(obj){
+  try { fs.mkdirSync(path.dirname(settingsPath()), { recursive: true }); fs.writeFileSync(settingsPath(), JSON.stringify(obj, null, 2)); } catch (e) {}
+}
+function scanImageDir(dir){
+  if (!dir) return [];
+  try { return fs.readdirSync(dir).filter(f => IMAGE_EXT.test(f)); } catch (e) { return []; }
+}
+function imageConfig(){
+  const dir = readSettings().imageDir || null;
+  return { dir, files: scanImageDir(dir) };
+}
 
 function createWindow() {
   // ユーザーの画面が1200x900より小さいと、ウィンドウが画面からはみ出して
@@ -31,6 +52,18 @@ app.whenReady().then(() => {
 
   // リプレイ再生時だけ、タスクバーも隠れる全画面表示に自動で切り替える
   // (preload.js経由でレンダラーから安全に呼べるようにしたもの)
+  ipcMain.on('image-config', (event) => { event.returnValue = imageConfig(); });
+  ipcMain.handle('pick-image-dir', async (event) => {
+    const senderWin = BrowserWindow.fromWebContents(event.sender) || win;
+    const r = await dialog.showOpenDialog(senderWin, { title: 'カード画像のフォルダを選択', properties: ['openDirectory'], defaultPath: readSettings().imageDir || undefined });
+    if (r.canceled || !r.filePaths[0]) return imageConfig();
+    writeSettings(Object.assign(readSettings(), { imageDir: r.filePaths[0] }));
+    return imageConfig();
+  });
+  ipcMain.handle('clear-image-dir', async () => {
+    const st = readSettings(); delete st.imageDir; writeSettings(st);
+    return imageConfig();
+  });
   ipcMain.on('set-fullscreen', (event, flag) => {
     const senderWin = BrowserWindow.fromWebContents(event.sender) || win;
     if (senderWin && !senderWin.isDestroyed()) senderWin.setFullScreen(flag);

@@ -19,7 +19,7 @@ const ROOT = path.join(__dirname, '..');
 const W = '§';
 
 function loadCode() {
-  let src = fs.readFileSync(path.join(ROOT, 'battle.html'), 'utf8');
+  let src = fs.readFileSync(path.join(ROOT, 'battle.html'), 'utf8') + String.fromCharCode(10) + fs.readFileSync(path.join(ROOT, 'js', 'battle-engine.js'), 'utf8');
   src = src.replace(/\/\*[\s\S]*?\*\//g, '');
   src = src.split('\n').map(l => l.replace(/^\s*\/\/.*$/, '').replace(/(^|[;{}),\s])\/\/ .*$/, '$1')).join('\n');
   return src;

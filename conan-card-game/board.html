@@ -349,6 +349,9 @@
   }
 </style>
 <script src="data/cards-data.js"></script>
+<script src="js/image-mode.js"></script>
+<script src="data/image-names.js"></script>
+<script src="js/card-images.js"></script>
 <script>
   function arcLogoSVG(id){
     return `<svg class="arclogo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
@@ -422,9 +425,10 @@
 
     document.querySelectorAll('[data-card]').forEach(el => {
       const card = byName.get(el.dataset.card);
-      if (!card || !card.image_url) return;
+      const url = card && window.CardImages ? window.CardImages.url(card.id) : null;
+      if (!url) return;
       const img = document.createElement('img');
-      img.src = `data/images/${card.image_url}`;
+      img.src = url;
       img.alt = card.name;
       img.style.width = '100%';
       img.style.height = '100%';

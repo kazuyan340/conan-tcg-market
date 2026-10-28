@@ -22,7 +22,8 @@ require(CARDS_DATA);
 require(path.join(ROOT, 'data', 'text-fixes.js'));
 const CARD_DATA = window.CARD_DATA;
 
-const src = fs.readFileSync(BATTLE_HTML, 'utf8');
+// 対戦のエンジン本体は js/battle-engine.js(battle.html とオンライン対戦が共用)に分けてある
+const src = fs.readFileSync(BATTLE_HTML, 'utf8') + String.fromCharCode(10) + fs.readFileSync(path.join(ROOT, 'js', 'battle-engine.js'), 'utf8');
 
 // ---- 1. battle.html からパターンを抜き出す ----
 const regexLiterals = [];
