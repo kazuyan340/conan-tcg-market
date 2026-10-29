@@ -3876,6 +3876,7 @@
   }
   function performAssist(side){
     if (!canUseAssist(side).ok) return;
+    hideCardSpotlight();   // 直前に発動したカードの大きな表示を消す(パートナーの表示に切り替わるため)
     const partnerEl = document.querySelector(`.zone[data-side="${side}"] .partner-slot`);
     const partnerImg = cardImage(match[side].partner.cardId);
     const wasResolved = !!(match[side].case && match[side].case.resolved);
@@ -4092,6 +4093,9 @@
   function startAction(side, uid){
     if (!canUseAction(side, uid).ok) return;
     const oppSide = side === 'self' ? 'opponent' : 'self';
+    // パートナーの推理のときは、直前に発動したカードの大きな表示を消す(そのカードがパートナーになるため)
+    const partnerCard = match[side].partner;
+    if (partnerCard && partnerCard.uid === uid) hideCardSpotlight();
     actionState = { side, actorUid: uid, oppSide, step: 'target', targetUid: null, targetType: null, pendingUid: null };
     renderBoard(match); // 相手の現場にハイライトを付けるため再描画
     renderPickHint();
