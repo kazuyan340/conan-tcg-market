@@ -261,19 +261,14 @@
   .dr-slot img{ height:44px; border-radius:5px; }
   .dr-slot .lbl{ color:#e0b34f; font-weight:800; font-size:11px; display:block; }
   .dr-slot .none{ opacity:.55; }
-  .dr-stats{ background:rgba(255,255,255,.07); border-radius:10px; padding:6px 10px; margin-bottom:8px; }
-  .dr-stat{ display:flex; align-items:baseline; gap:8px; padding:3px 0; font-size:13px; border-bottom:1px solid rgba(255,255,255,.07); }
-  .dr-stat:last-child{ border-bottom:none; }
-  .dr-stat span{ flex:1 1 auto; }
-  .dr-stat b{ font-size:16px; color:#ffe08a; }
-  .dr-stat small{ font-size:10px; opacity:.65; flex:0 0 auto; }
   .dr-sub{ font-size:11px; opacity:.7; margin:2px 0 8px; }
   .dr-distrow{ display:flex; gap:12px; align-items:stretch; margin:6px 0 4px; }
-  .dr-dist{ display:flex; align-items:flex-end; gap:2px; height:130px; flex:0 0 150px; margin:0; }
+  .dr-dist{ display:flex; align-items:flex-end; gap:2px; height:130px; flex:0 0 190px; margin:0; }
   .dr-lvlist{ flex:1 1 auto; display:flex; flex-direction:column; justify-content:space-between; font-size:12px; }
   .dr-lvlist div{ display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,.08); padding:1px 2px; }
   .dr-lvlist b{ color:#ffe08a; }
-  .dr-lvlist .zero{ opacity:.4; } .dr-lvlist .zero b{ color:#fff; }
+  .dr-lvlist{ justify-content:center; gap:6px; font-size:15px; }
+  .dr-lvlist span{ font-weight:800; }
   .dr-dist div{ flex:1; text-align:center; font-size:9px; display:flex; flex-direction:column; justify-content:flex-end; height:100%; min-width:0; }
   .dr-dist i{ display:block; background:var(--gold); border-radius:4px 4px 0 0; min-height:0; }
   .dr-dist b{ font-size:11px; }
@@ -889,25 +884,18 @@
     instances.forEach(id => { const c = CARD_BY_ID.get(id); if (c.level == null) noLv++; else lv[c.level] = (lv[c.level] || 0) + 1; });
     const maxLv = Math.max(1, ...LEVEL_VALUES.map(l => lv[l] || 0));
     const dist = LEVEL_VALUES.map(l => `<div><i style="height:${Math.round(((lv[l] || 0) / maxLv) * 92)}px"></i>${l}</div>`).join('');
-    // キャラ・イベントの枚数と、そのうちカットイン・ヒラメキを持つ枚数
+    // キャラ・イベントの枚数と、カットイン・ヒラメキを持つカードの枚数(棒グラフの右に出す)
     const nChar = instances.filter(id => CARD_BY_ID.get(id).type === 'キャラ').length;
     const nEvent = instances.filter(id => CARD_BY_ID.get(id).type === 'イベント').length;
-    const withKw = kw => {
-      const ids = instances.filter(id => CARD_BY_ID.get(id).text.includes(kw));
-      const ch = ids.filter(id => CARD_BY_ID.get(id).type === 'キャラ').length;
-      return { n: ids.length, ch, ev: ids.length - ch };
-    };
-    const kwCut = withKw('【カットイン】'), kwHir = withKw('【ヒラメキ】');
-    const kwLine = (label, k) => `<div class="dr-stat"><span>${label}</span><b>${k.n}枚</b><small>キャラ ${k.ch}・イベント ${k.ev}</small></div>`;
-    const stats = `<div class="dr-stats"><div class="dr-stat"><span>キャラ</span><b>${nChar}枚</b></div><div class="dr-stat"><span>イベント</span><b>${nEvent}枚</b></div>` +
-      kwLine('うち【カットイン】', kwCut) + kwLine('うち【ヒラメキ】', kwHir) + '</div>';
-    const lvList = LEVEL_VALUES.map(l => `<div class="${lv[l] ? '' : 'zero'}"><span>Lv${l}</span><b>${lv[l] || 0}枚</b></div>`).join('');
+    const nWith = kw => instances.filter(id => CARD_BY_ID.get(id).text.includes(kw)).length;
+    const counts = [['C', nChar], ['E', nEvent], ['💡', nWith('【ヒラメキ】')], ['💥', nWith('【カットイン】')]]
+      .map(([k, n]) => `<div><span>${k}:</span><b>${n}枚</b></div>`).join('');
     document.getElementById('drawerBody').innerHTML =
-      `<div class="dr-total ${total === MAX_DECK ? 'full' : total > MAX_DECK ? 'over' : ''}">${total} / ${MAX_DECK} 枚</div>` + stats +
+      `<div class="dr-total ${total === MAX_DECK ? 'full' : total > MAX_DECK ? 'over' : ''}">${total} / ${MAX_DECK} 枚</div>` +
       slot('パートナー', partner) + slot('事件', caseCard) +
       `<div class="dr-sortrow"><span>並び順</span><button class="sort-btn" id="drawerSortBtn">${SORT_LABELS[deckSortMode]}</button></div>` +
       `<div class="deck-list dr-grid">${tiles}</div>` +
-      `<div class="dr-sub" style="margin-top:14px">レベルごとの枚数${noLv ? `（レベルなし ${noLv}枚）` : ''}</div><div class="dr-distrow"><div class="dr-dist">${dist}</div><div class="dr-lvlist">${lvList}</div></div>`;
+      `<div class="dr-sub" style="margin-top:14px">レベルごとの枚数${noLv ? `（レベルなし ${noLv}枚）` : ''}</div><div class="dr-distrow"><div class="dr-dist">${dist}</div><div class="dr-lvlist">${counts}</div></div>`;
   }
   function setDrawer(open){
     document.body.classList.toggle('drawer-open', open);
