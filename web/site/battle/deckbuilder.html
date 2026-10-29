@@ -239,6 +239,38 @@
     max-width:min(86vw, 520px); max-height:86vh; border-radius:14px;
     box-shadow:var(--shadow-md); border:4px solid var(--outline);
   }
+  /* ---- 右上のハンバーガーメニュー: いまのデッキの様子を見る ---- */
+  .menu-btn{
+    width:38px; height:38px; border:none; border-radius:12px; cursor:pointer; flex:0 0 auto;
+    background:rgba(255,255,255,.15); color:#fff; font-size:20px; line-height:1; box-shadow:var(--shadow-sm);
+  }
+  .drawer-back{ position:fixed; inset:0; z-index:8000; background:rgba(8,6,20,.6); display:none; }
+  .drawer{
+    position:fixed; top:0; right:0; bottom:0; z-index:8001; width:min(380px,92vw); overflow-y:auto;
+    background:#1b1f33; box-shadow:-8px 0 30px rgba(0,0,0,.5); padding:14px 14px 30px;
+    transform:translateX(105%); transition:transform .22s ease-out; visibility:hidden;
+  }
+  body.drawer-open .drawer-back{ display:block; }
+  body.drawer-open .drawer{ transform:none; visibility:visible; }
+  .drawer-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .drawer-head h2{ font-size:16px; }
+  .drawer-close{ background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px; }
+  .dr-total{ font-size:22px; font-weight:900; margin:4px 0 8px; }
+  .dr-total.full{ color:#8ee3a6; } .dr-total.over{ color:#ff8a8a; }
+  .dr-slot{ display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.07); border-radius:10px; padding:6px 8px; margin-bottom:6px; font-size:13px; }
+  .dr-slot img{ height:44px; border-radius:5px; }
+  .dr-slot .lbl{ color:#e0b34f; font-weight:800; font-size:11px; display:block; }
+  .dr-slot .none{ opacity:.55; }
+  .dr-dist{ display:flex; align-items:flex-end; gap:5px; height:84px; margin:10px 0 4px; }
+  .dr-dist div{ flex:1; text-align:center; font-size:10px; display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
+  .dr-dist i{ display:block; background:var(--gold); border-radius:4px 4px 0 0; min-height:0; }
+  .dr-dist b{ font-size:11px; }
+  .dr-sub{ font-size:11px; opacity:.7; margin:2px 0 8px; }
+  .dr-row{ display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.08); font-size:13px; }
+  .dr-row img{ height:42px; border-radius:5px; flex:0 0 auto; }
+  .dr-row .nm{ flex:1 1 auto; min-width:0; line-height:1.3; }
+  .dr-row .nm small{ display:block; opacity:.65; font-size:11px; }
+  .dr-row .qty{ font-weight:900; font-size:16px; color:#ffe08a; flex:0 0 auto; }
   /* ---- スマホ幅: 一覧とデッキを縦に並べる ---- */
   .jump-btn{ display:none; }
   @media (max-width: 760px){
@@ -272,6 +304,7 @@
   <div style="display:flex; gap:10px;">
     <button class="back-btn" onclick="location.href='index.html'">← ホームに戻る</button>
     <button class="save-btn" id="saveBtn">デッキを保存</button>
+    <button class="menu-btn" id="menuBtn" aria-label="いまのデッキを見る" title="いまのデッキを見る">☰</button>
   </div>
 </header>
 
@@ -356,6 +389,12 @@
   </div>
 
 </div>
+
+<div class="drawer-back" id="drawerBack"></div>
+<aside class="drawer" id="drawer" aria-label="いまのデッキ">
+  <div class="drawer-head"><h2>いまのデッキ</h2><button class="drawer-close" id="drawerClose" aria-label="閉じる">✕</button></div>
+  <div id="drawerBody"></div>
+</aside>
 
 <button class="jump-btn" id="jumpBtn">デッキを見る ↓</button>
 
@@ -816,7 +855,46 @@
     updateSaveState();
   }
 
+  // 右上のメニュー(ハンバーガー): いまのデッキの様子を見る。開いている間は、デッキを変えるたびに更新する
+  function refreshDrawer(){
+    if (!document.body.classList.contains('drawer-open')) return;
+    const total = deckTotal();
+    const partner = partnerId != null ? CARD_BY_ID.get(partnerId) : null;
+    const caseCard = caseId != null ? CARD_BY_ID.get(caseId) : null;
+    const slot = (label, c) => `<div class="dr-slot">${c && c.image ? `<img src="${c.image}" alt="">` : ''}<div><span class="lbl">${label}</span>${c ? c.name : '<span class="none">未選択</span>'}</div></div>`;
+    const lv = {}; let noLv = 0;
+    const colorCnt = {};
+    let rows = Object.keys(deck).map(id => ({ c: CARD_BY_ID.get(Number(id)), q: deck[id] })).filter(x => x.c && x.q > 0);
+    // 絵柄違いでも同じカード(公式カードIDが同じ)は1行にまとめる
+    const merged = new Map();
+    rows.splice(0).forEach(x => { const m = merged.get(x.c.groupKey); if (m) m.q += x.q; else merged.set(x.c.groupKey, { c: x.c, q: x.q }); });
+    merged.forEach(v => rows.push(v));
+    rows.forEach(({ c, q }) => {
+      if (c.level == null) noLv += q; else lv[c.level] = (lv[c.level] || 0) + q;
+      (c.colors.length ? c.colors : ['無']).forEach(col => { colorCnt[col] = (colorCnt[col] || 0) + q; });
+    });
+    const maxLv = Math.max(1, ...LEVEL_VALUES.map(l => lv[l] || 0));
+    const dist = LEVEL_VALUES.map(l => `<div><b>${lv[l] || ''}</b><i style="height:${Math.round(((lv[l] || 0) / maxLv) * 60)}px"></i>Lv${l}</div>`).join('');
+    rows.sort((a, b) => (a.c.level == null) - (b.c.level == null) || (a.c.level || 0) - (b.c.level || 0) || a.c.id - b.c.id);
+    const list = rows.map(({ c, q }) => `<div class="dr-row">${c.image ? `<img src="${c.image}" alt="">` : ''}<div class="nm">${c.name}<small>${c.level != null ? 'Lv' + c.level : c.type}${c.ap != null ? ' / AP ' + c.ap : ''}</small></div><span class="qty">×${q}</span></div>`).join('');
+    const colors = Object.keys(colorCnt).map(k => `${k} ${colorCnt[k]}`).join('　');
+    document.getElementById('drawerBody').innerHTML =
+      `<div class="dr-total ${total === MAX_DECK ? 'full' : total > MAX_DECK ? 'over' : ''}">${total} / ${MAX_DECK} 枚</div>` +
+      slot('パートナー', partner) + slot('事件', caseCard) +
+      `<div class="dr-sub">レベルの分布${noLv ? `（レベルなし ${noLv}枚）` : ''}</div><div class="dr-dist">${dist}</div>` +
+      (colors ? `<div class="dr-sub">色: ${colors}</div>` : '') +
+      (list || '<div class="dr-sub">キャラ・イベントがまだ選ばれていません</div>');
+  }
+  function setDrawer(open){
+    document.body.classList.toggle('drawer-open', open);
+    if (open) refreshDrawer();
+  }
+  document.getElementById('menuBtn').onclick = () => setDrawer(!document.body.classList.contains('drawer-open'));
+  document.getElementById('drawerClose').onclick = () => setDrawer(false);
+  document.getElementById('drawerBack').onclick = () => setDrawer(false);
+
   function updateSaveState(){
+    refreshDrawer();
     const total = deckTotal();
     const ok = partnerId != null && caseId != null && total === MAX_DECK;
     document.getElementById('saveBtn').disabled = !ok;

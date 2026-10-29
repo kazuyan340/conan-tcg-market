@@ -1,0 +1,21 @@
+const { app, BrowserWindow, ipcMain } = require('electron');
+const fs = require('fs'), path = require('path');
+app.whenReady().then(async () => {
+  ipcMain.on('image-config', e => { e.returnValue = { dir: null, files: [] }; });
+  const w = new BrowserWindow({ show: false, width: 420, height: 900, webPreferences: { contextIsolation: true, preload: path.resolve('preload.js') } });
+  const errs = []; w.webContents.on('console-message', (e, l, m) => { if (l >= 3) errs.push(m); });
+  await w.loadFile(path.resolve('build-friend/deckbuilder.html')); await new Promise(r => setTimeout(r, 800));
+  const ev = c => w.webContents.executeJavaScript(c), sleep = ms => new Promise(r => setTimeout(r, ms));
+  await ev(`document.querySelectorAll('.tab-btn')[0].click()`); await sleep(200); await ev(`document.querySelector('#cardGrid .pool-card').click()`);
+  await ev(`document.querySelectorAll('.tab-btn')[1].click()`); await sleep(200); await ev(`document.querySelector('#cardGrid .pool-card').click()`);
+  await ev(`document.querySelectorAll('.tab-btn')[2].click()`); await sleep(300);
+  await ev(`(function(){ const c = document.querySelectorAll('#cardGrid .pool-card'); for (let i = 0; i < 14; i++) { c[i].click(); if (i % 3 === 0) c[i].click(); } })()`);
+  await ev(`document.getElementById('drawer').style.transition='none'; document.getElementById('menuBtn').click()`); await sleep(600);
+  console.log('open:', await ev(`document.body.classList.contains('drawer-open')`), 'rows:', await ev(`document.querySelectorAll('.dr-row').length`));
+  console.log(await ev(`(function(){ const d=document.getElementById('drawer'); const cs=getComputedStyle(d); const r=d.getBoundingClientRect(); return JSON.stringify({pos:cs.position,vis:cs.visibility,tr:cs.transform,left:r.left,w:r.width,z:cs.zIndex}); })()`));
+  fs.writeFileSync('C:/Users/kazuyan/AppData/Local/Temp/duo/drawer.png', (await w.webContents.capturePage()).toPNG());
+  await ev(`document.getElementById('drawerBack').click()`); await sleep(400);
+  console.log('closed:', !(await ev(`document.body.classList.contains('drawer-open')`)), 'errors:', errs.length, errs.slice(0, 2));
+  app.exit(0);
+});
+setTimeout(() => app.exit(1), 40000);
