@@ -169,3 +169,6 @@ body.online.host .zone[data-side="opponent"] .hand-row .detail-btn{ display:none
 @media (max-width:760px){
   body.online .card-spotlight{ left:50%; width:min(340px,86vw); transform:translate(-50%,-50%); animation:none; z-index:400; }
 }
+
+/* ゲストがカードをクリックして開いたメニュー(推理・アシストなどのボタン)は、ホスト画面には出さない */
+body.online.host .zone[data-side="opponent"] .deck-menu{ display:none !important; }

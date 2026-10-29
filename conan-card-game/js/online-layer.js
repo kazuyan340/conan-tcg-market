@@ -374,6 +374,8 @@
       });
       // ホストの手札のメニューが開いていても、カードの正体(詳細ボタンのID)は送らない
       clone.querySelectorAll('.zone[data-side="self"] .hand-row .detail-btn').forEach(b => { b.removeAttribute('data-cid'); b.style.display = 'none'; });
+      // ホストがカードをクリックして開いたメニュー(推理・アシストなどのボタン)は、相手には見せない(要素は残して隠すだけ)
+      clone.querySelectorAll('.zone[data-side="self"] .deck-menu').forEach(m => { m.style.display = 'none'; });
       // ホストがカードにマウスを乗せたときの拡大表示(手札の中身が出うる)は送らない
       const sp = clone.querySelector('#cardSpotlight');
       if (sp) { sp.style.display = 'none'; sp.innerHTML = ''; }
