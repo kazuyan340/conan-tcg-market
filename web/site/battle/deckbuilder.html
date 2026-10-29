@@ -277,6 +277,8 @@
   .dr-dist div{ flex:1; text-align:center; font-size:9px; display:flex; flex-direction:column; justify-content:flex-end; height:100%; min-width:0; }
   .dr-dist i{ display:block; background:var(--gold); border-radius:4px 4px 0 0; min-height:0; }
   .dr-dist b{ font-size:11px; }
+  .dr-sortrow{ display:flex; align-items:center; gap:8px; margin-top:12px; font-size:12px; }
+  .dr-sortrow .sort-btn{ background:rgba(255,255,255,.15); color:#fff; }
   .dr-grid{ max-height:none; grid-template-columns:repeat(8, 1fr); margin-top:12px; padding-right:0; overflow:visible; }
   .dr-grid .deck-tile{ cursor:default; }
   .dr-grid .deck-tile:hover{ transform:none; box-shadow:none; }
@@ -903,6 +905,7 @@
     document.getElementById('drawerBody').innerHTML =
       `<div class="dr-total ${total === MAX_DECK ? 'full' : total > MAX_DECK ? 'over' : ''}">${total} / ${MAX_DECK} 枚</div>` + stats +
       slot('パートナー', partner) + slot('事件', caseCard) +
+      `<div class="dr-sortrow"><span>並び順</span><button class="sort-btn" id="drawerSortBtn">${SORT_LABELS[deckSortMode]}</button></div>` +
       `<div class="deck-list dr-grid">${tiles}</div>` +
       `<div class="dr-sub" style="margin-top:14px">レベルごとの枚数${noLv ? `（レベルなし ${noLv}枚）` : ''}</div><div class="dr-distrow"><div class="dr-dist">${dist}</div><div class="dr-lvlist">${lvList}</div></div>`;
   }
@@ -910,6 +913,13 @@
     document.body.classList.toggle('drawer-open', open);
     if (open) refreshDrawer();
   }
+  // メニュー内の並び順ボタン(画面下のデッキ一覧の並び順ボタンと同じ設定を使う)
+  document.getElementById('drawerBody').addEventListener('click', e => {
+    if (!e.target.closest || !e.target.closest('#drawerSortBtn')) return;
+    deckSortMode = nextSortMode(deckSortMode);
+    document.getElementById('deckSortBtn').textContent = SORT_LABELS[deckSortMode];
+    renderDeckList();   // 下の一覧と、開いているメニューの両方を更新する
+  });
   document.getElementById('menuBtn').onclick = () => setDrawer(!document.body.classList.contains('drawer-open'));
   document.getElementById('drawerClose').onclick = () => setDrawer(false);
   document.getElementById('drawerBack').onclick = () => setDrawer(false);

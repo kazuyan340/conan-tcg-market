@@ -14,6 +14,13 @@ app.whenReady().then(async () => {
   console.log('open:', await ev(`document.body.classList.contains('drawer-open')`), 'rows:', await ev(`document.querySelectorAll('.dr-row').length`));
   console.log(await ev(`(function(){ const d=document.getElementById('drawer'); const cs=getComputedStyle(d); const r=d.getBoundingClientRect(); return JSON.stringify({pos:cs.position,vis:cs.visibility,tr:cs.transform,left:r.left,w:r.width,z:cs.zIndex}); })()`));
   fs.writeFileSync('C:/Users/kazuyan/AppData/Local/Temp/duo/drawer.png', (await w.webContents.capturePage()).toPNG());
+  const lvs = () => ev(`Array.from(document.querySelectorAll('.dr-grid .deck-tile:not(.placeholder)')).slice(0, 6).map(t => (t.querySelector('img')||{}).alt || t.textContent).join(',')`);
+  const sortLabel = () => ev(`document.getElementById('drawerSortBtn').textContent + ' / 下: ' + document.getElementById('deckSortBtn').textContent`);
+  console.log('並び:', await sortLabel(), await lvs());
+  await ev(`document.getElementById('drawerSortBtn').click()`); await sleep(200);
+  console.log('並び:', await sortLabel(), await lvs());
+  await ev(`document.getElementById('drawerSortBtn').click()`); await sleep(200);
+  console.log('並び:', await sortLabel(), await lvs());
   await ev(`document.getElementById('drawerBack').click()`); await sleep(400);
   console.log('closed:', !(await ev(`document.body.classList.contains('drawer-open')`)), 'errors:', errs.length, errs.slice(0, 2));
   app.exit(0);
