@@ -268,7 +268,9 @@
   .dr-lvlist div{ display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,.08); padding:1px 2px; }
   .dr-lvlist b{ color:#ffe08a; }
   .dr-lvlist{ justify-content:center; gap:6px; font-size:15px; }
-  .dr-lvlist span{ font-weight:800; }
+  .dr-lvlist .k{ flex:0 0 2em; text-align:center; font-weight:800; }
+  .dr-lvlist .co{ flex:0 0 .6em; font-weight:800; }
+  .dr-lvlist b{ margin-left:auto; }
   .dr-dist div{ flex:1; text-align:center; font-size:9px; display:flex; flex-direction:column; justify-content:flex-end; height:100%; min-width:0; }
   .dr-dist i{ display:block; background:var(--gold); border-radius:4px 4px 0 0; min-height:0; }
   .dr-dist b{ font-size:11px; }
@@ -889,7 +891,7 @@
     const nEvent = instances.filter(id => CARD_BY_ID.get(id).type === 'イベント').length;
     const nWith = kw => instances.filter(id => CARD_BY_ID.get(id).text.includes(kw)).length;
     const counts = [['C', nChar], ['E', nEvent], ['💡', nWith('【ヒラメキ】')], ['💥', nWith('【カットイン】')]]
-      .map(([k, n]) => `<div><span>${k}:</span><b>${n}枚</b></div>`).join('');
+      .map(([k, n]) => `<div><span class="k">${k}</span><span class="co">:</span><b>${n}枚</b></div>`).join('');
     document.getElementById('drawerBody').innerHTML =
       `<div class="dr-total ${total === MAX_DECK ? 'full' : total > MAX_DECK ? 'over' : ''}">${total} / ${MAX_DECK} 枚</div>` +
       slot('パートナー', partner) + slot('事件', caseCard) +
