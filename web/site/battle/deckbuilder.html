@@ -261,6 +261,11 @@
   .dr-slot img{ height:44px; border-radius:5px; }
   .dr-slot .lbl{ color:#e0b34f; font-weight:800; font-size:11px; display:block; }
   .dr-slot .none{ opacity:.55; }
+  .dr-sub{ font-size:11px; opacity:.7; margin:2px 0 8px; }
+  .dr-dist{ display:flex; align-items:flex-end; gap:5px; height:84px; margin:6px 0 4px; }
+  .dr-dist div{ flex:1; text-align:center; font-size:10px; display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
+  .dr-dist i{ display:block; background:var(--gold); border-radius:4px 4px 0 0; min-height:0; }
+  .dr-dist b{ font-size:11px; }
   .dr-grid{ max-height:none; grid-template-columns:repeat(8, 1fr); margin-top:12px; padding-right:0; overflow:visible; }
   .dr-grid .deck-tile{ cursor:default; }
   .dr-grid .deck-tile:hover{ transform:none; box-shadow:none; }
@@ -866,10 +871,16 @@
         tiles += `<div class="deck-tile" title="${card.name}">${card.image ? `<img src="${card.image}" alt="${card.name}">` : `<div class="no-image">${card.name}</div>`}</div>`;
       } else tiles += '<div class="deck-tile placeholder"><div class="placeholder-label">キャラ<br>イベント</div></div>';
     }
+    // レベルごとの枚数の棒グラフ(表の下)
+    const lv = {}; let noLv = 0;
+    instances.forEach(id => { const c = CARD_BY_ID.get(id); if (c.level == null) noLv++; else lv[c.level] = (lv[c.level] || 0) + 1; });
+    const maxLv = Math.max(1, ...LEVEL_VALUES.map(l => lv[l] || 0));
+    const dist = LEVEL_VALUES.map(l => `<div><b>${lv[l] || ''}</b><i style="height:${Math.round(((lv[l] || 0) / maxLv) * 60)}px"></i>Lv${l}</div>`).join('');
     document.getElementById('drawerBody').innerHTML =
       `<div class="dr-total ${total === MAX_DECK ? 'full' : total > MAX_DECK ? 'over' : ''}">${total} / ${MAX_DECK} 枚</div>` +
       slot('パートナー', partner) + slot('事件', caseCard) +
-      `<div class="deck-list dr-grid">${tiles}</div>`;
+      `<div class="deck-list dr-grid">${tiles}</div>` +
+      `<div class="dr-sub" style="margin-top:14px">レベルごとの枚数${noLv ? `（レベルなし ${noLv}枚）` : ''}</div><div class="dr-dist">${dist}</div>`;
   }
   function setDrawer(open){
     document.body.classList.toggle('drawer-open', open);
