@@ -41,9 +41,9 @@ app.whenReady().then(async () => {
   await W1.loadFile(file); await ev(W1, SEED);
   await W1.loadFile(file); await W2.loadFile(file);
   const pass = 'soak-' + Math.random().toString(36).slice(2);
-  await ev(W1, `document.getElementById('lobbyPass').value='${pass}'; document.getElementById('lobbyName').value='コナン'; document.getElementById('lobbyDeck').selectedIndex=0; document.getElementById('lobbyStart').click(); 1`);
+  await ev(W1, `window.__skipJanken=true; document.getElementById('lobbyPass').value='${pass}'; document.getElementById('lobbyName').value='コナン'; document.getElementById('lobbyDeck').selectedIndex=0; document.getElementById('lobbyStart').click(); 1`);
   await sleep(1500);
-  await ev(W2, `document.getElementById('lobbyPass').value='${pass}'; document.getElementById('lobbyName').value='蘭'; document.getElementById('lobbyDeck').selectedIndex=1; document.getElementById('lobbyStart').click(); 1`);
+  await ev(W2, `window.__skipJanken=true; document.getElementById('lobbyPass').value='${pass}'; document.getElementById('lobbyName').value='蘭'; document.getElementById('lobbyDeck').selectedIndex=1; document.getElementById('lobbyStart').click(); 1`);
   for (let i = 0; i < 40; i++) { await sleep(500); const a = await ev(W1, `document.getElementById('lobby').classList.contains('hidden')`), b = await ev(W2, `document.getElementById('lobby').classList.contains('hidden')`); if (a && b) break; }
   await sleep(1500);
   const r1 = await ev(W1, `document.body.classList.contains('host')`);

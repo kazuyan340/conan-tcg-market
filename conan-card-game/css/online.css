@@ -154,3 +154,13 @@ body.online.host .zone[data-side="opponent"] .hand-row .detail-btn{ display:none
   body.online .handfan .card-menu-wrap{ margin-left:-6px; }
   body.online #saveReplayBtn{ display:none; }
 }
+
+/* ---- ジャンケン(先攻・後攻決め) ---- */
+#jankenOverlay{ position:fixed; inset:0; z-index:9000; background:rgba(8,6,20,.92); display:none; align-items:center; justify-content:center; padding:16px; }
+#jankenOverlay .jk-box{ width:min(420px,100%); text-align:center; color:#fff; }
+#jankenOverlay .jk-title{ font-size:24px; font-weight:800; color:var(--gold,#e0b34f); margin-bottom:14px; }
+#jankenOverlay .jk-hands{ display:flex; align-items:center; justify-content:center; gap:16px; margin:6px 0 14px; font-size:20px; }
+#jankenOverlay .jk-hands small{ display:block; font-size:11px; opacity:.7; }
+#jankenOverlay .jk-sub{ font-size:13px; line-height:1.6; opacity:.9; margin-bottom:16px; min-height:1.6em; }
+#jankenOverlay .jk-btns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+#jankenOverlay .jk-btns .btn{ font-size:18px; padding:12px 16px; }
