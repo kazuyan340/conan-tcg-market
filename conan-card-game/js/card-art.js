@@ -29,7 +29,7 @@
     else {
       if (c.level != null) nums.push(['Lv', c.level]);
       if (c.ap != null) nums.push(['AP', c.ap]);
-      if (c.card_type === 'パートナー' && c.lp != null) nums.push(['LP', c.lp]);
+      if (c.lp != null) nums.push(['LP', c.lp]);
     }
     const shown = nums.filter(n => n[1] != null);
     const h = shown.length ? 250 / shown.length : 0;
@@ -85,23 +85,21 @@
     } else {
       if (c.level != null) stats.push(['Lv', c.level]);
       if (c.ap != null) stats.push(['AP', c.ap]);
-      if (c.card_type === 'パートナー' && c.lp != null) stats.push(['LP', c.lp]);
+      if (c.lp != null) stats.push(['LP', c.lp]);
     }
     const shown = stats.filter(s => s[1] != null);
-    const rowH = 64, top = 180;
+    const three = shown.length > 2, rowH = three ? 52 : 64, top = three ? 156 : 180, boxH = rowH - 10, fsz = three ? 30 : 36;
     const statSvg = shown.map((s, i) => {
       const y = top + i * rowH;
-      return `<rect x="22" y="${y}" width="206" height="54" rx="12" fill="rgba(255,255,255,.12)"/>` +
-        `<text x="40" y="${y + 36}" font-size="22" font-weight="700" fill="#e0b34f">${esc(s[0])}</text>` +
-        `<text x="214" y="${y + 40}" font-size="${String(s[1]).length > 4 ? 30 : 36}" font-weight="800" text-anchor="end" fill="#fff">${esc(s[1])}</text>`;
+      return `<rect x="22" y="${y}" width="206" height="${boxH}" rx="12" fill="rgba(255,255,255,.12)"/>` +
+        `<text x="40" y="${y + boxH * 0.67}" font-size="22" font-weight="700" fill="#e0b34f">${esc(s[0])}</text>` +
+        `<text x="214" y="${y + boxH * 0.74}" font-size="${String(s[1]).length > 4 ? 26 : fsz}" font-weight="800" text-anchor="end" fill="#fff">${esc(s[1])}</text>`;
     }).join('');
-    const lpLine = (c.card_type === 'キャラ' && c.lp != null)
-      ? `<text x="125" y="${top + shown.length * rowH + 22}" font-size="18" text-anchor="middle" fill="#bbb">LP ${esc(c.lp)}</text>` : '';
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 350" width="250" height="350">` +
       `<rect x="1" y="1" width="248" height="348" rx="15" fill="#1d2340" stroke="${main}" stroke-width="2"/>` +
       band +
       `<text x="125" y="27" font-size="18" font-weight="700" text-anchor="middle" fill="${dark}">${esc(c.card_type || '')}</text>` +
-      lines + statSvg + lpLine + `</svg>`;
+      lines + statSvg + `</svg>`;
   }
 
   // full=true: 詳細パネル用の、情報がそろった大きめの表示

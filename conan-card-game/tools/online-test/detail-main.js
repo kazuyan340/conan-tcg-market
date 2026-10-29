@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 app.whenReady().then(async () => {
   ipcMain.on('image-config', e => { e.returnValue = { dir: null, files: [] }; });
-  const w = new BrowserWindow({ show: false, width: 420, height: 900, webPreferences: { contextIsolation: true, preload: path.resolve('preload.js') } });
+  const w = new BrowserWindow({ show: false, width: 420, height: 900, webPreferences: { contextIsolation: true } });
   await w.loadFile(path.resolve('build-friend/deckbuilder.html')); await new Promise(r => setTimeout(r, 800));
   const ev = c => w.webContents.executeJavaScript(c), sleep = ms => new Promise(r => setTimeout(r, ms));
   await ev(`document.querySelectorAll('.tab-btn')[2].click()`); await sleep(300);
