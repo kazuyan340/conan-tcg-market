@@ -241,8 +241,8 @@
   }
   /* ---- 右上のハンバーガーメニュー: いまのデッキの様子を見る ---- */
   .menu-btn{
-    width:38px; height:38px; border:none; border-radius:12px; cursor:pointer; flex:0 0 auto;
-    background:rgba(255,255,255,.15); color:#fff; font-size:20px; line-height:1; box-shadow:var(--shadow-sm);
+    height:38px; padding:0 14px; border:none; border-radius:12px; cursor:pointer; flex:0 0 auto; font-weight:700; font-size:14px; white-space:nowrap;
+    background:rgba(255,255,255,.15); color:#fff; line-height:1; box-shadow:var(--shadow-sm);
   }
   .drawer-back{ position:fixed; inset:0; z-index:8000; background:rgba(8,6,20,.6); display:none; }
   .drawer{
@@ -284,6 +284,7 @@
   @media (max-width: 760px){
     header{ padding:10px 12px; gap:8px; flex-wrap:wrap; }
     header h1{ font-size:15px; }
+    header > div{ flex-wrap:wrap; gap:8px !important; }
     .back-btn, .save-btn{ padding:7px 12px; font-size:12px; }
     .layout{ flex-direction:column; align-items:stretch; padding:12px 10px 90px; gap:14px; }
     .deck-panel{ width:100%; position:static; max-height:none; overflow:visible; padding:14px; }
@@ -312,7 +313,7 @@
   <div style="display:flex; gap:10px;">
     <button class="back-btn" onclick="location.href='index.html'">← ホームに戻る</button>
     <button class="save-btn" id="saveBtn">デッキを保存</button>
-    <button class="menu-btn" id="menuBtn" aria-label="いまのデッキを見る" title="いまのデッキを見る">☰</button>
+    <button class="menu-btn" id="menuBtn" aria-label="いまのデッキを見る" title="いまのデッキを見る">デッキ確認</button>
   </div>
 </header>
 
