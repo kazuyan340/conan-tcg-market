@@ -49,6 +49,15 @@
     background:rgba(255,255,255,.12); color:#fff;
   }
   .search-input::placeholder{ color:rgba(255,255,255,.55); }
+  .search-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .search-row .search-input{ margin-bottom:0; flex:1 1 180px; max-width:320px; }
+  .kw-group{ flex-basis:100%; flex-wrap:wrap; }
+  .kw-chips{ display:flex; gap:5px; flex-wrap:wrap; }
+  .kw-chip{
+    border:none; border-radius:12px; padding:4px 9px; font-size:11px; font-weight:800; cursor:pointer;
+    background:rgba(255,255,255,.14); color:#fff;
+  }
+  .kw-chip.active{ background:var(--gold); color:#2b2438; }
 
   .filter-panel{
     display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;
@@ -270,7 +279,10 @@
 
   <div class="pool-panel">
     <div class="tab-row" id="tabRow"></div>
-    <input type="text" id="searchInput" class="search-input" placeholder="カード名で検索">
+    <div class="search-row">
+      <input type="text" id="searchInput" class="search-input" placeholder="検索(空白で複数条件)">
+      <div class="kw-chips" id="scopeChips" title="どこに含まれるものを探すか"></div>
+    </div>
     <div class="filter-panel">
       <div class="filter-group">
         <span class="filter-label">色</span>
@@ -289,6 +301,10 @@
       <div class="filter-group" id="lpFilter">
         <span class="filter-label">LP</span>
         <div class="value-filter" id="lpValueFilter"></div>
+      </div>
+      <div class="filter-group kw-group">
+        <span class="filter-label">キーワード</span>
+        <div class="kw-chips" id="kwChips"></div>
       </div>
       <div class="filter-group">
         <span class="filter-label">並び順</span>
@@ -375,6 +391,9 @@
     level: c.level != null ? c.level : null,
     ap: c.ap != null ? c.ap : null,
     lp: c.lp != null ? c.lp : null,
+    cardNo: c.card_id || '',
+    traits: (c.category || '').split(',').map(t => t.trim()).filter(Boolean),
+    text: (c.ability_text || '').replace(/\s+/g, ''),
     colors: parseColors(c.color), // 2色以上のカードは複数持つ("緑,白"/"緑白"どちらの表記も対応)
     color: colorFor(c.color),
     image: window.CardImages.url(c.id) || (window.CardArt ? window.CardArt.url(c.id) : null),
@@ -495,8 +514,10 @@
   }
 
   function clearFilters(){
-    searchQuery = '';
+    searchWords = [];
     document.getElementById('searchInput').value = '';
+    kwSelected.clear();
+    renderKeywordChips();
     selectedColors.clear();
     includedLevels.clear();
     excludedLevels.clear();
@@ -536,16 +557,54 @@
     renderValueFilter('lpValueFilter', LP_VALUES, includedLp, excludedLp, () => { renderLpFilter(); renderPool(); });
   }
 
-  let searchQuery = '';
+  let searchWords = [];
+  // 検索枠は1つ。「どこに含まれるものを探すか」(名前・番号/特徴/効果文)を選ぶ。複数選んだら、どれかに含まれていれば出す。
+  // 空白で区切った言葉は、すべてに当てはまるカードだけを出す。キーワードのボタンは、効果文に含まれるものだけに絞る。
+  const SEARCH_SCOPES = [{ key: 'name', label: '名前・番号' }, { key: 'trait', label: '特徴' }, { key: 'text', label: '効果文' }];
+  const scopeSelected = new Set(['name']);
+  const kwSelected = new Set();
+  const KEYWORD_CHIPS = ['【登場時】', '【宣言】', '【カットイン】', '【ヒラメキ】', '【疾風】', '【変装】', '【アシスト】', '【事件編】', '【解決編】',
+    '【ターン1】', '【自分ターン中】', '【相手ターン中】', '【現場リムーブ時】', '突撃', '迅速', 'ミスリード'];
+  function renderScopeChips(){
+    const box = document.getElementById('scopeChips');
+    box.innerHTML = '';
+    SEARCH_SCOPES.forEach(sc => {
+      const b = document.createElement('button');
+      b.className = 'kw-chip' + (scopeSelected.has(sc.key) ? ' active' : '');
+      b.textContent = sc.label;
+      b.onclick = () => {
+        if (scopeSelected.has(sc.key)) { if (scopeSelected.size > 1) scopeSelected.delete(sc.key); } else scopeSelected.add(sc.key);
+        renderScopeChips(); renderPool();
+      };
+      box.appendChild(b);
+    });
+  }
+  function matchesSearch(c){
+    if (!searchWords.length) return true;
+    return searchWords.every(w =>
+      (scopeSelected.has('name') && (c.name.toLowerCase().includes(w) || c.cardNo.toLowerCase().includes(w))) ||
+      (scopeSelected.has('trait') && c.traits.some(t => t.toLowerCase().includes(w))) ||
+      (scopeSelected.has('text') && c.text.toLowerCase().includes(w)));
+  }
+  function renderKeywordChips(){
+    const box = document.getElementById('kwChips');
+    box.innerHTML = '';
+    KEYWORD_CHIPS.forEach(k => {
+      const b = document.createElement('button');
+      b.className = 'kw-chip' + (kwSelected.has(k) ? ' active' : '');
+      b.textContent = k;
+      b.onclick = () => { if (kwSelected.has(k)) kwSelected.delete(k); else kwSelected.add(k); renderKeywordChips(); renderPool(); };
+      box.appendChild(b);
+    });
+  }
 
   function renderPool(){
     const grid = document.getElementById('cardGrid');
     grid.innerHTML = '';
     const tab = TABS.find(t => t.key === currentTab);
     let list = CARD_POOL.filter(c => tab.types.includes(c.type));
-    if (searchQuery) {
-      list = list.filter(c => c.name.toLowerCase().includes(searchQuery));
-    }
+    list = list.filter(matchesSearch);
+    if (kwSelected.size) list = list.filter(c => Array.from(kwSelected).every(k => c.text.includes(k)));
     if (selectedColors.size > 0) {
       list = list.filter(c => c.colors.some(col => selectedColors.has(col)));
     }
@@ -855,7 +914,7 @@
   }
 
   document.getElementById('searchInput').addEventListener('input', (e) => {
-    searchQuery = e.target.value.trim().toLowerCase();
+    searchWords = e.target.value.trim().toLowerCase().split(/[\s　]+/).filter(Boolean);
     renderPool();
   });
   document.getElementById('apMin').addEventListener('input', (e) => {
@@ -907,6 +966,8 @@
   );
 
   renderTabs();
+  renderScopeChips();
+  renderKeywordChips();
   renderColorFilter();
   renderLevelFilter();
   renderLpFilter();
