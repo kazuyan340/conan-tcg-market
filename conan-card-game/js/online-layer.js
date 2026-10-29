@@ -246,7 +246,7 @@
   function jkView(title, sub, hands, buttons, onKey, badge){
     const el = jkBox();
     el.innerHTML = '<div class="jk-box"><div class="jk-title"></div>' + (hands ? '<div class="jk-hands"></div>' : '') +
-      (badge ? '<div class="jk-badge ' + badge + '">' + (badge === 'first' ? '先攻' : '後攻') + '</div>' : '') +
+      (badge ? '<div class="jk-badge ' + badge + '">' + (badge === 'first' ? 'あなたは先攻です' : 'あなたは後攻です') + '</div>' : '') +
       '<div class="jk-sub"></div><div class="jk-btns"></div></div>';
     el.querySelector('.jk-box').className = 'jk-box' + (hands && hands.res ? ' res-' + hands.res : '');
     el.querySelector('.jk-title').textContent = title;
@@ -288,10 +288,10 @@
       jkView('あいこ!', 'もう一度出します…', { mine: jkH, theirs: jkG, res: 'draw' }, [], null);
       setTimeout(() => jkRound('あいこでした。'), 1400);
     } else if (win === 'host') {
-      jkView('あなたの勝ち!', '先攻で始めます', { mine: jkH, theirs: jkG, res: 'win' }, [], null, 'first');
+      jkView('あなたの勝ち!', 'まもなく対戦を始めます…', { mine: jkH, theirs: jkG, res: 'win' }, [], null, 'first');
       setTimeout(() => jkDecide('host'), 2800);
     } else {
-      jkView('あなたの負け', '後攻で始めます', { mine: jkH, theirs: jkG, res: 'lose' }, [], null, 'second');
+      jkView('あなたの負け', 'まもなく対戦を始めます…', { mine: jkH, theirs: jkG, res: 'lose' }, [], null, 'second');
       setTimeout(() => jkDecide('guest'), 2800);
     }
   }
@@ -309,8 +309,8 @@
     else if (m.s === 'result') {
       const hands = { mine: m.mine, theirs: m.theirs, res: m.win === 'draw' ? 'draw' : m.win === 'you' ? 'win' : 'lose' };
       if (m.win === 'draw') jkView('あいこ!', 'もう一度出します…', hands, [], null);
-      else if (m.win === 'you') jkView('あなたの勝ち!', '先攻で始めます', hands, [], null, 'first');
-      else jkView('あなたの負け', '後攻で始めます', hands, [], null, 'second');
+      else if (m.win === 'you') jkView('あなたの勝ち!', 'まもなく対戦を始めます…', hands, [], null, 'first');
+      else jkView('あなたの負け', 'まもなく対戦を始めます…', hands, [], null, 'second');
     } else if (m.s === 'end') {
       setTimeout(jkClose, 300);   // 結果の表示はそのまま見せてから閉じる
     }
