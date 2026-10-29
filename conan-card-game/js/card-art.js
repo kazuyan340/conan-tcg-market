@@ -110,7 +110,7 @@
     if (cache.has(key)) return cache.get(key);
     const c = (window.CARD_DATA || []).find(x => x.id === cardId);
     if (!c) return null;
-    const u = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(c.card_type === '事件' ? buildCase(c) : (COMPACT && !full) ? buildCompact(c) : build(c)).replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/'/g, '%27');
+    const u = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent((c.card_type === '事件' ? buildCase(c) : (COMPACT && !full) ? buildCompact(c) : build(c)).replace('<svg ', '<svg data-cid="' + c.id + '" ')).replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/'/g, '%27');
     cache.set(key, u);
     return u;
   }
