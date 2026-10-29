@@ -164,3 +164,8 @@ body.online.host .zone[data-side="opponent"] .hand-row .detail-btn{ display:none
 #jankenOverlay .jk-sub{ font-size:13px; line-height:1.6; opacity:.9; margin-bottom:16px; min-height:1.6em; }
 #jankenOverlay .jk-btns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 #jankenOverlay .jk-btns .btn{ font-size:18px; padding:12px 16px; }
+
+/* 発動したカードの大きな表示: 狭い画面(スマホ)では中央に出す */
+@media (max-width:760px){
+  body.online .card-spotlight{ left:50%; width:min(340px,86vw); transform:translate(-50%,-50%); animation:none; z-index:400; }
+}

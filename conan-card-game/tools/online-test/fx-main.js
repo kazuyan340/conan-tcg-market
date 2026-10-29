@@ -33,6 +33,12 @@ app.whenReady().then(async () => {
   fs.writeFileSync(path.join(outDir, 'fx-h.png'), (await H.webContents.capturePage()).toPNG());
   await sleep(1200);
   console.log('CUTIN after: host', await ev(H, `getComputedStyle(document.getElementById('cutInEffect')).display`), 'guest', await ev(G, `getComputedStyle(document.getElementById('cutInEffect')).display`));
+  // 発動したカードの大きな表示(絵・名前・効果文)が両方の画面に出るか
+  await ev(H, `showCardSpotlight(${cardId})`);
+  await sleep(700);
+  const sp = w => ev(w, `(function(){ const e = document.getElementById('${w === H ? 'cardSpotlight' : 'guestSpotlight'}'); return e ? e.style.display + '|' + (e.querySelector('.card-spotlight-name')||e.querySelector('#cardSpotlightName')||{}).textContent : 'none'; })()`);
+  console.log('SPOTLIGHT host:', await sp(H), 'guest:', await sp(G));
+  fs.writeFileSync(path.join(outDir, 'spot-g.png'), (await G.webContents.capturePage()).toPNG());
   app.exit(0);
 });
 setTimeout(() => { console.log('TIMEOUT'); app.exit(1); }, 90000);

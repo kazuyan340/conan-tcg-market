@@ -476,6 +476,9 @@
     wrap('playCutInEffect', (cardId, onDone, amountText) => fxSend({ k: 'cutin', cardId, amount: amountText || null }));
     wrap('playClashEffect', (l, r, removed, onDone, lb, rb) => fxSend({ k: 'clash', l, r, removed, lb: lb || [], rb: rb || [] }));
     wrap('flashCaseCard', side => fxSend({ k: 'flashCase', side }));
+    // 発動したカードの大きな表示(絵・名前・効果文)をゲストの画面にも出す
+    wrap('showCardSpotlight', (cardId, same) => fxSend({ k: 'spot', cardId, same: !!same }));
+    wrap('hideCardSpotlight', () => fxSend({ k: 'spotHide' }));
     // 対戦ログ: エンジンが出来事を記録するたびに1行作る(自分の画面と、ゲストの画面向けの2通り)
     const origRec = window.recordEvent;
     if (typeof origRec === 'function') window.recordEvent = function(ev){
@@ -553,10 +556,34 @@
       } catch (e) { console.error('fx play', e); }
     });
   }
+  // ゲスト側の「発動したカード」の大きな表示。盤面はホストの写しで毎回作り直されるので、盤面の外に別の部品として持つ。
+  // 画面をふさぎ続けないよう、数秒で消える(タップ操作はそのまま下に通る)。
+  let spotTimer = null;
+  function guestSpotlight(cardId, same){
+    let el = $('guestSpotlight');
+    if (cardId == null) { if (el) el.style.display = 'none'; return; }
+    const c = CARD_BY_ID.get(cardId);
+    if (!c) return;
+    if (!el) {
+      el = document.createElement('div'); el.id = 'guestSpotlight'; el.className = 'card-spotlight';
+      el.innerHTML = '<img alt=""><div class="card-spotlight-name"></div><div class="card-spotlight-text"></div>';
+      document.body.appendChild(el);
+    }
+    if (same && el.style.display === 'flex' && el.dataset.cardId === String(cardId)) return;
+    el.dataset.cardId = String(cardId);
+    el.querySelector('img').src = cardImage(cardId);
+    el.querySelector('.card-spotlight-name').textContent = cardName(cardId);
+    el.querySelector('.card-spotlight-text').textContent = c.ability_text || '';
+    el.style.display = 'flex';
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    clearTimeout(spotTimer); spotTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
   function onFx(m){
     switch (m.k) {
       case 'fly': case 'fade': pendingFly.push({ k: m.k, from: snapAt(m.from), to: m.to, face: m.face }); clearTimeout(flyTimer); flyTimer = setTimeout(runPendingFly, 450); break;
       case 'entry': pendingFly.push({ k: 'entry', to: m.to }); clearTimeout(flyTimer); flyTimer = setTimeout(runPendingFly, 450); break;
+      case 'spot': guestSpotlight(m.cardId, m.same); break;
+      case 'spotHide': guestSpotlight(null); break;
       case 'cutin': playCutInEffect(m.cardId, null, m.amount || undefined); break;
       case 'clash': playClashEffect(m.l, m.r, m.removed, null, m.lb, m.rb); break;
       case 'flashCase': { const el = document.querySelector(`.zone[data-side="${m.side}"] .case-slot`); if (el) { el.classList.add('landing-flash'); setTimeout(() => el.classList.remove('landing-flash'), 1000); } break; }
