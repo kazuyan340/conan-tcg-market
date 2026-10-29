@@ -81,7 +81,7 @@
       if (mulliganPhase) return mulliganPhase;
       if (disguiseReactState) return disguiseReactState.oppSide;
       if (misleadState) return misleadState.oppSide;
-      for (const get of SIDE_STATES) { const st = get(); if (st && st.side) return st.side; }
+      for (const get of SIDE_STATES) { const st = get(); if (st && st.side) return st.actor || st.side; }
       if (choiceState) return choiceOwner || currentActorSide() || (match.turn && match.turn.activeSide) || 'self';
       if (contactState && contactState.queue && contactState.queue.length) return contactState.queue[0];
       if (actionState) return actionState.step === 'guard' ? actionState.oppSide : actionState.side;

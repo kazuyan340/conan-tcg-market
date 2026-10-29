@@ -2590,7 +2590,7 @@
     const oppSide = otherSide(side);
     const revealed = match[oppSide].deckPile.slice(0, count);
     startDeckPeek(oppSide, sourceUid, {
-      count, filter: () => false, rest: 'bottom', skipChoose: true, title: '捜査',
+      actor: side, count, filter: () => false, rest: 'bottom', skipChoose: true, title: '捜査',
       onFinish: () => { if (onComplete) onComplete(revealed); },
     });
   }
@@ -4245,7 +4245,7 @@
         let flipped = 0;
         const pickOpp = () => {
           if (!match[opp].evidence.some(e => !e.faceUp)) { done(); return; }
-          startEvidencePick(opp, actorUid, 'toFaceUp', 1, uids => { flipped += uids.length; done(); }, 1);
+          startEvidencePick(opp, actorUid, 'toFaceUp', 1, uids => { flipped += uids.length; done(); }, 1, side);
         };
         const done = () => { if (flipped >= need) recordEvent({ type: 'apBuffApply', side, targetUid: actorUid, amount, sourceCardId: actor.cardId }); };
         setTimeout(() => {
@@ -7572,7 +7572,7 @@
     const body = effect.body;
     if (body === 'カードを1枚引く。') { sequentialDraw(side, 1, null); return; }
     if (body === '自分は証拠を1つ得る。') { recordEvent({ type: 'addEvidence', side }); return; }
-    if (body === '相手の裏向きの証拠を1つまで選び、表向きにする。') { startEvidencePick(otherSide(side), uid, 'toFaceUp', 1, null, 0); return; }
+    if (body === '相手の裏向きの証拠を1つまで選び、表向きにする。') { startEvidencePick(otherSide(side), uid, 'toFaceUp', 1, null, 0, side); return; }
     const keywordM = body.match(/^ターン終了時までこのキャラは〚([^〛]+?)〛を持つ。$/);
     if (keywordM) { recordEvent({ type: 'tempKeywordGrant', side, targetUid: uid, keyword: keywordM[1] }); return; }
     // 萩原千速(2501)：ターン終了時までこのキャラは「相手のアクティブ状態のキャラを指定してアクションできる」を持つ
@@ -8649,8 +8649,8 @@
   // mode:'toFaceUp'は裏向きの証拠を表向きに、'toFaceDown'は表向きの証拠を裏向きにする。
   // min未満では確定できず(コストとして必須の場合はmin=maxにする)、min=0なら「選ばない」を選べる
   let evidencePickState = null; // { side, sourceUid, mode, min, max, selectedUids, onComplete }
-  function startEvidencePick(side, sourceUid, mode, max, onComplete, min){
-    evidencePickState = { side, sourceUid, mode, min: min != null ? min : 0, max, selectedUids: [], onComplete: onComplete || null };
+  function startEvidencePick(side, sourceUid, mode, max, onComplete, min, actor){
+    evidencePickState = { side, actor: actor || side, sourceUid, mode, min: min != null ? min : 0, max, selectedUids: [], onComplete: onComplete || null };
     renderBoard(match);
     renderPickHint();
   }
@@ -9605,7 +9605,7 @@
     const s = match[side];
     const revealedUids = s.deckPile.slice(0, effect.count).map(c => c.uid);
     deckPeekState = {
-      side, sourceUid, color: effect.color, forceRemove: effect.forceRemove, mandatory: !!effect.mandatory,
+      side, actor: effect.actor || side, sourceUid, color: effect.color, forceRemove: effect.forceRemove, mandatory: !!effect.mandatory,
       levelMax: effect.levelMax != null ? effect.levelMax : null,
       destination: effect.destination || 'hand',
       // filter：色ではなく任意の条件(cardDef→bool)で候補を絞る／rest：選ばなかった残りの行き先
@@ -11220,7 +11220,7 @@
             onDone: keys => { if (keys[0]) recordEvent({ type: 'fieldToEvidenceFaceUp', side: opp, uid: keys[0], toSide: opp }); },
           });
         };
-        if (match[opp].evidence.length > 0) startEvidencePick(opp, uid, 'toDeckBottom', 1, step2, 0);
+        if (match[opp].evidence.length > 0) startEvidencePick(opp, uid, 'toDeckBottom', 1, step2, 0, side);
         else step2();
       }
       return true;
@@ -11810,7 +11810,7 @@
               if (!keys[0]) return;
               recordEvent({ type: 'handDiscard', side, uid: keys[0] });
               const gain = () => recordEvent({ type: 'addEvidence', side });
-              if (match[opp].evidence.length > 0) startEvidencePick(opp, uid, 'toDeckBottom', 1, gain, 0);
+              if (match[opp].evidence.length > 0) startEvidencePick(opp, uid, 'toDeckBottom', 1, gain, 0, side);
               else gain();
             },
           });
@@ -15566,7 +15566,7 @@
     if (s === '表向きの証拠を1つまで選び、裏向きにする') return (ctx, next) => {
       const sides = ['self', 'opponent'].filter(sk => match[sk].evidence.some(e => e.faceUp));
       if (!sides.length) { ctx.last = false; next(); return; }
-      const go = sk => startEvidencePick(sk, ctx.srcUid, 'toFaceDown', 1, picked => { ctx.last = (picked || []).length > 0; next(); }, 0);
+      const go = sk => startEvidencePick(sk, ctx.srcUid, 'toFaceDown', 1, picked => { ctx.last = (picked || []).length > 0; next(); }, 0, ctx.side);
       if (sides.length === 1) go(sides[0]);
       else DC.choose2(ctx.side, ctx.srcUid, { label: '自分の表向きの証拠', run: () => go(ctx.side) }, { label: '相手の表向きの証拠', run: () => go(otherSide(ctx.side)) });
     };
@@ -15719,7 +15719,7 @@
     if ((m = s.match(/^相手の裏向きの証拠を(\d+)つまで選び、表向きにする$/))) return (ctx, next) => {
       const opp = otherSide(ctx.side), cnt = Math.min(Number(m[1]), match[opp].evidence.filter(e => !e.faceUp).length);
       if (cnt <= 0) { ctx.last = false; next(); return; }
-      startEvidencePick(opp, ctx.srcUid, 'toFaceUp', cnt, picked => { ctx.last = (picked || []).length > 0; next(); }, 0);
+      startEvidencePick(opp, ctx.srcUid, 'toFaceUp', cnt, picked => { ctx.last = (picked || []).length > 0; next(); }, 0, ctx.side);
     };
     if ((m = s.match(/^自分の裏向きの証拠を(\d+)つまで選び、表向きにする$/))) return (ctx, next) => {
       const cnt = Math.min(Number(m[1]), match[ctx.side].evidence.filter(e => !e.faceUp).length);
@@ -18992,7 +18992,7 @@
             },
           });
         };
-        if (match[opp].evidence.length > 0) startEvidencePick(opp, uid, 'toDeckBottom', 1, step2, 0);
+        if (match[opp].evidence.length > 0) startEvidencePick(opp, uid, 'toDeckBottom', 1, step2, 0, side);
         else step2();
       },
     },
@@ -19797,7 +19797,7 @@
             const oppSide = otherSide(side);
             startEvidencePick(side, uid, 'toFaceUp', DC.evidenceDownCount(side), picked => {
               const n = Math.min(picked.length, DC.evidenceDownCount(oppSide));
-              if (n > 0) startEvidencePick(oppSide, uid, 'toFaceUp', n, null, 0);
+              if (n > 0) startEvidencePick(oppSide, uid, 'toFaceUp', n, null, 0, side);
             }, 0);
           });
         },
