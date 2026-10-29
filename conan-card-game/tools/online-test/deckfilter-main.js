@@ -19,7 +19,7 @@ app.whenReady().then(async () => {
   await type('登場時'); await chip('特徴'); await chip('効果文'); console.log('効果文のみ 登場時:', await n());
   await type(''); await chip('【疾風】'); console.log('キーワード疾風:', await n());
   await chip('【疾風】'); await chip('突撃'); console.log('キーワード突撃:', await n());
-  await type('少年探偵団'); await chip('名前・番号'); await chip('特徴'); console.log('名前+特徴(どちらかに含まれればOK) 少年探偵団:', await n());
+  await chip('効果文'); await chip('特徴'); await chip('名前・番号'); await type('少年探偵団'); console.log('名前+特徴の2つ選択 少年探偵団:', await n(), '(名前のみ5 / 特徴のみ154 より少なくならないはず)');
   console.log('errors:', errs.length, errs.slice(0, 2));
   app.exit(0);
 });
