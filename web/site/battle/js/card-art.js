@@ -47,6 +47,29 @@
       body + `</svg>`;
   }
 
+  // 事件カード: 横向きの枠(盤面・デッキ作成の事件カードの枠と同じ縦横比 174:124)に合わせる。
+  // 名前を大きく中央に、事件レベル(先攻/後攻)を左下・右下に出す
+  function buildCase(c){
+    const cols = colorsOf(c);
+    const main = cols.length ? COLORS[cols[0]] : '#666';
+    const dark = cols[0] === '白' || cols[0] === '黄' ? '#222' : '#fff';
+    const chars = Array.from(String(c.name).replace(/\s+/g, ''));
+    const per = 10, lines = [];
+    for (let i = 0; i < chars.length && lines.length < 3; i += per) lines.push(chars.slice(i, i + per).join(''));
+    if (chars.length > per * 3) lines[2] = lines[2].slice(0, per - 1) + '…';
+    const fs = lines.length > 2 ? 28 : 34, lh = fs + 8;
+    const y0 = 128 - ((lines.length - 1) * lh) / 2;
+    const name = lines.map((t, i) => `<text x="174" y="${y0 + i * lh}" font-size="${fs}" font-weight="800" text-anchor="middle" fill="#fff">${esc(t)}</text>`).join('');
+    const num = (label, v, x, anchor) => v == null ? '' :
+      `<text x="${x}" y="226" font-size="24" font-weight="800" text-anchor="${anchor}" fill="#e0b34f">${label}</text>` +
+      `<text x="${anchor === 'start' ? x + 34 : x - 34}" y="228" font-size="52" font-weight="900" text-anchor="${anchor}" fill="#fff">${esc(v)}</text>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 348 248" width="348" height="248">` +
+      `<rect x="2" y="2" width="344" height="244" rx="16" fill="#1d2340" stroke="${main}" stroke-width="5"/>` +
+      `<rect x="0" y="0" width="348" height="40" rx="16" fill="${main}"/>` +
+      `<text x="174" y="29" font-size="20" font-weight="700" text-anchor="middle" fill="${dark}">事件</text>` +
+      name + num('先', c.difficulty_first, 16, 'start') + num('後', c.difficulty_second, 332, 'end') + `</svg>`;
+  }
+
   function build(c){
     const cols = colorsOf(c);
     const main = cols.length ? COLORS[cols[0]] : '#666';
@@ -87,7 +110,7 @@
     if (cache.has(key)) return cache.get(key);
     const c = (window.CARD_DATA || []).find(x => x.id === cardId);
     if (!c) return null;
-    const u = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent((COMPACT && !full) ? buildCompact(c) : build(c)).replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/'/g, '%27');
+    const u = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(c.card_type === '事件' ? buildCase(c) : (COMPACT && !full) ? buildCompact(c) : build(c)).replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/'/g, '%27');
     cache.set(key, u);
     return u;
   }
