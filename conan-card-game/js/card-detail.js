@@ -1,8 +1,7 @@
 // カード詳細の表示(効果の全文など)。画像が無い環境(スマホ版など)では、盤面のカードには
 // レベル・APなどの数字しか出ないので、全文はここで見る。
-//   ・カードを長押し(PCは右クリック)すると詳細を開く
+//   ・カードを長押し(PCはマウスの長押し、または右クリック)すると詳細を開く
 //   ・開いたあとは、もう一度どこかをタップすると閉じる
-//   ・カードをタップしたときのメニューにも「🔍 詳細」ボタンを足す(js/battle-engine.js のメニュー用)
 //   ・オンライン対戦のゲスト画面は盤面がホストの写しなので、詳細は必ず自分の画面だけで開く(ホストへは送らない)
 (function(){
   const LONG_PRESS_MS = 450;
@@ -22,7 +21,6 @@
     #cardDetail .cd-row span{ color:#e0b34f; flex:0 0 auto; }
     #cardDetail .cd-row b{ font-weight:600; text-align:right; }
     #cardDetail .cd-text{ margin-top:12px; font-size:14px; line-height:1.75; white-space:pre-wrap; background:rgba(0,0,0,.25); border-radius:8px; padding:10px 12px; }
-    .detail-btn{ background:#e0b34f; color:#2b2438; border:none; border-radius:14px; padding:5px 10px; font-weight:800; font-size:12px; cursor:pointer; }
   `;
   document.head.appendChild(style);
 
@@ -112,27 +110,8 @@
     e.preventDefault(); open(id);
   }, true);
 
-  // 長押し直後のクリックを捨てる / 「詳細」ボタンの処理(キャプチャ段階で先に処理して、ゲスト画面のホスト転送や盤面の処理に渡さない)
+  // 長押し直後のクリックを捨てる(指を離したときのクリックが、カードの操作として扱われないようにする)
   document.addEventListener('click', e => {
-    if (Date.now() < swallowClickUntil) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return; }
-    const btn = e.target.closest && e.target.closest('.detail-btn');
-    if (btn) {
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      const id = Number(btn.getAttribute('data-cid'));
-      if (id) open(id);
-    }
+    if (Date.now() < swallowClickUntil) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
   }, true);
-
-  // ---- 盤面のカードメニューに「詳細」ボタンを足す(メニューのHTMLを作るエンジン側の関数を包む) ----
-  window.addEventListener('DOMContentLoaded', () => {
-    const orig = window.cardActionMenuHtml;
-    if (typeof orig !== 'function') return;
-    window.cardActionMenuHtml = function(side, targetType, uid){
-      const html = orig.apply(this, arguments);
-      let cid = null;
-      try { cid = uidToCardId(uid); } catch (e) {}
-      if (!html || cid == null) return html;
-      return html.replace(/(<div class="deck-menu card-action-menu"[^>]*>)/, `$1<button class="detail-btn" data-cid="${cid}">🔍 詳細</button>`);
-    };
-  });
 })();
