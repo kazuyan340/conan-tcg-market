@@ -22067,6 +22067,15 @@
     }
   }
 
+  // ログは普段は隠しておき、「ログ」ボタンを押したときだけ出す(出しっぱなしだと盤面の邪魔になる)
+  (function setupLogToggle(){
+    if (document.body.classList.contains('online')) return;   // オンライン対戦ではログを出さない
+    const btn = document.createElement('button');
+    btn.id = 'logToggleBtn'; btn.className = 'btn small'; btn.textContent = '📜 ログ';
+    btn.onclick = () => { const on = document.body.classList.toggle('log-open'); btn.textContent = on ? '✕ ログを閉じる' : '📜 ログ'; };
+    document.body.appendChild(btn);
+  })();
+
   // ---- セットアップ画面 ----
   function populateDeckSelects(){
     const decks = loadSavedDecks();

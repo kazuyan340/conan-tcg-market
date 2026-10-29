@@ -636,6 +636,10 @@
     /* 中身の量によらず、枠のサイズを常に一定にする(足りない分は枠内でスクロール) */
     height:70vh; overflow-y:auto; font-size:12px; line-height:1.9;
   }
+  /* ログは「ログ」ボタンを押したときだけ出す */
+  .action-log{ display:none !important; }
+  body.log-open .action-log{ display:block !important; }
+  #logToggleBtn{ position:fixed; right:18px; bottom:14px; z-index:61; box-shadow:var(--shadow-md); }
   .action-log .entry.current{ color:var(--gold); font-weight:800; }
   .action-log .empty-hint{ opacity:.5; }
 
