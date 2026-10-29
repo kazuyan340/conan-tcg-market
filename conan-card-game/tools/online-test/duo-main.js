@@ -51,8 +51,9 @@ app.whenReady().then(async () => {
   await sleep(800); log('JK round1 titles:', await jkTitle(JW[0]), '/', await jkTitle(JW[1]));
   await sleep(2000);
   log('JK round2 picks:', await jk(JW[0], 2), await jk(JW[1], 0));
-  await sleep(800); log('JK round2 titles:', await jkTitle(JW[0]), '/', await jkTitle(JW[1]));
-  await sleep(1500);
+  await sleep(800); await ev(JW[0], `1`); log('JK round2 titles:', await jkTitle(JW[0]), '/', await jkTitle(JW[1]));
+  await shot(JW[0], 'jk-h.png'); await shot(JW[1], 'jk-g.png');
+  await sleep(3500);
   for (let i = 0; i < 40; i++) { await sleep(500); const st = await ev(W2, `document.getElementById('lobby').classList.contains('hidden')`); const st1 = await ev(W1, `document.getElementById('lobby').classList.contains('hidden')`); if (st && st1) break; }
   await sleep(1500);
   const r1 = await ev(W1, `document.body.classList.contains('host')`);

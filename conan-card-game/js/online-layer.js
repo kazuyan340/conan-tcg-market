@@ -232,6 +232,7 @@
   // デッキを交換したあと、対戦を始める前に行う。ホストが進行役で、手は選んだ時点で相手に見えない(両方そろってから公開)。
   // あいこなら、やり直し。勝った側が先攻、負けた側が後攻になる。
   const JK_HANDS = ['✊ グー', '✌ チョキ', '✋ パー'];
+  const JK_ICON = ['✊', '✌', '✋'], JK_NAME = ['グー', 'チョキ', 'パー'];
   let jkH = null, jkG = null, jkLocked = false, jkStarted = false, jkOpen = false;
   function jkBox(){
     let el = $('jankenOverlay');
@@ -241,13 +242,20 @@
   }
   function jkClose(){ const el = $('jankenOverlay'); if (el) el.style.display = 'none'; }
   // title: 見出し / sub: 説明 / hands: {mine, theirs} (公開する手) / buttons: [{label, key}] / onKey: ボタンが押されたとき
-  function jkView(title, sub, hands, buttons, onKey){
+  // hands: {mine, theirs, res:'win'|'lose'|'draw'} (公開する手と勝敗) / badge: 'first'|'second' (決まった順番を大きく見せる)
+  function jkView(title, sub, hands, buttons, onKey, badge){
     const el = jkBox();
     el.innerHTML = '<div class="jk-box"><div class="jk-title"></div>' + (hands ? '<div class="jk-hands"></div>' : '') +
+      (badge ? '<div class="jk-badge ' + badge + '">' + (badge === 'first' ? '先攻' : '後攻') + '</div>' : '') +
       '<div class="jk-sub"></div><div class="jk-btns"></div></div>';
+    el.querySelector('.jk-box').className = 'jk-box' + (hands && hands.res ? ' res-' + hands.res : '');
     el.querySelector('.jk-title').textContent = title;
     el.querySelector('.jk-sub').textContent = sub || '';
-    if (hands) el.querySelector('.jk-hands').innerHTML = '<div><small>あなた</small><b>' + JK_HANDS[hands.mine] + '</b></div><span>vs</span><div><small>相手</small><b>' + JK_HANDS[hands.theirs] + '</b></div>';
+    if (hands) {
+      const side = (label, v, cls) => '<div class="jk-hand ' + cls + '"><small>' + label + '</small><i>' + JK_ICON[v] + '</i><b>' + JK_NAME[v] + '</b></div>';
+      el.querySelector('.jk-hands').innerHTML = side('あなた', hands.mine, hands.res === 'win' ? 'won' : hands.res === 'lose' ? 'lost' : '') + '<span>VS</span>' +
+        side('相手', hands.theirs, hands.res === 'lose' ? 'won' : hands.res === 'win' ? 'lost' : '');
+    }
     const box = el.querySelector('.jk-btns');
     (buttons || []).forEach(bt => {
       const b = document.createElement('button');
@@ -277,14 +285,14 @@
     const win = jkH === jkG ? 'draw' : ((jkG - jkH + 3) % 3 === 1 ? 'host' : 'guest');
     conn.send({ t: 'jk', s: 'result', mine: jkG, theirs: jkH, win: win === 'draw' ? 'draw' : win === 'guest' ? 'you' : 'other' });
     if (win === 'draw') {
-      jkView('あいこ', 'もう一度出します…', { mine: jkH, theirs: jkG }, [], null);
+      jkView('あいこ!', 'もう一度出します…', { mine: jkH, theirs: jkG, res: 'draw' }, [], null);
       setTimeout(() => jkRound('あいこでした。'), 1400);
     } else if (win === 'host') {
-      jkView('あなたの勝ち!', 'あなたが先攻です。', { mine: jkH, theirs: jkG }, [], null);
-      setTimeout(() => jkDecide('host'), 1800);
+      jkView('あなたの勝ち!', '先攻で始めます', { mine: jkH, theirs: jkG, res: 'win' }, [], null, 'first');
+      setTimeout(() => jkDecide('host'), 2800);
     } else {
-      jkView('相手の勝ち', 'あなたは後攻です。', { mine: jkH, theirs: jkG }, [], null);
-      setTimeout(() => jkDecide('guest'), 1800);
+      jkView('あなたの負け', '後攻で始めます', { mine: jkH, theirs: jkG, res: 'lose' }, [], null, 'second');
+      setTimeout(() => jkDecide('guest'), 2800);
     }
   }
   function jkGuestPick(v){ if (!jkOpen || jkG != null || ![0, 1, 2].includes(v)) return; jkG = v; jkCheck(); }
@@ -299,13 +307,12 @@
   function jkOnMessage(m){
     if (m.s === 'pick') jkView('ジャンケン', (m.note ? m.note + ' ' : '') + '勝った方が先攻です。出す手を選んでください。', null, jkPickButtons(), v => { conn.send({ t: 'jkPick', v }); jkView('ジャンケン', '相手が選ぶのを待っています…', null, [], null); });
     else if (m.s === 'result') {
-      const hands = { mine: m.mine, theirs: m.theirs };
-      if (m.win === 'draw') jkView('あいこ', 'もう一度出します…', hands, [], null);
-      else if (m.win === 'you') jkView('あなたの勝ち!', 'あなたが先攻です。', hands, [], null);
-      else jkView('相手の勝ち', 'あなたは後攻です。', hands, [], null);
+      const hands = { mine: m.mine, theirs: m.theirs, res: m.win === 'draw' ? 'draw' : m.win === 'you' ? 'win' : 'lose' };
+      if (m.win === 'draw') jkView('あいこ!', 'もう一度出します…', hands, [], null);
+      else if (m.win === 'you') jkView('あなたの勝ち!', '先攻で始めます', hands, [], null, 'first');
+      else jkView('あなたの負け', '後攻で始めます', hands, [], null, 'second');
     } else if (m.s === 'end') {
-      jkView(m.first === 'you' ? 'あなたが先攻です' : 'あなたは後攻です', '対戦を始めます…', null, [], null);
-      setTimeout(jkClose, 1200);
+      setTimeout(jkClose, 300);   // 結果の表示はそのまま見せてから閉じる
     }
   }
 
