@@ -183,6 +183,9 @@ body.online.host .zone[data-side="opponent"] .hand-row .detail-btn{ display:none
   body.online .card-spotlight img{ width:76%; align-self:center; }
   body.online .card-spotlight-name{ font-size:13px; }
   body.online .card-spotlight-text{ font-size:11px; line-height:1.5; }
+  /* カードをタップして出る選択肢(推理・アシストなど)は、指で押しやすい大きさにする */
+  body.online .deck-menu{ gap:10px; }
+  body.online .deck-menu button{ font-size:17px; padding:13px 22px; border-radius:20px; min-width:150px; }
 }
 
 /* ゲストがカードをクリックして開いたメニュー(推理・アシストなどのボタン)は、ホスト画面には出さない */
