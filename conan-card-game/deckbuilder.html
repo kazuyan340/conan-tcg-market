@@ -443,6 +443,8 @@
     // レベル・APはキャラ・イベント(デッキ40枚タブ)のみ、LPはパートナー・キャラにある項目なので
     // タブに応じて意味のある絞り込みだけを表示する
     document.getElementById('levelFilter').style.display = currentTab === 'deck' ? 'flex' : 'none';
+    // キーワードのボタンはキャラ・イベントを探すときだけ(パートナー・事件の選択には出さない)
+    document.querySelector('.kw-group').style.display = currentTab === 'deck' ? 'flex' : 'none';
     document.getElementById('apFilter').style.display = currentTab === 'deck' ? 'flex' : 'none';
     document.getElementById('lpFilter').style.display = (currentTab === 'deck' || currentTab === 'partner') ? 'flex' : 'none';
   }
@@ -604,7 +606,7 @@
     const tab = TABS.find(t => t.key === currentTab);
     let list = CARD_POOL.filter(c => tab.types.includes(c.type));
     list = list.filter(matchesSearch);
-    if (kwSelected.size) list = list.filter(c => Array.from(kwSelected).every(k => c.text.includes(k)));
+    if (currentTab === 'deck' && kwSelected.size) list = list.filter(c => Array.from(kwSelected).every(k => c.text.includes(k)));
     if (selectedColors.size > 0) {
       list = list.filter(c => c.colors.some(col => selectedColors.has(col)));
     }
