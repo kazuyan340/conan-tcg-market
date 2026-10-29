@@ -559,8 +559,7 @@
     });
   }
   // ゲスト側の「発動したカード」の大きな表示。盤面はホストの写しで毎回作り直されるので、盤面の外に別の部品として持つ。
-  // 画面をふさぎ続けないよう、数秒で消える(タップ操作はそのまま下に通る)。
-  let spotTimer = null;
+  // ホストの画面と同じく、次の表示に切り替わるか、ホストが消すまで残る(タップ操作はそのまま下に通る)。
   function guestSpotlight(cardId, same){
     let el = $('guestSpotlight');
     if (cardId == null) { if (el) el.style.display = 'none'; return; }
@@ -578,7 +577,6 @@
     el.querySelector('.card-spotlight-text').textContent = c.ability_text || '';
     el.style.display = 'flex';
     el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
-    clearTimeout(spotTimer); spotTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
   }
   function onFx(m){
     switch (m.k) {
