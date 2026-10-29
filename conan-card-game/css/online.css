@@ -158,14 +158,14 @@ body.online.host .zone[data-side="opponent"] .hand-row .detail-btn{ display:none
 /* ---- ジャンケン(先攻・後攻決め) ---- */
 #jankenOverlay{ position:fixed; inset:0; z-index:9000; background:rgba(8,6,20,.97); display:none; align-items:center; justify-content:center; padding:16px; }
 #jankenOverlay .jk-box{ width:min(680px,100%); text-align:center; color:#fff; }
-#jankenOverlay .jk-title{ font-size:16px; font-weight:800; color:var(--gold,#e0b34f); margin-bottom:8px; }
-#jankenOverlay .jk-hands{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 12px; transform:scale(.62); transform-origin:center top; height:84px; }
+#jankenOverlay .jk-title{ font-size:18px; font-weight:800; color:var(--gold,#e0b34f); margin-bottom:14px; }
+#jankenOverlay .jk-hands{ display:flex; align-items:center; justify-content:center; gap:10px; margin:0 0 14px; }
 #jankenOverlay .jk-hands span{ font-weight:900; opacity:.6; font-size:14px; }
-#jankenOverlay .jk-hand{ flex:0 1 130px; padding:12px 8px; border-radius:16px; background:rgba(255,255,255,.07); border:2px solid rgba(255,255,255,.12); }
-#jankenOverlay .jk-hand small{ display:block; font-size:11px; opacity:.75; }
-#jankenOverlay .jk-hand i{ display:block; font-style:normal; font-size:54px; line-height:1.15; }
-#jankenOverlay .jk-hand b{ font-size:14px; }
-#jankenOverlay .jk-hand.won{ border-color:var(--gold,#e0b34f); background:rgba(224,179,79,.18); box-shadow:0 0 22px rgba(224,179,79,.45); transform:scale(1.06); }
+#jankenOverlay .jk-hand{ flex:0 1 84px; padding:6px 6px; border-radius:12px; background:rgba(255,255,255,.07); border:2px solid rgba(255,255,255,.12); }
+#jankenOverlay .jk-hand small{ display:block; font-size:10px; opacity:.75; }
+#jankenOverlay .jk-hand i{ display:block; font-style:normal; font-size:32px; line-height:1.2; }
+#jankenOverlay .jk-hand b{ font-size:11px; }
+#jankenOverlay .jk-hand.won{ border-color:var(--gold,#e0b34f); background:rgba(224,179,79,.18); box-shadow:0 0 22px rgba(224,179,79,.45); }
 #jankenOverlay .jk-hand.lost{ opacity:.5; filter:grayscale(.6); }
 #jankenOverlay .jk-badge{ display:inline-block; margin:2px 0 10px; padding:18px 22px; border-radius:56px; font-size:clamp(34px,10.5vw,68px); font-weight:900; letter-spacing:.02em; white-space:nowrap; max-width:96vw; animation:jkPop .45s ease-out; }
 #jankenOverlay .jk-badge.first{ background:linear-gradient(135deg,#f5d36b,#e0a526); color:#2b2438; box-shadow:0 0 28px rgba(245,211,107,.55); }
