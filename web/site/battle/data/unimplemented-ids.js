@@ -1,0 +1,1 @@
+window.UNIMPLEMENTED_CARD_IDS = [];

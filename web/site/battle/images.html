@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画像設定 - 名探偵コナンTCG</title>
+<style>
+  :root{
+    --bg1:#2c3550; --bg2:#232a42; --bg3:#3a3226; --bg4:#4a3d28;
+    --gold:#e0b34f; --navy1:#3d4f88;
+    --shadow-md:0 8px 16px rgba(27,20,45,.28);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif; color:#fff;
+    background:linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 38%, var(--bg3) 60%, var(--bg4) 100%);
+    min-height:100vh;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; background:rgba(0,0,0,.25); box-shadow:var(--shadow-md);
+  }
+  header h1{ font-size:20px; letter-spacing:.04em; }
+  .back-btn, .btn{
+    background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:20px;
+    padding:9px 20px; font-weight:800; font-size:13px; cursor:pointer;
+  }
+  .btn.primary{ background:var(--navy1); }
+  .back-btn:hover, .btn:hover{ filter:brightness(1.15); }
+  main{ max-width:760px; margin:0 auto; padding:28px 20px 60px; display:flex; flex-direction:column; gap:22px; }
+  section{ background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.18); border-radius:14px; padding:18px 20px; }
+  section h2{ font-size:15px; margin-bottom:10px; color:var(--gold); }
+  p, li{ font-size:13px; line-height:1.8; opacity:.9; }
+  ol{ padding-left:22px; }
+  .dir{ font-size:13px; word-break:break-all; background:rgba(0,0,0,.25); border-radius:8px; padding:8px 12px; margin:8px 0 12px; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .count{ font-size:22px; font-weight:800; }
+  .count small{ font-size:13px; opacity:.7; font-weight:400; }
+  .bar{ height:10px; border-radius:6px; background:rgba(255,255,255,.15); overflow:hidden; margin:10px 0 4px; }
+  .bar > i{ display:block; height:100%; background:var(--gold); }
+  table{ width:100%; border-collapse:collapse; font-size:12px; }
+  th, td{ text-align:left; padding:5px 8px; border-bottom:1px solid rgba(255,255,255,.1); }
+  .scroll{ max-height:320px; overflow:auto; margin-top:10px; }
+  code{ background:rgba(0,0,0,.3); padding:1px 6px; border-radius:4px; }
+  .note{ font-size:12px; opacity:.7; }
+</style>
+<script src="data/cards-data.js"></script>
+<script src="js/image-mode.js"></script>
+<script src="data/image-names.js"></script>
+<script src="js/card-images.js"></script>
+</head>
+<body>
+<header>
+  <h1>🖼️ 画像設定</h1>
+  <button class="back-btn" onclick="location.href='index.html'">← メニューへ戻る</button>
+</header>
+<main>
+  <section>
+    <h2>カード画像のフォルダ</h2>
+    <p>このアプリにはカード画像は入っていません。各自が用意した画像を置いたフォルダを指定してください。</p>
+    <div class="dir" id="dirLabel">未設定</div>
+    <div class="row">
+      <button class="btn primary" id="pickBtn">フォルダを選ぶ</button>
+      <button class="btn" id="clearBtn">設定を解除</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>読み込み状況</h2>
+    <div class="count"><span id="foundCount">0</span><small> / <span id="totalCount">0</span> 枚の画像が見つかりました</small></div>
+    <div class="bar"><i id="barFill" style="width:0%"></i></div>
+    <p class="note">画像が見つからないカードは、枠とカード名だけで表示されます(対戦・デッキ作成はそのまま遊べます)。</p>
+    <div class="row" style="margin-top:10px;"><button class="btn" id="toggleMissing">足りない画像の一覧を表示</button></div>
+    <div class="scroll" id="missingBox" style="display:none;">
+      <table><thead><tr><th>ID</th><th>カード名</th><th>探すファイル名</th></tr></thead><tbody id="missingBody"></tbody></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>画像の用意のしかた</h2>
+    <ol>
+      <li>公式サイトのカードリストから、お手持ちのカードの画像を、ご自身で保存します。</li>
+      <li>保存した画像は、<b>ダウンロードしたときのファイル名のまま</b>1つのフォルダに入れます(名前を変える必要はありません)。</li>
+      <li>上の「フォルダを選ぶ」で、そのフォルダを指定します。</li>
+    </ol>
+    <p class="note" style="margin-top:8px;">画像の著作権は権利者にあります。画像を他の人に配ったり、ネットにアップロードしたりしないでください。<br>
+    カードの裏面(伏せ札)の画像を使いたい場合は、同じフォルダに <code>cardback.jpg</code> を置くと使われます。</p>
+  </section>
+</main>
+<script>
+  const api = window.electronAPI;
+  const cards = (window.CARD_DATA || []).filter(c => c.card_type !== undefined);
+  const NAMES = window.CARD_IMAGE_NAMES || {};
+
+  function render(){
+    const ci = window.CardImages;
+    document.getElementById('dirLabel').textContent = ci.dir || '未設定(フォルダを選んでください)';
+    const ids = cards.map(c => c.id);
+    const st = ci.status(ids);
+    const found = st.filter(s => s.found).length;
+    document.getElementById('foundCount').textContent = found;
+    document.getElementById('totalCount').textContent = ids.length;
+    document.getElementById('barFill').style.width = ids.length ? (found / ids.length * 100) + '%' : '0%';
+    const byId = new Map(cards.map(c => [c.id, c]));
+    const body = document.getElementById('missingBody');
+    body.innerHTML = '';
+    st.filter(s => !s.found).forEach(s => {
+      const tr = document.createElement('tr');
+      const c = byId.get(s.id);
+      [s.id, c ? c.name : '', s.name || '(不明)'].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+      body.appendChild(tr);
+    });
+  }
+
+  document.getElementById('pickBtn').onclick = async () => {
+    if (!api || !api.pickImageDir) return;
+    await api.pickImageDir();
+    location.reload();
+  };
+  document.getElementById('clearBtn').onclick = async () => {
+    if (!api || !api.clearImageDir) return;
+    await api.clearImageDir();
+    location.reload();
+  };
+  document.getElementById('toggleMissing').onclick = () => {
+    const box = document.getElementById('missingBox');
+    const show = box.style.display === 'none';
+    box.style.display = show ? 'block' : 'none';
+    document.getElementById('toggleMissing').textContent = show ? '一覧を閉じる' : '足りない画像の一覧を表示';
+  };
+  render();
+</script>
+</body>
+</html>

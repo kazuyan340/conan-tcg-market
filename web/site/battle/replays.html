@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>リプレイ再生 - 名探偵コナンTCG</title>
+<style>
+  :root{
+    --bg1:#2c3550; --bg2:#232a42; --bg3:#3a3226; --bg4:#4a3d28;
+    --gold:#e0b34f; --navy1:#3d4f88;
+    --shadow-sm:0 3px 7px rgba(27,20,45,.22);
+    --shadow-md:0 8px 16px rgba(27,20,45,.28);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif; color:#fff;
+    background:linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 38%, var(--bg3) 60%, var(--bg4) 100%);
+    min-height:100vh;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; background:rgba(0,0,0,.25); box-shadow:var(--shadow-md);
+  }
+  header h1{ font-size:20px; letter-spacing:.04em; }
+  .back-btn{
+    background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:20px;
+    padding:9px 20px; font-weight:800; font-size:13px; cursor:pointer;
+  }
+  .back-btn:hover{ filter:brightness(1.15); }
+  main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
+  .empty-hint{ font-size:13px; opacity:.65; text-align:center; padding:40px 0; }
+  .replay-row{
+    display:flex; align-items:center; gap:14px; background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.2); border-radius:14px; padding:14px 18px;
+    margin-bottom:12px; box-shadow:var(--shadow-sm);
+  }
+  .replay-row .info{ flex:1; min-width:0; }
+  .replay-row .matchup{ font-weight:800; font-size:14px; margin-bottom:4px; }
+  .replay-row .meta{ font-size:11.5px; opacity:.65; }
+  .replay-row button{
+    border:none; border-radius:16px; padding:8px 16px; font-weight:700; font-size:12.5px; cursor:pointer;
+  }
+  .replay-row .play-btn{ background:var(--gold); color:#2b2438; }
+  .replay-row .play-btn:hover{ filter:brightness(1.08); }
+  .replay-row .delete-btn{ background:rgba(255,255,255,.12); color:#ff9c9c; margin-left:6px; }
+  .replay-row .delete-btn:hover{ filter:brightness(1.15); }
+</style>
+<script src="js/image-mode.js"></script>
+</head>
+<body>
+<header>
+  <h1>📼 リプレイ再生</h1>
+  <button class="back-btn" onclick="location.href='index.html'">← ホームに戻る</button>
+</header>
+<main>
+  <div id="replayList"></div>
+</main>
+
+<script src="js/replay-storage.js"></script>
+<script>
+  function formatDate(iso){
+    try {
+      const d = new Date(iso);
+      return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function renderReplayList(){
+    const listEl = document.getElementById('replayList');
+    const replays = loadSavedReplays();
+    if (replays.length === 0) {
+      listEl.innerHTML = '<div class="empty-hint">まだ保存したリプレイはありません。対戦終了時に「保存する」を選ぶとここに表示されます。</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    replays.slice().reverse().forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'replay-row';
+      row.innerHTML = `
+        <div class="info">
+          <div class="matchup">${r.self.deckName} vs ${r.opponent.deckName}</div>
+          <div class="meta">${formatDate(r.savedAt)}</div>
+        </div>
+        <button class="play-btn">▶ 再生</button>
+        <button class="delete-btn">削除</button>
+      `;
+      row.querySelector('.play-btn').onclick = () => playReplay(r);
+      row.querySelector('.delete-btn').onclick = () => {
+        if (!confirm('このリプレイを削除しますか？')) return;
+        deleteReplay(r.id);
+        renderReplayList();
+      };
+      listEl.appendChild(row);
+    });
+  }
+
+  function playReplay(r){
+    sessionStorage.setItem('conanTcgReplayToLoad', JSON.stringify(r));
+    location.href = 'battle.html';
+  }
+
+  renderReplayList();
+</script>
+</body>
+</html>
