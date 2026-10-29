@@ -42,7 +42,7 @@ app.whenReady().then(async () => {
   await ev(W1, `document.getElementById('lobbyPass').value='${pass}'; document.getElementById('lobbyName').value='コナン'; document.getElementById('lobbyDeck').selectedIndex=0; document.getElementById('lobbyStart').click(); 1`);
   await sleep(1500);
   await ev(W2, `document.getElementById('lobbyPass').value='${pass}'; document.getElementById('lobbyName').value='蘭'; document.getElementById('lobbyDeck').selectedIndex=1; document.getElementById('lobbyStart').click(); 1`);
-  // ジャンケン: 1回目はあいこ、2回目はゲストが勝って後攻を選ぶ(ホストが先攻になる)
+  // ジャンケン: 1回目はあいこ、2回目はホストが勝って先攻になる
   await sleep(3000);
   const JW = (await ev(W1, `document.body.classList.contains('host')`)) ? [W1, W2] : [W2, W1];
   const jk = (w, i) => ev(w, `(function(){ const b = document.querySelectorAll('#jankenOverlay .jk-btns .btn')[${i}]; if (!b) return false; b.click(); return true; })()`);
@@ -50,9 +50,8 @@ app.whenReady().then(async () => {
   log('JK pick buttons:', await jk(JW[0], 0), await jk(JW[1], 0));
   await sleep(800); log('JK round1 titles:', await jkTitle(JW[0]), '/', await jkTitle(JW[1]));
   await sleep(2000);
-  log('JK round2 picks:', await jk(JW[0], 0), await jk(JW[1], 2));
+  log('JK round2 picks:', await jk(JW[0], 2), await jk(JW[1], 0));
   await sleep(800); log('JK round2 titles:', await jkTitle(JW[0]), '/', await jkTitle(JW[1]));
-  log('JK guest chooses 後攻:', await jk(JW[1], 1));
   await sleep(1500);
   for (let i = 0; i < 40; i++) { await sleep(500); const st = await ev(W2, `document.getElementById('lobby').classList.contains('hidden')`); const st1 = await ev(W1, `document.getElementById('lobby').classList.contains('hidden')`); if (st && st1) break; }
   await sleep(1500);
