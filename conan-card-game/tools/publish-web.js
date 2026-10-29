@@ -22,4 +22,11 @@ fs.mkdirSync(dest, { recursive: true });
     else fs.copyFileSync(s, d);
   }
 })(stage, dest, '');
+// スマホのブラウザが古い js/css を使い続けないよう、html から読み込むファイルに公開のたびに変わる印(?v=)を付ける
+const ver = Date.now().toString(36);
+for (const f of fs.readdirSync(dest).filter(n => n.endsWith('.html'))) {
+  const fp = path.join(dest, f);
+  const h = fs.readFileSync(fp, 'utf8').replace(/(<script[^>]*\ssrc="|<link[^>]*\shref=")((?:js|css|data)\/[^"?]+)"/g, '$1$2?v=' + ver + '"');
+  fs.writeFileSync(fp, h);
+}
 console.log('web/site/battle/ に入れました:', dest);
