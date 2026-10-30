@@ -201,5 +201,5 @@ body.online .card-spotlight{ pointer-events:auto; cursor:pointer; }
    (相手の陣地は180度回っているので、同じ指定で画面の左上に出る) */
 @media (min-width: 761px){
   body.online .zone .center-col{ margin-top:0 !important; height:var(--hand-row-h, 50px); align-items:flex-end; }
-  body.online .zone .handfan{ height:100%; min-width:0; width:100%; justify-content:flex-end; padding-right:14px; box-sizing:border-box; }
+  body.online .zone .handfan{ height:100%; min-width:0; width:100%; justify-content:flex-end; padding-right:0; position:relative; left:34px; box-sizing:border-box; }
 }
