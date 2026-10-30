@@ -193,3 +193,5 @@ body.online.host .zone[data-side="opponent"] .hand-row .detail-btn{ display:none
 
 /* ゲストがカードをクリックして開いたメニュー(推理・アシストなどのボタン)は、ホスト画面には出さない */
 body.online.host .zone[data-side="opponent"] .deck-menu{ display:none !important; }
+/* 大きなカード表示は、タップすると消える */
+body.online .card-spotlight{ pointer-events:auto; cursor:pointer; }

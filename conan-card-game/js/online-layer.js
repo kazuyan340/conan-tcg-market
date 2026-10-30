@@ -596,6 +596,13 @@
     el.style.display = 'flex';
     el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
   }
+  // 大きなカード表示は、タップ(クリック)すると消える
+  document.addEventListener('click', e => {
+    const sp = e.target.closest && e.target.closest('.card-spotlight');
+    if (!sp) return;
+    sp.style.display = 'none';
+    e.preventDefault(); e.stopPropagation();
+  }, true);
   function onFx(m){
     switch (m.k) {
       case 'fly': case 'fade': pendingFly.push({ k: m.k, from: snapAt(m.from), to: m.to, face: m.face }); clearTimeout(flyTimer); flyTimer = setTimeout(runPendingFly, 450); break;
