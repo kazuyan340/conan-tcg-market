@@ -195,3 +195,11 @@ body.online.host .zone[data-side="opponent"] .hand-row .detail-btn{ display:none
 body.online.host .zone[data-side="opponent"] .deck-menu{ display:none !important; }
 /* 大きなカード表示は、タップすると消える */
 body.online .card-spotlight{ pointer-events:auto; cursor:pointer; }
+
+/* ---- PC幅: 手札を、自分は右・相手は左へ寄せ、リムーブエリア下の空きに少し重ねる(盤面を大きく収めるため) ----
+   手札の見た目はそのまま。手札の行の高さだけを縮め、カードは上へはみ出して盤面の下端に重なる。
+   (相手の陣地は180度回っているので、同じ指定で画面の左上に出る) */
+@media (min-width: 761px){
+  body.online .zone .center-col{ margin-top:0 !important; height:var(--hand-row-h, 96px); align-items:flex-end; }
+  body.online .zone .handfan{ height:100%; min-width:0; width:100%; justify-content:flex-end; padding-right:14px; box-sizing:border-box; }
+}
