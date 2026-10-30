@@ -2,6 +2,110 @@
  "ambiguous": [
   {
    "site": "わいTV",
+   "raw_key": "P001",
+   "rarity": "C",
+   "candidates": [
+    {
+     "id": 1,
+     "card_num": "B01001",
+     "name": "江戸川コナン",
+     "rarity": "C",
+     "pack": "CT-P01 Case-Booster 01 探偵たちの切札（ジョーカー）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1734349765499910.jpg"
+    },
+    {
+     "id": 289,
+     "card_num": "B02001",
+     "name": "江戸川コナン",
+     "rarity": "C",
+     "pack": "CT-P02 Case-Booster 02 西と東の大決戦（コンタクト）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721357158802699.jpg"
+    },
+    {
+     "id": 2387,
+     "card_num": "B09001",
+     "name": "江戸川コナン",
+     "rarity": "C",
+     "pack": "CT-P09 Case-Booster 09 疾風の煌めき",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1775608802525878.jpg"
+    },
+    {
+     "id": 2859,
+     "card_num": "B11001",
+     "name": "江戸川コナン",
+     "rarity": "C",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME!",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1792677418075956.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10385",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3137333837393336392e6a706700323430000074006669745f686569676874.jpg",
+     "price": 25,
+     "product_name": "江戸川コナン",
+     "hint": ""
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
+   "raw_key": "P004",
+   "rarity": "C",
+   "candidates": [
+    {
+     "id": 67,
+     "card_num": "B01042",
+     "name": "怪盗キッド",
+     "rarity": "C",
+     "pack": "CT-P01 Case-Booster 01 探偵たちの切札（ジョーカー）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1714013020295439.jpg"
+    },
+    {
+     "id": 344,
+     "card_num": "B02035",
+     "name": "怪盗キッド",
+     "rarity": "C",
+     "pack": "CT-P02 Case-Booster 02 西と東の大決戦（コンタクト）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1721357211047679.jpg"
+    },
+    {
+     "id": 1677,
+     "card_num": "B07029",
+     "name": "怪盗キッド",
+     "rarity": "C",
+     "pack": "CT-P07 Case-Booster 07 魅惑のマジック",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1758249671494849.jpg"
+    },
+    {
+     "id": 2440,
+     "card_num": "B09035",
+     "name": "怪盗キッド",
+     "rarity": "C",
+     "pack": "CT-P09 Case-Booster 09 疾風の煌めき",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1775608835883388.jpg"
+    },
+    {
+     "id": 2907,
+     "card_num": "B11029",
+     "name": "怪盗キッド",
+     "rarity": "C",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME!",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1792677458829010.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.cardshop-waitv.net/product/10406",
+     "image_url": "https://www.cardshop-waitv.net/data/toreca873/_/70726f647563742f70726f647563745f3137333837363733302e6a706700323430000074006669745f686569676874.jpg",
+     "price": 25,
+     "product_name": "怪盗キッド",
+     "hint": ""
+    }
+   ]
+  },
+  {
+   "site": "わいTV",
    "raw_key": "0197",
    "rarity": "PR",
    "candidates": [
@@ -276,9 +380,103 @@
      "hint": "pack_tag='ボーナスカード'"
     }
    ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P094",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 3029,
+     "card_num": "PR342_1",
+     "name": "白馬探",
+     "rarity": "PR",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1793167534637373.jpg"
+    },
+    {
+     "id": 3030,
+     "card_num": "PR342_2",
+     "name": "中森青子",
+     "rarity": "PR",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1793167534645696.jpg"
+    },
+    {
+     "id": 3031,
+     "card_num": "PR342_3",
+     "name": "怪盗キッド",
+     "rarity": "PR",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1793167534652687.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/9398",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313739333136373533343633373337332e6a706700323430000074006669745f686569676874.jpg",
+     "price": 180,
+     "product_name": "白馬探・中森青子・怪盗キッド",
+     "hint": "pack_tag='CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典'"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
+   "raw_key": "P093",
+   "rarity": "PR",
+   "candidates": [
+    {
+     "id": 3026,
+     "card_num": "PR341_1",
+     "name": "工藤新一",
+     "rarity": "PR",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1793167534611534.jpg"
+    },
+    {
+     "id": 3027,
+     "card_num": "PR341_2",
+     "name": "灰原哀",
+     "rarity": "PR",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1793167534620568.jpg"
+    },
+    {
+     "id": 3028,
+     "card_num": "PR341_3",
+     "name": "小さくなった新一",
+     "rarity": "PR",
+     "pack": "CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1793167534628294.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/9397",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f50522f313739333136373533343631313533342e6a706700323430000074006669745f686569676874.jpg",
+     "price": 180,
+     "product_name": "工藤新一・灰原哀・小さくなった新一",
+     "hint": "pack_tag='CT-P11 Case-Booster 11 月下のSHOW TIME! BOX封入特典'"
+    }
+   ]
   }
  ],
  "missing": [
+  {
+   "site": "まんぞく屋",
+   "raw_key": "B11095Sec2",
+   "rarity": null,
+   "price": 118000,
+   "hint": "",
+   "product_name": "! ! !★★★パラ(サイン付SEC) CT-P11 B11095Sec2b 江戸川コナン＆怪盗キッド(キッドセリフ)",
+   "image_url": "https://shopmanzokuya.com/html/upload/save_image/CT-P11_B11095Sec2b___-bc302e62_3013.jpg",
+   "product_url": "https://shopmanzokuya.com/products/detail/249643",
+   "listing_count": 1,
+   "prices": [
+    118000
+   ]
+  },
   {
    "site": "カードラボ",
    "raw_key": "B08077SEC2",
@@ -371,7 +569,7 @@
    "hint": "",
    "product_name": "A01087 風見裕也 C [ID:0075]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000128983_khqUMql.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page33/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -385,7 +583,7 @@
    "hint": "",
    "product_name": "A02088 犯人 C [ID:0249]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129133_kiJIH79.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page33/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -399,7 +597,7 @@
    "hint": "",
    "product_name": "A03036 越水七槻 C [ID:0293]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page33/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -413,7 +611,7 @@
    "hint": "",
    "product_name": "A04056 アンドレ・キャメル C [ID:0448]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129403_va6euPC.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page33/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -427,7 +625,7 @@
    "hint": "",
    "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]【キラ仕様】【FVP】【金箔】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page33/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     2480
@@ -441,7 +639,7 @@
    "hint": "",
    "product_name": "A05030 遠山銀司郎 R [ID:0534]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129593_iilBCTS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012959/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -455,7 +653,7 @@
    "hint": "",
    "product_name": "A05069 ジェイムズ・ブラック R [ID:0569]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012961/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012961/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -469,7 +667,7 @@
    "hint": "",
    "product_name": "A05101 毛利小五郎 C [ID:0599]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129643_0yzw7tB.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012964/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012964/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -483,7 +681,7 @@
    "hint": "",
    "product_name": "A06041 服部静華 C [ID:0664]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129753_p4D9PL8.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012975/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012975/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -497,7 +695,7 @@
    "hint": "",
    "product_name": "A06101 キャンティ R [ID:0718]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129793_wrA3CQ8.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012979/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012979/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     120
@@ -511,7 +709,7 @@
    "hint": "",
    "product_name": "A06102 コルン C [ID:0719]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012980/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012980/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -525,7 +723,7 @@
    "hint": "",
    "product_name": "【パラレル】A06005P 阿笠博士 RP [ID:0630]【キラ仕様】【FVP】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129823_P6PhXff.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012982/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012982/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     1080
@@ -539,7 +737,7 @@
    "hint": "",
    "product_name": "【パラレル】A06077P ジョディ・スターリング RP [ID:0697]【キラ仕様】【FVP】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129863_3AEvRIy.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012986/conan/page34/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012986/conan/page37/recommend/",
    "listing_count": 1,
    "prices": [
     1480
@@ -715,6 +913,34 @@
   },
   {
    "site": "竜のしっぽ",
+   "raw_key": "レンチキュラー",
+   "rarity": "P093",
+   "price": 100,
+   "hint": "",
+   "product_name": "工藤新一/灰原哀/小さくなった新一(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5031312f3234303236353537342e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97970",
+   "listing_count": 1,
+   "prices": [
+    100
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "レンチキュラー",
+   "rarity": "P094",
+   "price": 100,
+   "hint": "",
+   "product_name": "怪盗キッド/中森青子/白馬探(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5031312f3234303236353537352d322e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97971",
+   "listing_count": 1,
+   "prices": [
+    100
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
    "raw_key": "金箔",
    "rarity": "B09090P2",
    "price": 2200,
@@ -757,6 +983,34 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "A04016P",
+   "rarity": "CP",
+   "price": 340,
+   "hint": "",
+   "product_name": "遠山和葉",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427098&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427098",
+   "listing_count": 1,
+   "prices": [
+    340
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A01010",
+   "rarity": "R",
+   "price": 200,
+   "hint": "",
+   "product_name": "毛利小五郎",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956098&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956098",
+   "listing_count": 1,
+   "prices": [
+    200
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "A05069",
    "rarity": "R",
    "price": 160,
@@ -781,6 +1035,34 @@
    "listing_count": 1,
    "prices": [
     160
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A02023",
+   "rarity": "R",
+   "price": 170,
+   "hint": "",
+   "product_name": "遠山和葉",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
+   "listing_count": 1,
+   "prices": [
+    170
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A01065",
+   "rarity": "R",
+   "price": 180,
+   "hint": "",
+   "product_name": "沖矢昴",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956099&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956099",
+   "listing_count": 1,
+   "prices": [
+    180
    ]
   },
   {
@@ -851,20 +1133,6 @@
    "listing_count": 1,
    "prices": [
     160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "B080077Sec1",
-   "rarity": "SEC",
-   "price": 11000,
-   "hint": "",
-   "product_name": "ジン(レンガ版)",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU616563&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU616563",
-   "listing_count": 1,
-   "prices": [
-    11000
    ]
   },
   {
