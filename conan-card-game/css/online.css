@@ -105,6 +105,9 @@ body.online #choiceCards .side-tag-label{ font-size:13px; padding:3px 14px; }
   background:rgba(14,12,28,.72); border:1px solid rgba(255,255,255,.14); border-radius:10px;
   padding:5px 9px; font-size:11px; line-height:1.5; color:#d9d6ea; -webkit-overflow-scrolling:touch;
 }
+#onlineLog{ display:none !important; }
+body.log-open #onlineLog{ display:block !important; }
+#logToggleBtn{ position:fixed; right:10px; bottom:14px; z-index:160; box-shadow:0 3px 10px rgba(0,0,0,.5); }
 #onlineLog.hidden{ display:none; }
 #onlineLog .ln{ padding:1px 0; border-bottom:1px dotted rgba(255,255,255,.08); }
 #onlineLog .ln.turn{ color:var(--gold); font-weight:800; text-align:center; border-bottom:none; margin-top:3px; }

@@ -519,8 +519,23 @@
     box.appendChild(d);
     while (box.children.length > LOG_MAX) box.removeChild(box.firstChild);
     box.classList.remove('hidden');
+    showLogButton();
     layoutLog();
     if (atEnd) box.scrollTop = box.scrollHeight;
+  }
+  // ログは普段は隠しておき、「ログ」ボタンを押したときだけ出す(出しっぱなしだと盤面の邪魔になる)
+  function showLogButton(){
+    let btn = $('logToggleBtn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'logToggleBtn'; btn.className = 'btn small'; btn.textContent = '📜 ログ';
+      btn.onclick = () => {
+        const on = document.body.classList.toggle('log-open');
+        btn.textContent = on ? '✕ ログを閉じる' : '📜 ログ';
+        if (on) { layoutLog(); const box = $('onlineLog'); if (box) box.scrollTop = box.scrollHeight; }
+      };
+      document.body.appendChild(btn);
+    }
   }
   // 盤面の下に残った余白の高さに合わせてログ欄の大きさを決める(余白が小さすぎるときは隠す)
   function layoutLog(){
