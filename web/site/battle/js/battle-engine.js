@@ -2114,7 +2114,11 @@
     // ただし向きが変わらない(diffが0)場合にまで適用すると、実際には回転不要なのに
     // 丸ごと1周回転してしまうので、その場合は適用しない
     const zoneSide = fromIsSnapshot ? fromEl.zoneSide : fromEl.closest('.zone')?.dataset.side;
-    if (zoneSide === 'opponent') {
+    if (document.body.classList.contains('online')) {
+      // オンライン対戦の盤面は回転していないので、最短の回り方(90度なら90度)で向きを合わせる。
+      // 下の「相手側は逆回り」は90度回した盤面用で、そのままだと相手側のアシスト等で270度もクルクル回ってしまう
+      toDeg = fromDeg + ((((toDeg - fromDeg) % 360) + 540) % 360 - 180);
+    } else if (zoneSide === 'opponent') {
       const diff = toDeg - fromDeg;
       if (diff !== 0) toDeg = fromDeg + (diff > 0 ? diff - 360 : diff + 360);
     }
