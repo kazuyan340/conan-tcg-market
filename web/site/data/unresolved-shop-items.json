@@ -335,54 +335,6 @@
   },
   {
    "site": "トレカバース",
-   "raw_key": "0169",
-   "rarity": "D",
-   "candidates": [
-    {
-     "id": 274,
-     "card_num": "D06010",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176820249.jpg"
-    },
-    {
-     "id": 275,
-     "card_num": "D06011",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176827920.jpg"
-    },
-    {
-     "id": 286,
-     "card_num": "D06022",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902798752.jpg"
-    },
-    {
-     "id": 288,
-     "card_num": "D06024",
-     "name": "怪盗キッド",
-     "rarity": "D",
-     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
-     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902804096.jpg"
-    }
-   ],
-   "listings": [
-    {
-     "product_url": "https://www.torecabirth.jp/product/147",
-     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f53542f434f4e414e5f5354303632352e6a706700323430000074006669745f686569676874.jpg",
-     "price": 1080,
-     "product_name": "怪盗キッド",
-     "hint": "pack_tag='ボーナスカード'"
-    }
-   ]
-  },
-  {
-   "site": "トレカバース",
    "raw_key": "P094",
    "rarity": "PR",
    "candidates": [
@@ -995,20 +947,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A02023",
-   "rarity": "R",
-   "price": 170,
-   "hint": "",
-   "product_name": "遠山和葉",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
-   "listing_count": 1,
-   "prices": [
-    170
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "A01065",
    "rarity": "R",
    "price": 180,
@@ -1019,6 +957,20 @@
    "listing_count": 1,
    "prices": [
     180
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A02023",
+   "rarity": "R",
+   "price": 170,
+   "hint": "",
+   "product_name": "遠山和葉",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
+   "listing_count": 1,
+   "prices": [
+    170
    ]
   },
   {
