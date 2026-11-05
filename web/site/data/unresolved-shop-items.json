@@ -335,6 +335,54 @@
   },
   {
    "site": "トレカバース",
+   "raw_key": "0169",
+   "rarity": "D",
+   "candidates": [
+    {
+     "id": 274,
+     "card_num": "D06010",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176820249.jpg"
+    },
+    {
+     "id": 275,
+     "card_num": "D06011",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1718844176827920.jpg"
+    },
+    {
+     "id": 286,
+     "card_num": "D06022",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902798752.jpg"
+    },
+    {
+     "id": 288,
+     "card_num": "D06024",
+     "name": "怪盗キッド",
+     "rarity": "D",
+     "pack": "CT-D06 Case-ThemeDeck 01 服部平次VS怪盗キッド",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1719469902804096.jpg"
+    }
+   ],
+   "listings": [
+    {
+     "product_url": "https://www.torecabirth.jp/product/123",
+     "image_url": "https://www.torecabirth.jp/data/birth-netshop/_/70726f647563742f434f4e414e5f53542f434f4e414e5f5354303631312e6a706700323430000074006669745f686569676874.jpg",
+     "price": 480,
+     "product_name": "怪盗キッド",
+     "hint": "pack_tag='ホイル版'"
+    }
+   ]
+  },
+  {
+   "site": "トレカバース",
    "raw_key": "P094",
    "rarity": "PR",
    "candidates": [
@@ -667,6 +715,20 @@
   },
   {
    "site": "フルアヘッド",
+   "raw_key": "A06007P",
+   "rarity": null,
+   "price": 3480,
+   "hint": "",
+   "product_name": "【パラレル】A06007P 灰原哀 RP [ID:0632]【キラ仕様】【FVP】",
+   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129833_pAnLG6O.jpg",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012983/conan/page35/recommend/",
+   "listing_count": 1,
+   "prices": [
+    3480
+   ]
+  },
+  {
+   "site": "フルアヘッド",
    "raw_key": "A06077P",
    "rarity": null,
    "price": 1480,
@@ -859,6 +921,34 @@
    "listing_count": 1,
    "prices": [
     50
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "レンチキュラー",
+   "rarity": "P093",
+   "price": 100,
+   "hint": "",
+   "product_name": "工藤新一/灰原哀/小さくなった新一(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5031312f3234303236353537342e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97970",
+   "listing_count": 1,
+   "prices": [
+    100
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "レンチキュラー",
+   "rarity": "P094",
+   "price": 100,
+   "hint": "",
+   "product_name": "怪盗キッド/中森青子/白馬探(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5031312f3234303236353537352d322e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97971",
+   "listing_count": 1,
+   "prices": [
+    100
    ]
   },
   {
