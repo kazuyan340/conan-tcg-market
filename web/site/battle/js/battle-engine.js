@@ -3986,9 +3986,30 @@
 
   // アクション/推理どちらかを、名乗り状態(justEntered)でも行えるキーワードを持っているか
   // (常時持っている場合、一時的に付与されている場合の両方を見る)
+  // 突撃［レベルN以下のキャラ］(ウォッカ0823)：名乗り状態でも、レベルN以下のキャラを指定してアクションできる
+  function limitedChargeLevel(instance){
+    const d = defOfInst(instance);
+    if (!d || !d.ability_text || isAbilityNegated(instance.uid)) return null;
+    for (const line of d.ability_text.split('\n')) {
+      const m = line.trim().match(/^((?:【[^】]*】)*)〚突撃［レベル(\d+)以下のキャラ］〛/);
+      if (!m) continue;
+      const gating = (m[1].match(/【[^】]+】/g) || []).filter(t => /^【(?:パートナー.+|事件.+|解決編|絆.+|FILE\d+|自分ターン中|相手ターン中)】$/.test(t));
+      const owner = fieldOwnerOf(instance.uid);
+      if (gating.length === 0 || (owner && tagsOk(owner, gating.join('')))) return Number(m[2]);
+    }
+    return null;
+  }
   function hasQuickOrCharge(instance){
     return charHasKeyword(instance, '迅速') || charHasKeyword(instance, '突撃')
-      || charHasKeyword(instance, '突撃［キャラ］') || charHasKeyword(instance, '突撃［事件］');
+      || charHasKeyword(instance, '突撃［キャラ］') || charHasKeyword(instance, '突撃［事件］')
+      || limitedChargeLevel(instance) != null;
+  }
+  // 名乗り状態で、レベル制限つきの突撃しか持たないキャラが、この相手キャラを指定してよいか
+  function limitedChargeAllows(actor, targetDef){
+    if (!actor || !actor.justEntered) return true;
+    if (charHasKeyword(actor, '迅速') || charHasKeyword(actor, '突撃') || charHasKeyword(actor, '突撃［キャラ］') || charHasKeyword(actor, '突撃［事件］')) return true;
+    const lv = limitedChargeLevel(actor);
+    return lv == null || (targetDef && targetDef.level != null && targetDef.level <= lv);
   }
 
   // ---- アクション［キャラ］：相手のスリープ状態のキャラを対象に宣言→相手はガードを選べる→
@@ -4076,7 +4097,7 @@
     const oppState = match[oppSide];
     const canTargetActive = canTargetActiveEnemies(actor);
     const hasCharTarget = oppState.field.some(c => (c.sleeping || canTargetActive)
-      && !isProtectedByLowLevelGuard(oppSide, defOfInst(c)) && !hasActionLockRestriction(defOfInst(c)));
+      && !isProtectedByLowLevelGuard(oppSide, defOfInst(c)) && !hasActionLockRestriction(defOfInst(c)) && limitedChargeAllows(actor, defOfInst(c)));
     // アクション［事件］：証拠が1つもない事件は対象にできない。京極真(Lv7)等「このキャラは
     // 事件を指定してアクションできない。」を持つ場合は事件そのものを対象にできない
     const actorDef = defOfInst(actor);
@@ -4275,7 +4296,7 @@
     const forcedTargetUid = getForcedActionTargetUid();
     const charTarget = oppState.field.find(c => c.uid === uid && (c.sleeping || canTargetActiveNow || canTargetSetBearingActiveEnemy(actingChar, c))
       && !isProtectedByLowLevelGuard(actionState.oppSide, defOfInst(c)) && !hasActionLockRestriction(defOfInst(c))
-      && !isImmuneWhileSleepingFromAction(defOfInst(c), c)
+      && !isImmuneWhileSleepingFromAction(defOfInst(c), c) && limitedChargeAllows(actingChar, defOfInst(c))
       && (!forcedTargetUid || c.uid === forcedTargetUid));
     const isCaseTarget = !forcedTargetUid && !!(oppState.case && oppState.case.uid === uid && oppState.evidence.length > 0);
     if (!charTarget && !isCaseTarget) return;
@@ -21531,7 +21552,7 @@
     const forcedActionTargetUid = actionState && actionState.step === 'target' ? getForcedActionTargetUid() : null;
     const isActionTarget = actionState && actionState.step === 'target' && sideKey === actionState.oppSide
       && (instance.sleeping || actionActorCanTargetActive || canTargetSetBearingActiveEnemy(actionActor, instance))
-      && !isProtectedByLowLevelGuard(sideKey, c) && !hasActionLockRestriction(c) && !isImmuneWhileSleepingFromAction(c, instance)
+      && !isProtectedByLowLevelGuard(sideKey, c) && !hasActionLockRestriction(c) && !isImmuneWhileSleepingFromAction(c, instance) && limitedChargeAllows(actionActor, c)
       && (!forcedActionTargetUid || instance.uid === forcedActionTargetUid);
     // 「キャラを1枚まで選び、ターン終了時までAP＋Nする」：自分・相手どちらの現場の
     // キャラも(状態を問わず)直接クリックで選べる
