@@ -730,7 +730,7 @@
       if (card) side.file.push(card);
     } else if (ev.type === 'addEvidence') {
       const card = side.deckPile.shift();
-      if (card) side.evidence.push(card);
+      if (card) { card.faceUp = false; side.evidence.push(card); }
     } else if (ev.type === 'evidenceFlip') {
       const card = side.evidence.find(c => c.uid === ev.uid);
       if (card) card.faceUp = ev.faceUp;
@@ -761,7 +761,7 @@
       // 〚ミスリードX〛：相手が使用した分だけ、この推理で得るLPが下がる(0未満にはならない)
       const lp = Math.max(0, baseLp - (ev.lpReduction || 0));
       const n = Math.max(0, Math.min(lp, side.deckPile.length));
-      side.evidence.push(...side.deckPile.splice(0, n));
+      side.evidence.push(...side.deckPile.splice(0, n).map(c => { c.faceUp = false; return c; }));
     } else if (ev.type === 'randomHandDiscard') {
       // 「赤井…秀一!?」等：相手は手札を1枚ランダムにリムーブする(ランダムな添字は
       // recordEvent時に確定させ、ここでは再生時も同じ結果になるよう記録済みの値を使う)
@@ -830,7 +830,7 @@
         if (ev.giveEvidence) {
           const oppSide = ev.side === 'self' ? 'opponent' : 'self';
           const oppState = state[oppSide];
-          if (oppState.deckPile.length > 0) oppState.evidence.push(oppState.deckPile.shift());
+          if (oppState.deckPile.length > 0) { const ec = oppState.deckPile.shift(); ec.faceUp = false; oppState.evidence.push(ec); }
         }
       }
     } else if (ev.type === 'turnStart') {
@@ -899,7 +899,7 @@
         // アクション［事件］がガードされなかった場合：相手の一番上(=最後に得た)証拠を
         // リムーブし、自分は証拠を1つ得る(ヒラメキの発動選択は未実装)
         if (targetState.evidence.length > 0) targetState.remove.push(targetState.evidence.pop());
-        if (side.deckPile.length > 0 && !ev.noGain) side.evidence.push(side.deckPile.shift());
+        if (side.deckPile.length > 0 && !ev.noGain) { const ec = side.deckPile.shift(); ec.faceUp = false; side.evidence.push(ec); }
       } else {
         const defenderUid = ev.guardUid || ev.targetUid;
         const actor = side.field.find(c => c.uid === ev.actorUid);
@@ -1104,7 +1104,7 @@
     } else if (ev.type === 'handToEvidence') {
       // 鬼丸猛等：手札からカードを1枚裏向きで証拠として得る
       const idx = side.hand.findIndex(c => c.uid === ev.uid);
-      if (idx !== -1) side.evidence.push(side.hand.splice(idx, 1)[0]);
+      if (idx !== -1) { const ec = side.hand.splice(idx, 1)[0]; ec.faceUp = false; side.evidence.push(ec); }
     } else if (ev.type === 'deckBottomToHand') {
       // 怪盗キッド(740)：自分のデッキのカードを下から1枚手札に加える
       const card = side.deckPile.pop();
@@ -1440,7 +1440,7 @@
         const fd = defOfInst(fc);
         return !!fd && !!fd.ability_text && fd.ability_text.replace(/\r/g, '').split('\n').some(l => l.trim() === '相手はリフレッシュによって証拠を得られない。');
       });
-      if (!noEvidenceFromRefresh && oppState.deckPile.length > 0) oppState.evidence.push(oppState.deckPile.shift());
+      if (!noEvidenceFromRefresh && oppState.deckPile.length > 0) { const ec = oppState.deckPile.shift(); ec.faceUp = false; oppState.evidence.push(ec); }
       oppState.trace = true;
     }
   }
