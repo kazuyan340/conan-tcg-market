@@ -126,6 +126,7 @@
     pointer-events:none; filter:brightness(.85);
   }
   .under-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .under-card.face-down{ background-image:var(--cardback-url, linear-gradient(#5a3a22, #5a3a22)); background-size:cover; background-position:center; }
   .mulligan-card{
     width:96px; height:134px; border-radius:8px; overflow:hidden; cursor:pointer;
     border:3px solid rgba(255,255,255,.5); transition:transform .1s, border-color .1s;

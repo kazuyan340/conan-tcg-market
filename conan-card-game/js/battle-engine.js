@@ -21504,7 +21504,7 @@
     }
     // 重なっている/セットされているカードを、キャラの後ろに少しずつずらして表示する
     // (キャラ本体は動かさない。枚数や中身が変わったときだけ作り直す)
-    const underKey = (instance.under || []).map(u => u.uid + ':' + u.cardId).join(',');
+    const underKey = (instance.under || []).map(u => u.uid + ':' + u.cardId + (u.faceDown ? 'd' : '')).join(',');
     if (div.dataset.underKey !== underKey) {
       div.dataset.underKey = underKey;
       div.querySelectorAll('.under-card').forEach(el => el.remove());
@@ -21513,8 +21513,9 @@
         el.className = 'under-card';
         const shift = 20 * (i + 1);
         el.style.transform = `translate(calc(-50% - ${shift}px), calc(-50% + ${Math.min(shift / 2, 10)}px))`;
-        el.innerHTML = `<img src="${cardImage(u.cardId)}" alt="${cardName(u.cardId)}">`;
-        el.title = `「${cardName(u.cardId)}」が下に重なっています`;
+        // 裏向きでセットされているカードは裏面で見せる(中身は相手にも見せない)
+        if (u.faceDown) { el.classList.add('face-down'); el.title = '裏向きのカードがセットされています'; }
+        else { el.innerHTML = `<img src="${cardImage(u.cardId)}" alt="${cardName(u.cardId)}">`; el.title = `「${cardName(u.cardId)}」が下に重なっています`; }
         div.insertBefore(el, div.firstChild);
       });
     }
