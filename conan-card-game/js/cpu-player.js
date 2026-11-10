@@ -3,7 +3,8 @@
 // 戦い方は単純: 勝てるなら事件解決 → 出せるカードを出す → 起きているキャラでアクション(相手のスリープキャラか証拠)か推理 → ターン終了。
 // ガード・カットイン・ミスリード・変装は使わない。選択画面は「する」を優先して先頭を選ぶ。
 (function(){
-  if (!document.getElementById('startBtn') || document.body.classList.contains('online')) return;
+  const isOnlinePage = document.body.classList.contains('online');   // スマホ(オンライン画面)では、ロビーの「CPUと対戦」から始める
+  if (!isOnlinePage && !document.getElementById('startBtn')) return;
 
   let cpuOn = false;
   let aiType = (window.CPU_AI_TYPES || {}).control || {};
@@ -13,7 +14,7 @@
   let choiceOwnerCpu = null;
 
   // ---- 画面: 「相手をCPUにする」チェック ----
-  const actions = document.querySelector('#setupPanel .setup-actions');
+  const actions = isOnlinePage ? null : document.querySelector('#setupPanel .setup-actions');
   if (actions) {
     const row = document.createElement('div');
     row.className = 'setup-row';
@@ -44,8 +45,9 @@
   const chkEl = document.getElementById('cpuModeChk');
   if (chkEl) chkEl.addEventListener('change', syncOppDecks);
   // 開始ボタン: CPU対戦なら、AI用デッキを右側にして始める
-  const engineStart = document.getElementById('startBtn').onclick;
-  document.getElementById('startBtn').onclick = function(){
+  const startBtn = document.getElementById('startBtn');
+  const engineStart = startBtn && startBtn.onclick;
+  if (startBtn) startBtn.onclick = function(){
     const chk = document.getElementById('cpuModeChk');
     if (!(chk && chk.checked)) return engineStart && engineStart.apply(this, arguments);
     const mine = loadSavedDecks()[Number(document.getElementById('selfDeckSelect').value)];
@@ -54,7 +56,7 @@
     if (!mine || !ai) { alert('左のデッキと、CPUのデッキの両方が必要です'); return; }
     startMatchWith(mine, ai, document.getElementById('firstPlayerSelect').value === 'opponent' ? 'opponent' : 'self');
   };
-  document.getElementById('startBtn').addEventListener('click', () => {
+  if (startBtn) startBtn.addEventListener('click', () => {
     const chk = document.getElementById('cpuModeChk');
     cpuOn = !!(chk && chk.checked);
     const sel = document.getElementById('cpuTypeSelect');
@@ -282,5 +284,12 @@
     } catch (e) { console.error('cpu', e); busyUntil = Date.now() + 1500; }
   }
   setInterval(tick, 500);
-  window.cpuPlayer = { tick, mulliganReturnUids, get on(){ return cpuOn; } };
+  // スマホ(オンライン画面)用: ロビーから呼ぶ。デッキに決めてある aiType を優先する
+  function startOnline(deck, typeKey){
+    const types = window.CPU_AI_TYPES || {};
+    aiType = (deck && deck.aiType && types[deck.aiType]) || types[typeKey] || types.control || {};
+    cpuOn = true; tried.clear();
+    document.body.classList.add('cpu-mode');
+  }
+  window.cpuPlayer = { startOnline, tick, mulliganReturnUids, get on(){ return cpuOn; } };
 })();

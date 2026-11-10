@@ -306,6 +306,13 @@
     <select id="lobbyDeck"></select>
     <div class="note" id="deckNote"></div>
   </div>
+  <div class="panel" id="cpuPanel">
+    <label for="cpuDeck">🤖 CPUと対戦(一人で遊べます。上の「使うデッキ」で戦います)</label>
+    <select id="cpuDeck"></select>
+    <label for="cpuType" style="margin-top:8px;">AIタイプ</label>
+    <select id="cpuType"></select>
+    <div class="row"><button class="btn" id="cpuStart">CPUと対戦開始</button></div>
+  </div>
   <div class="panel">
     <label for="lobbyPass">パス(同じパスを入れた2人が対戦します)</label>
     <input type="text" id="lobbyPass" maxlength="64" autocomplete="off" placeholder="例: conan-tonight-1234">
@@ -325,6 +332,9 @@
 </div>
 
 <script src="js/battle-engine.js"></script>
+<script src="js/cpu-decks.js"></script>
+<script src="js/cpu-cards.js"></script>
+<script src="js/cpu-player.js"></script>
 <script src="js/online-layer.js"></script>
 </body>
 </html>

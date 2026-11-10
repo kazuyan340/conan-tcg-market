@@ -10,7 +10,7 @@ const r = cp.spawnSync(process.execPath, [path.join(__dirname, 'build-friend.js'
 if (r.status !== 0) process.exit(r.status || 1);
 
 // ブラウザでは使わないもの(アプリ本体・ビルド用)
-const SKIP = ['js/cpu-decks.js', 'js/cpu-player.js', 'js/cpu-cards.js', 'main.js', 'preload.js', 'package.json', 'package-lock.json', 'tools', 'online.template.html'];
+const SKIP = ['main.js', 'preload.js', 'package.json', 'package-lock.json', 'tools', 'online.template.html'];
 fs.rmSync(dest, { recursive: true, force: true });
 fs.mkdirSync(dest, { recursive: true });
 (function copy(src, dst, rel){

@@ -142,7 +142,7 @@
   let bannerTimer = null;
   function updateBanner(){
     const b = $('onlineBanner');
-    if (!conn || conn.state !== 'open') return;
+    if (!cpuGame && (!conn || conn.state !== 'open')) return;
     const mine = canAct(owner, mySide);
     document.body.classList.toggle('wait-overlays', role === 'host' && !mine);
     b.className = mine ? 'mine' : '';
@@ -196,6 +196,32 @@
       }
     };
     $('lobbyCancel').onclick = () => { if (abortCtl) abortCtl.abort(); };
+    initCpuLobby(decks, sel);
+  }
+
+  // ============ CPU対戦(ネットワークなし。自分がホスト、右側はCPUが操作) ============
+  let cpuGame = false;
+  function initCpuLobby(decks, sel){
+    const panel = $('cpuPanel'); if (!panel) return;
+    const cpuDecks = [];
+    (window.CPU_PRESET_DECKS || []).forEach(d => cpuDecks.push({ label: d.name, deck: d }));
+    (typeof loadAiDecks === 'function' ? loadAiDecks() : []).forEach(d => cpuDecks.push({ label: d.name + '(自作)', deck: d }));
+    const dsel = $('cpuDeck'), tsel = $('cpuType'), btn = $('cpuStart');
+    dsel.innerHTML = cpuDecks.length ? cpuDecks.map((x, i) => '<option value="' + i + '">' + x.label + '</option>').join('') : '<option value="">CPU用のデッキはまだありません</option>';
+    const types = window.CPU_AI_TYPES || {};
+    tsel.innerHTML = Object.keys(types).map(k => '<option value="' + k + '">' + types[k].label + '</option>').join('');
+    btn.disabled = !cpuDecks.length || !decks.length;
+    btn.onclick = () => {
+      myDeck = decks[Number(sel.value)];
+      const pick = cpuDecks[Number(dsel.value)];
+      if (!myDeck || !pick || !window.cpuPlayer) { lobbyStatus('デッキを選んでください', 'ng'); return; }
+      myName = $('lobbyName').value.trim().slice(0, 12) || 'あなた';
+      cpuGame = true; role = 'host'; conn = null; mySide = 'self';
+      document.body.classList.add('host');
+      guestDeck = pick.deck; guestName = 'CPU';
+      window.cpuPlayer.startOnline(pick.deck, tsel.value);
+      startAsHost('self');
+    };
   }
 
   // ============ 接続後 ============
