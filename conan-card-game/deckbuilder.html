@@ -363,6 +363,11 @@
     <div class="save-row">
       <input type="text" id="deckName" placeholder="デッキ名を入力" value="名探偵デッキ">
     </div>
+    <div class="save-row">
+      <input type="text" id="deckCodeInput" placeholder="公式のデッキコード(例: WyQICVPTz)" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="save-btn" id="deckCodeBtn" type="button">コードから読み込む</button>
+    </div>
+    <div class="tab-hint" id="deckCodeMsg" style="min-height:0;"></div>
 
     <div class="summary-block">
       <h2>デッキ構成 (42枚セット)</h2>
@@ -1015,6 +1020,43 @@
     renderDeckList();
     renderSummary();
   }
+
+  // 公式「デッキレシピ」のデッキコードから、パートナー・事件・40枚を読み込む(保存は「デッキを保存」で)
+  async function importDeckCode(){
+    const msg = document.getElementById('deckCodeMsg');
+    const code = document.getElementById('deckCodeInput').value.trim();
+    const say = t => { msg.textContent = t; };
+    if (!/^[A-Za-z0-9]{4,32}$/.test(code)) { say('デッキコードは英数字だけで入力してください'); return; }
+    say('公式サイトから読み込み中…');
+    let data;
+    try {
+      const res = await fetch('https://www.takaratomy.co.jp/products/conan-cardgame/deckrecipe/create?d_code=' + encodeURIComponent(code));
+      if (/\/deckrecipe\/error/.test(res.url)) { say('そのデッキコードは見つかりませんでした'); return; }
+      const html = await res.text();
+      const m = html.match(/name=['"]deck['"]\s+value=['"]([^'"]*)['"]/);
+      if (!m) { say('デッキの中身を読み取れませんでした'); return; }
+      const ta = document.createElement('textarea'); ta.innerHTML = m[1];
+      data = JSON.parse(ta.value);
+    } catch (e) { say('読み込めませんでした(通信エラー): ' + e.message); return; }
+    const byNum = new Map();
+    CARD_DATA.forEach(c => { if (!byNum.has(c.card_num)) byNum.set(c.card_num, c); });
+    const missing = [];
+    const find = n => { const c = byNum.get(n); if (!c) missing.push(n); return c; };
+    const newDeck = {};
+    (data.other || []).forEach(n => { const c = find(n); if (c) newDeck[c.id] = (newDeck[c.id] || 0) + 1; });
+    const pc = find((data.partner || [])[0]), cc = find((data.incident || [])[0]);
+    Object.keys(deck).forEach(id => delete deck[id]);
+    Object.assign(deck, newDeck);
+    partnerId = pc ? pc.id : null;
+    caseId = cc ? cc.id : null;
+    editingDeckId = null;
+    document.getElementById('deckName').value = 'デッキコード ' + code;
+    renderPool(); renderDeckList(); renderSummary();
+    const total = Object.values(newDeck).reduce((a, b) => a + b, 0);
+    say('読み込みました(キャラ・イベント' + total + '枚)。内容を確認して「デッキを保存」を押してください。' + (missing.length ? ' ※このシミュレータに無いカード: ' + [...new Set(missing)].join(', ') : ''));
+  }
+  document.getElementById('deckCodeBtn').addEventListener('click', importDeckCode);
+  document.getElementById('deckCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') importDeckCode(); });
 
   document.getElementById('searchInput').addEventListener('input', (e) => {
     searchWords = e.target.value.trim().toLowerCase().split(/[\s　]+/).filter(Boolean);
