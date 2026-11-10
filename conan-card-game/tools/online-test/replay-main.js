@@ -31,7 +31,7 @@ app.whenReady().then(async () => {
     await win.webContents.executeJavaScript(`(function(){ clearInterval(window.__human); const m = match; try { localStorage.setItem('conanTcgReplayPortrait', '${portrait ? 1 : 0}'); } catch (e) {} replayPortrait = ${portrait}; replayFlip = ${portrait}; startReplay({ self: m.config.self, opponent: m.config.opponent, firstPlayer: m.firstPlayer, events: m.events.slice() }); for (let i = 0; i < 30; i++) { try { replayNext(); } catch (e) {} } })()`);
     await sleep(1500);
     fs.writeFileSync(path.join(outDir, 'replay-' + (portrait ? 'p' : 'l') + '.png'), (await win.webContents.capturePage()).toPNG());
-    console.log(portrait, await win.webContents.executeJavaScript(`document.body.className + ' ' + document.querySelector('.table').style.transform`));
+    console.log(portrait, await win.webContents.executeJavaScript(`document.getElementById('replayFlipBtn').textContent + ' ' + document.body.className + ' ' + document.querySelector('.table').style.transform`));
   }
   console.log('ERRS', JSON.stringify(errs.slice(0, 8)));
   app.exit(0);

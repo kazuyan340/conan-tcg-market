@@ -22627,7 +22627,7 @@
     const rot = portrait ? (replayFlip ? 180 : 0) : 90;
     document.body.classList.toggle('view-flip', portrait && replayFlip);
     const flipBtn = document.getElementById('replayFlipBtn');
-    if (flipBtn) { flipBtn.style.display = portrait ? '' : 'none'; flipBtn.textContent = replayFlip ? '🔃 下: 相手側' : '🔃 下: 自分側'; }
+    if (flipBtn) { flipBtn.style.display = portrait ? '' : 'none'; if (match && match.self) flipBtn.textContent = '🔃 下: ' + ((replayFlip ? match.opponent : match.self).deckName || '無題') + '(押すと入れ替え)'; }   // 下側の名前(オンライン対戦なら対戦相手の名前、1人で両方動かしたならデッキ名)
     table.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(1)`;
     // rotate(90deg)により見た目の幅/高さが元の高さ/幅と入れ替わる。transformは
     // レイアウト上のサイズに影響しないため、.table-rotate-wrapの幅/高さを
