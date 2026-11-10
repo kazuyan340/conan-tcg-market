@@ -652,3 +652,14 @@
 /* CPU対戦(仮): CPUの手札は裏向きにして、操作できないようにする */
 body.cpu-mode .zone[data-side="opponent"] .hand-row .hcard{ background-color:#5a3a22; background-image:var(--cardback-url, linear-gradient(#5a3a22, #5a3a22)); background-size:cover; background-position:center; border-radius:6px; pointer-events:none; }
 body.cpu-mode .zone[data-side="opponent"] .hand-row .hcard img{ visibility:hidden; }
+/* リプレイの縦画面表示(盤面の回転を外した分、数字バッジ等の「回転の打ち消し」を戻す) */
+body.view-portrait .num-badge{ transform:none; }
+body.view-portrait .rotate180 .num-badge{ transform:rotate(180deg); }
+body.view-portrait .stun-badge{ transform:translateX(-50%); }
+body.view-portrait .rotate180 .stun-badge{ transform:translateX(-50%) rotate(180deg); }
+body.view-portrait .lp-badge{ transform:none; }
+body.view-portrait .rotate180 .lp-badge{ transform:rotate(180deg); }
+body.view-portrait .partner-mr-slot .mr-badge{ transform:none; }
+body.view-portrait .rotate180 .partner-mr-slot .mr-badge{ transform:rotate(180deg); }
+body.view-portrait .deck-menu{ transform:translate(-50%,-50%); }
+body.view-portrait .rotate180 .deck-menu{ transform:translate(-50%,-50%) rotate(180deg); }

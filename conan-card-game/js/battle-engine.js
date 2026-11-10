@@ -664,6 +664,7 @@
   // ---- グローバル対戦状態 ----
   let match = null;      // { self, opponent, config:{self,opponent}, events:[] }
   let replayMode = false;
+  let replayPortrait = (() => { try { return localStorage.getItem('conanTcgReplayPortrait') === '1'; } catch (e) { return false; } })();   // リプレイ再生の向き
   let replayPointer = 0; // 次に適用するevents[]のインデックス(replay時)
   let replayTimer = null;
   let replayAutoPlaying = false;
@@ -22619,7 +22620,11 @@
     // 前回のwrapサイズが残っていると測定に影響しうるため、測定前に一旦解除する
     wrap.style.width = 'auto';
     wrap.style.height = 'auto';
-    table.style.transform = 'translate(-50%, -50%) rotate(90deg) scale(1)';
+    // リプレイ再生中は「縦画面」(回転なし)も選べる。それ以外は従来どおり90度回して横画面に収める
+    const portrait = replayMode && replayPortrait;
+    document.body.classList.toggle('view-portrait', portrait);
+    const rot = portrait ? 0 : 90;
+    table.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(1)`;
     // rotate(90deg)により見た目の幅/高さが元の高さ/幅と入れ替わる。transformは
     // レイアウト上のサイズに影響しないため、.table-rotate-wrapの幅/高さを
     // 回転後の実寸に明示的に合わせることで、ページ全体の高さも縮小分だけ小さくなる
@@ -22628,17 +22633,20 @@
     // board.clientWidth はpadding込みのサイズなので、左右のpadding(26+26=52)を
     // 差し引かないと実際に描画できる幅より広く見積もってしまい、右端(デッキ等)が
     // はみ出す原因になる。フォント/環境差を吸収する余白(20)も追加で引いておく
-    const availableWidth = board.clientWidth - 52 - 20;
+    const availableWidth = portrait ? board.clientWidth - 8 : board.clientWidth - 52 - 20;
     // .boardのpadding(上16+下40=56)に加えて、フォント/画像読み込みによる
     // 微妙なズレを吸収する余白(24)も引いておく
-    const availableHeight = document.documentElement.clientHeight - headerHeight - 56 - 24;
+    // 縦画面は、盤面の上にある表示(手番など)と、手札がマットからはみ出す分も引く
+    const turnBarEl = document.getElementById('turnBar');
+    const topSpace = portrait ? (board.getBoundingClientRect().top + window.scrollY) - headerHeight + (turnBarEl ? turnBarEl.getBoundingClientRect().height : 0) : 0;
+    const availableHeight = document.documentElement.clientHeight - headerHeight - (portrait ? 70 + topSpace : 56 + 24);
     // 現場にキャラカード5枚が並ぶ最低限の見やすさは確保したいので、
     // 画面が小さくてもこれ以上は縮小しない下限を設ける(下限を下回る場合は
     // 画面内に収めるのをあきらめてスクロールさせる)
-    const MIN_SCALE = 0.4;
+    const MIN_SCALE = portrait ? 0.1 : 0.4;
     const rawScale = Math.min(availableWidth / rect.width, availableHeight / rect.height, 1);
     const scale = Math.max(rawScale, MIN_SCALE);
-    table.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
+    table.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(${scale})`;
     wrap.style.width = (rect.width * scale) + 'px';
     wrap.style.height = (rect.height * scale) + 'px';
     // 計算結果が想定通りか実測で検算し、それでもboardからはみ出していれば
@@ -22654,7 +22662,7 @@
       // デッキ・リムーブエリアが画面外に切れる方が、カードが少し小さくなるより
       // 悪いので、この最終補正だけはMIN_SCALEの下限を無視してでも必ず収める
       const correctedScale = scale * Math.min(shrinkX, shrinkY) * 0.98;
-      table.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${correctedScale})`;
+      table.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(${correctedScale})`;
       wrap.style.width = (rect.width * correctedScale) + 'px';
       wrap.style.height = (rect.height * correctedScale) + 'px';
     }
@@ -22663,6 +22671,17 @@
     if (!retry) setTimeout(() => fitRotatedTable(true), 200);
   }
   window.addEventListener('resize', () => fitRotatedTable());
+  // リプレイの縦画面/横画面の切り替え(選んだ向きは覚えておく)
+  (function(){
+    const btn = document.getElementById('replayRotateBtn');
+    const sync = () => { if (btn) btn.textContent = replayPortrait ? '🔄 横画面にする' : '🔄 縦画面にする'; };
+    sync();
+    if (btn) btn.onclick = () => {
+      replayPortrait = !replayPortrait;
+      try { localStorage.setItem('conanTcgReplayPortrait', replayPortrait ? '1' : '0'); } catch (e) {}
+      sync(); fitRotatedTable();
+    };
+  })();
 
   populateDeckSelects();
 
