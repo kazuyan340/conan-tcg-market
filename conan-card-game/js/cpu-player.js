@@ -62,7 +62,7 @@
 
   // ---- CPUの番に出る選択画面を自動で進める ----
   function resolvePending(){
-    if (mulliganPhase === 'opponent') { document.getElementById('mulliganConfirmBtn').click(); return true; }
+    if (mulliganPhase === 'opponent') { performMulligan('opponent', mulliganReturnUids()); return true; }
     if (disguiseReactState) { skipDisguiseReact(); return true; }
     if (misleadState) { skipMislead(); return true; }
     if (evidencePickState) {
@@ -125,6 +125,28 @@
     if (!cards.length) return false;
     cards[0].click();
     return true;
+  }
+  // ---- マリガン: 優先度①〜⑤のルール(js/cpu-cards.js の CPU_MULLIGAN) ----
+  function mulliganTier(cardId){
+    const d = CARD_BY_ID.get(cardId); if (!d) return 9;
+    const pri = (window.CPU_MULLIGAN && window.CPU_MULLIGAN.priorities) || [];
+    if (pri.length) { const i = pri.findIndex(ids => ids.map(String).includes(String(d.card_id))); return i === -1 ? 9 : i + 1; }
+    // 優先度の指定が無いときは、レベルの低いキャラほど先に欲しいカードとみなす
+    if (d.card_type === 'キャラ' && d.level != null) return d.level <= 2 ? 1 : d.level === 3 ? 2 : d.level === 4 ? 3 : d.level === 5 ? 4 : 9;
+    return d.level != null && d.level <= 2 ? 3 : 9;
+  }
+  function mulliganReturnUids(){
+    const hand = match.opponent.hand.map(c => ({ c, t: mulliganTier(c.cardId) }));
+    const keepBy = list => { const seen = new Set(), keep = new Set(); list.forEach(x => { if (!seen.has(x.t)) { seen.add(x.t); keep.add(x.c.uid); } }); return keep; };
+    const sorted = [...hand].sort((a, b) => a.t - b.t);
+    const has = t => hand.some(x => x.t === t);
+    const low = sorted.filter(x => x.t <= 5);
+    let keep;
+    if (has(1)) keep = keepBy(low);                                                    // ルール1: ①〜⑤を各1枚
+    else if (has(2) && hand.some(x => x.t >= 3 && x.t <= 5)) { const tiers = [...new Set(low.map(x => x.t))].slice(0, 2); keep = keepBy(low.filter(x => tiers.includes(x.t))); } // ルール2: 優先度の高い2種類
+    else if (!hand.some(x => x.t <= 3)) keep = new Set();                              // ルール3: ④以下だけなら全部引き直す
+    else keep = new Set(low.length ? [low[0].c.uid] : []);                              // ルール4: 最も優先度の高い1枚
+    return hand.filter(x => !keep.has(x.c.uid)).map(x => x.c.uid);
   }
   const ruleOf = cardId => { const d = CARD_BY_ID.get(cardId); return (d && (window.CPU_CARD_RULES || {})[String(d.card_id)]) || null; };
   const lvOf = cardId => { const d = CARD_BY_ID.get(cardId); return d && d.level != null ? d.level : 0; };
@@ -215,5 +237,5 @@
     } catch (e) { console.error('cpu', e); busyUntil = Date.now() + 1500; }
   }
   setInterval(tick, 500);
-  window.cpuPlayer = { tick, get on(){ return cpuOn; } };
+  window.cpuPlayer = { tick, mulliganReturnUids, get on(){ return cpuOn; } };
 })();
