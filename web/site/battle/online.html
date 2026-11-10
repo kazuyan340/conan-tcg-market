@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>オンライン対戦 - 名探偵コナンTCG</title>
 <!-- このファイルから tools/build-online.js が online.html を作る(盤面のHTMLは battle.html から取り込む) -->
-<link rel="stylesheet" href="css/battle.css?v=mw6jlos0">
-<link rel="stylesheet" href="css/online.css?v=mw6jlos0">
-<script src="data/cards-data.js?v=mw6jlos0"></script>
-<script src="js/image-mode.js?v=mw6jlos0"></script>
-<script src="data/image-names.js?v=mw6jlos0"></script>
-<script src="js/card-images.js?v=mw6jlos0"></script>
-<script src="js/card-art.js?v=mw6jlos0"></script>
-<script src="js/card-detail.js?v=mw6jlos0"></script>
-<script src="data/text-fixes.js?v=mw6jlos0"></script>
-<script src="js/deck-storage.js?v=mw6jlos0"></script>
-<script src="js/replay-storage.js?v=mw6jlos0"></script>
-<script src="js/p2p.js?v=mw6jlos0"></script>
-<script src="js/signaling.js?v=mw6jlos0"></script>
-</head>
+<link rel="stylesheet" href="css/battle.css?v=mwadg1sp">
+<link rel="stylesheet" href="css/online.css?v=mwadg1sp">
+<script src="data/cards-data.js?v=mwadg1sp"></script>
+<script src="js/image-mode.js?v=mwadg1sp"></script>
+<script src="data/image-names.js?v=mwadg1sp"></script>
+<script src="js/card-images.js?v=mwadg1sp"></script>
+<script src="js/card-art.js?v=mwadg1sp"></script>
+<script src="js/card-detail.js?v=mwadg1sp"></script>
+<script src="data/text-fixes.js?v=mwadg1sp"></script>
+<script src="js/deck-storage.js?v=mwadg1sp"></script>
+<script src="js/replay-storage.js?v=mwadg1sp"></script>
+<script src="js/p2p.js?v=mwadg1sp"></script>
+<script src="js/signaling.js?v=mwadg1sp"></script>
+<style>#replayFileInput, .file-row, #gameOverSaveBtn, #gameOverReplayHint{ display:none !important; }</style></head>
 <body class="online portrait">
 
 
@@ -53,11 +53,11 @@
   <div class="setup-actions">
     <button class="btn" id="startBtn">対戦開始</button>
   </div>
-  <div class="divider">または</div>
+  <div class="divider" style="display:none">または</div>
   <div class="file-row">
     <input type="file" id="replayFileInput" accept="application/json">
   </div>
-  <div class="setup-hint" style="text-align:center;">保存済みのリプレイファイル(.json)を読み込んで再生できます</div>
+  
 </div>
 
 <div class="mulligan-overlay" id="mulliganPanel" style="display:none;">
@@ -73,7 +73,7 @@
   <div class="mulligan-box" style="text-align:center;">
     <h2 id="gameOverTitle">ゲーム終了</h2>
     <p class="mulligan-hint" id="gameOverMessage"></p>
-    <p class="mulligan-hint">対戦を保存しますか？（保存すると、ホーム画面の「リプレイ再生」から後で見返せます）</p>
+    <p class="mulligan-hint" id="gameOverReplayHint"></p>
     <div class="setup-actions" style="justify-content:center;">
       <button class="btn" id="gameOverSaveBtn">💾 保存する</button>
       <button class="btn ghost" id="gameOverCloseBtn">閉じる（そのまま観戦を続ける）</button>
@@ -324,7 +324,7 @@
   </div>
 </div>
 
-<script src="js/battle-engine.js?v=mw6jlos0"></script>
-<script src="js/online-layer.js?v=mw6jlos0"></script>
+<script src="js/battle-engine.js?v=mwadg1sp"></script>
+<script src="js/online-layer.js?v=mwadg1sp"></script>
 </body>
 </html>
