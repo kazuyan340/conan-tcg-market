@@ -663,3 +663,14 @@ body.view-portrait .partner-mr-slot .mr-badge{ transform:none; }
 body.view-portrait .rotate180 .partner-mr-slot .mr-badge{ transform:rotate(180deg); }
 body.view-portrait .deck-menu{ transform:translate(-50%,-50%); }
 body.view-portrait .rotate180 .deck-menu{ transform:translate(-50%,-50%) rotate(180deg); }
+/* 縦画面で相手側を下にする(盤面全体を180度回すので、数字バッジ等の向きも逆にする) */
+body.view-portrait.view-flip .num-badge{ transform:rotate(180deg); }
+body.view-portrait.view-flip .rotate180 .num-badge{ transform:none; }
+body.view-portrait.view-flip .stun-badge{ transform:translateX(-50%) rotate(180deg); }
+body.view-portrait.view-flip .rotate180 .stun-badge{ transform:translateX(-50%); }
+body.view-portrait.view-flip .lp-badge{ transform:rotate(180deg); }
+body.view-portrait.view-flip .rotate180 .lp-badge{ transform:none; }
+body.view-portrait.view-flip .partner-mr-slot .mr-badge{ transform:rotate(180deg); }
+body.view-portrait.view-flip .rotate180 .partner-mr-slot .mr-badge{ transform:none; }
+body.view-portrait.view-flip .deck-menu{ transform:translate(-50%,-50%) rotate(180deg); }
+body.view-portrait.view-flip .rotate180 .deck-menu{ transform:translate(-50%,-50%); }

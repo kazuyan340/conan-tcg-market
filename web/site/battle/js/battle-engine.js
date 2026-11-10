@@ -664,6 +664,7 @@
   // ---- グローバル対戦状態 ----
   let match = null;      // { self, opponent, config:{self,opponent}, events:[] }
   let replayMode = false;
+  let replayFlip = (() => { try { return localStorage.getItem('conanTcgReplayFlip') === '1'; } catch (e) { return false; } })();   // 縦画面で相手側を下にする
   let replayPortrait = (() => { try { return localStorage.getItem('conanTcgReplayPortrait') === '1'; } catch (e) { return false; } })();   // リプレイ再生の向き
   let replayPointer = 0; // 次に適用するevents[]のインデックス(replay時)
   let replayTimer = null;
@@ -22623,7 +22624,10 @@
     // リプレイ再生中は「縦画面」(回転なし)も選べる。それ以外は従来どおり90度回して横画面に収める
     const portrait = replayMode && replayPortrait;
     document.body.classList.toggle('view-portrait', portrait);
-    const rot = portrait ? 0 : 90;
+    const rot = portrait ? (replayFlip ? 180 : 0) : 90;
+    document.body.classList.toggle('view-flip', portrait && replayFlip);
+    const flipBtn = document.getElementById('replayFlipBtn');
+    if (flipBtn) { flipBtn.style.display = portrait ? '' : 'none'; flipBtn.textContent = replayFlip ? '🔃 下: 相手側' : '🔃 下: 自分側'; }
     table.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(1)`;
     // rotate(90deg)により見た目の幅/高さが元の高さ/幅と入れ替わる。transformは
     // レイアウト上のサイズに影響しないため、.table-rotate-wrapの幅/高さを
@@ -22671,6 +22675,7 @@
     if (!retry) setTimeout(() => fitRotatedTable(true), 200);
   }
   window.addEventListener('resize', () => fitRotatedTable());
+  { const fb = document.getElementById('replayFlipBtn'); if (fb) fb.onclick = () => { replayFlip = !replayFlip; try { localStorage.setItem('conanTcgReplayFlip', replayFlip ? '1' : '0'); } catch (e) {} fitRotatedTable(); }; }
   // リプレイの縦画面/横画面の切り替え(選んだ向きは覚えておく)
   (function(){
     const btn = document.getElementById('replayRotateBtn');
