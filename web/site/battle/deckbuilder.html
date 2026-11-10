@@ -297,19 +297,19 @@
     }
   }
 </style>
-<script src="data/cards-data.js?v=mwadg1sp"></script>
-<script src="js/image-mode.js?v=mwadg1sp"></script>
-<script src="data/image-names.js?v=mwadg1sp"></script>
-<script src="js/card-images.js?v=mwadg1sp"></script>
-<script src="js/card-art.js?v=mwadg1sp"></script>
-<script src="js/card-detail.js?v=mwadg1sp"></script>
-<script src="data/unimplemented-ids.js?v=mwadg1sp"></script>
-<script src="js/deck-storage.js?v=mwadg1sp"></script>
+<script src="data/cards-data.js?v=mwahks3f"></script>
+<script src="js/image-mode.js?v=mwahks3f"></script>
+<script src="data/image-names.js?v=mwahks3f"></script>
+<script src="js/card-images.js?v=mwahks3f"></script>
+<script src="js/card-art.js?v=mwahks3f"></script>
+<script src="js/card-detail.js?v=mwahks3f"></script>
+<script src="data/unimplemented-ids.js?v=mwahks3f"></script>
+<script src="js/deck-storage.js?v=mwahks3f"></script>
 </head>
 <body>
 
 <header>
-  <h1>🔍 デッキ作成</h1>
+  <h1 id="pageTitle">🔍 デッキ作成</h1>
   <div style="display:flex; gap:10px;">
     <button class="back-btn" onclick="location.href='index.html'">← ホームに戻る</button>
     <button class="save-btn" id="saveBtn">デッキを保存</button>
@@ -1095,6 +1095,13 @@
     new MutationObserver(refresh).observe(countEl, { childList: true, characterData: true, subtree: true });
     refresh();
   })();
+</script>
+<script>
+// AI用デッキ作成(?ai=1): CPU対戦で右側が使うデッキを、自分用とは別に保存する
+if (/[?&]ai=1/.test(location.search)) {
+  document.getElementById('pageTitle').textContent = '🤖 AI用デッキ作成';
+  document.title = 'AI用デッキ作成';
+}
 </script>
 </body>
 </html>

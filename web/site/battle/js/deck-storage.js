@@ -1,5 +1,12 @@
 // デッキの保存/読み込み(localStorage)。deckbuilder.html と battle.html の両方から使う共通処理。
-const DECK_STORAGE_KEY = 'conanTcgDecks';
+// AI用デッキ作成(deckbuilder.html?ai=1)は、自分用のデッキとは別の保存場所を使う
+const AI_DECK_STORAGE_KEY = 'conanTcgDecksAI';
+const DECK_STORAGE_KEY = /[?&]ai=1/.test(location.search) ? AI_DECK_STORAGE_KEY : 'conanTcgDecks';
+
+// CPU対戦で右側が使う、AI用デッキの一覧
+function loadAiDecks() {
+  try { const raw = localStorage.getItem(AI_DECK_STORAGE_KEY); return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
+}
 
 function loadSavedDecks() {
   try {

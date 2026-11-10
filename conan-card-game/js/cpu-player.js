@@ -6,6 +6,7 @@
   if (!document.getElementById('startBtn') || document.body.classList.contains('online')) return;
 
   let cpuOn = false;
+  let aiType = (window.CPU_AI_TYPES || {}).control || {};
   let busyUntil = 0;
   let stuckTicks = 0, stuckKey = '';
   const tried = new Set();            // このターンに試した操作(同じ操作を繰り返さない)
@@ -16,12 +17,40 @@
   if (actions) {
     const row = document.createElement('div');
     row.className = 'setup-row';
-    row.innerHTML = '<label for="cpuModeChk">CPU対戦(仮)</label><label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="cpuModeChk"> 右のデッキをCPUが操作する</label>';
+    const types = window.CPU_AI_TYPES || {};
+    row.innerHTML = '<label for="cpuModeChk">CPU対戦(仮)</label><label style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><input type="checkbox" id="cpuModeChk"> 右のデッキをCPUが操作する　AIタイプ:' +
+      ' <select id="cpuTypeSelect">' + Object.keys(types).map(k => '<option value="' + k + '">' + types[k].label + '</option>').join('') + '</select></label>';
     actions.parentNode.insertBefore(row, actions);
   }
+  // CPU対戦のときは、右のデッキの選択肢を「AI用デッキ作成」で作ったデッキにする
+  const oppSel = document.getElementById('oppDeckSelect');
+  let normalOppOptions = null;
+  function syncOppDecks(){
+    const chk = document.getElementById('cpuModeChk');
+    if (!oppSel) return;
+    if (chk && chk.checked) {
+      if (normalOppOptions === null) normalOppOptions = oppSel.innerHTML;
+      const ai = typeof loadAiDecks === 'function' ? loadAiDecks() : [];
+      oppSel.innerHTML = ai.length ? ai.map((d, i) => '<option value="' + i + '">' + d.name + '</option>').join('') : '<option value="">AI用デッキがありません(ホームの「AI用デッキ作成」で作る)</option>';
+    } else if (normalOppOptions !== null) { oppSel.innerHTML = normalOppOptions; normalOppOptions = null; }
+  }
+  const chkEl = document.getElementById('cpuModeChk');
+  if (chkEl) chkEl.addEventListener('change', syncOppDecks);
+  // 開始ボタン: CPU対戦なら、AI用デッキを右側にして始める
+  const engineStart = document.getElementById('startBtn').onclick;
+  document.getElementById('startBtn').onclick = function(){
+    const chk = document.getElementById('cpuModeChk');
+    if (!(chk && chk.checked)) return engineStart && engineStart.apply(this, arguments);
+    const mine = loadSavedDecks()[Number(document.getElementById('selfDeckSelect').value)];
+    const ai = loadAiDecks()[Number(oppSel.value)];
+    if (!mine || !ai) { alert('左のデッキと、AI用デッキの両方が必要です'); return; }
+    startMatchWith(mine, ai, document.getElementById('firstPlayerSelect').value === 'opponent' ? 'opponent' : 'self');
+  };
   document.getElementById('startBtn').addEventListener('click', () => {
     const chk = document.getElementById('cpuModeChk');
     cpuOn = !!(chk && chk.checked);
+    const sel = document.getElementById('cpuTypeSelect');
+    aiType = (window.CPU_AI_TYPES || {})[sel && sel.value] || (window.CPU_AI_TYPES || {}).control || {};
     document.body.classList.toggle('cpu-mode', cpuOn);
     tried.clear();
   });
@@ -126,16 +155,16 @@
     cards[0].click();
     return true;
   }
-  // ---- マリガン: 優先度①〜⑤のルール(js/cpu-cards.js の CPU_MULLIGAN) ----
+  // ---- マリガン: 優先度①〜⑤のルール(js/cpu-cards.js の CPU_AI_TYPES) ----
   function mulliganTier(cardId){
     const d = CARD_BY_ID.get(cardId); if (!d) return 9;
-    const lvTiers = (window.CPU_MULLIGAN && window.CPU_MULLIGAN.levelTiers) || [];
-    if (lvTiers.length && !((window.CPU_MULLIGAN.priorities || []).length)) {
+    const mg = aiType.mulligan || {};
+    const lvTiers = mg.levelTiers || [];
+    if (lvTiers.length && !(mg.priorities || []).length) {
       if (d.card_type !== 'キャラ' || d.level == null) return 9;
       const i = lvTiers.findIndex(lvs => lvs.includes(d.level)); return i === -1 ? 9 : i + 1;
     }
-    const pri = (window.CPU_MULLIGAN && window.CPU_MULLIGAN.priorities) || [];
-    if (pri.length) { const i = pri.findIndex(ids => ids.map(String).includes(String(d.card_id))); return i === -1 ? 9 : i + 1; }
+    const pri = mg.priorities || [];
     // 優先度の指定が無いときは、レベルの低いキャラほど先に欲しいカードとみなす
     if (d.card_type === 'キャラ' && d.level != null) return d.level <= 2 ? 1 : d.level === 3 ? 2 : d.level === 4 ? 3 : d.level === 5 ? 4 : 9;
     return d.level != null && d.level <= 2 ? 3 : 9;
@@ -182,7 +211,7 @@
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
       const rule = ruleOf(c.cardId) || {};
-      const target = rule.noAction ? null : pickActionTarget(c);
+      const target = rule.noAction || (aiType.reasonFirst && canUseReason(me, 'field', c.uid).ok) ? null : pickActionTarget(c);
       if (target && canUseAction(me, c.uid).ok) {
         startAction(me, c.uid);
         if (actionState && actionState.step === 'target') { selectActionTarget(target.uid); if (actionState && actionState.step === 'target') { actionState = null; renderBoard(match); } }
@@ -212,7 +241,7 @@
     const winnable = cands.filter(x => x.ap < ap);
     if (winnable.length) return winnable[winnable.length - 1];
     if (foe.case && foe.evidence.length > 0) return { uid: foe.case.uid };
-    return cands[0] || null;
+    return aiType.attackUnwinnable ? (cands[0] || null) : null;   // 勝てないアクションは、アグロ以外はしない
   }
 
   function tick(){

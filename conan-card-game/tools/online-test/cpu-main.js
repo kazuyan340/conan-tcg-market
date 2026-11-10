@@ -1,7 +1,7 @@
 // CPU対戦の動作確認: electron cpu-main.js <outdir> [秒数] [first=opponent|self]
 const { app, BrowserWindow } = require('electron');
 const path = require('path'), fs = require('fs');
-const outDir = process.argv[2], secs = +(process.argv[3] || 40), first = process.argv[4] || 'opponent';
+const outDir = process.argv[2], secs = +(process.argv[3] || 40), first = process.argv[4] || 'opponent', aiT = process.argv[5] || 'control';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const SEED = fs.readFileSync(path.join(__dirname, 'duo-main.js'), 'utf8').match(/const SEED = `([\s\S]*?)`;/)[1];
 app.whenReady().then(async () => {
@@ -13,9 +13,10 @@ app.whenReady().then(async () => {
   await win.webContents.executeJavaScript(SEED);
   await win.loadFile(path.resolve(__dirname, '../../battle.html'));
   await win.webContents.executeJavaScript(`(function(){
-    document.getElementById('cpuModeChk').checked = true;
+    localStorage.setItem('conanTcgDecksAI', JSON.stringify(loadSavedDecks().slice(1)));
+    document.getElementById('cpuModeChk').checked = true; document.getElementById('cpuModeChk').dispatchEvent(new Event('change')); document.getElementById('cpuTypeSelect').value = '${aiT}';
     document.getElementById('firstPlayerSelect').value = '${first}';
-    document.getElementById('selfDeckSelect').value = '0'; document.getElementById('oppDeckSelect').value = '1';
+    document.getElementById('selfDeckSelect').value = '0'; document.getElementById('oppDeckSelect').value = '0';
     document.getElementById('startBtn').click();
     // 人間側の代わり: マリガンはそのまま、ターンは何もせず終了
     window.__human = setInterval(() => {

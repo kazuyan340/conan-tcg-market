@@ -13,15 +13,30 @@
 window.CPU_CARD_RULES = {
 };
 
-// マリガン(初手の引き直し)。CPUのデッキで「初手に来てほしいカード」を、優先度①〜⑤の順に card_id で並べる。
-// 参考: https://note.com/kessy456/n/nc27da5360327
+// AIタイプ(対戦画面の「CPU対戦(仮)」で選ぶ)。タイプごとに、マリガンと動きの傾向を変える。
+//   mulligan.levelTiers   優先度①〜⑤を、キャラのレベルで書く([[2],[4],[6],[8],[7]] なら ①Lv2 ②Lv4 ③Lv6 ④Lv8 ⑤Lv7)
+//   mulligan.priorities   優先度①〜⑤を、card_id で書く(書いたら levelTiers より優先)。例: [['0085'], ['0393'], ['0365', '0473'], ['0602'], ['0823']]
+//   attackUnwinnable      勝てない相手(APが上)のスリープキャラにもアクションするか(アグロは true)
+//   reasonFirst           アクションより推理(証拠集め)を優先するか
+// マリガンの考え方: https://note.com/kessy456/n/nc27da5360327
 //   ルール1: ①があれば、手札の①〜⑤を各1枚残す
 //   ルール2: ①がなく、②があり、③〜⑤が1枚以上あれば、優先度の高い2枚を残す
 //   ルール3: ④以下しかなければ、全部引き直す
 //   ルール4: 上記以外は、最も優先度の高い1枚を残す
-// priorities[0] が優先度①、[1] が②…(各段に複数のカードを書いてよい。同じ段のカードは1枚として数える)。
-// 空のままなら、レベルの低いキャラほど高い優先度とみなす。
-// 例: window.CPU_MULLIGAN = { priorities: [['0085'], ['0393'], ['0365', '0473'], ['0602'], ['0823']] };
-// カードIDの代わりに、キャラのレベルで優先度を書くこともできる(priorities が空のときだけ使う)。
-// 先攻の理想の初手は、レベル2・4・6・8・7のキャラ1枚ずつ(1〜4ターン目に出すカードがそろう)。
-window.CPU_MULLIGAN = { priorities: [], levelTiers: [[2], [4], [6], [8], [7]] };
+window.CPU_AI_TYPES = {
+  control: {   // コントロール: 先攻の理想の初手は Lv2,4,6,8,7 のキャラ1枚ずつ(1〜4ターン目に出すカードがそろう)
+    label: 'コントロール',
+    mulligan: { priorities: [], levelTiers: [[2], [4], [6], [8], [7]] },
+    attackUnwinnable: false, reasonFirst: false,
+  },
+  aggro: {     // アグロ: 軽いキャラを早く並べて殴る(仮の値。デッキに合わせて直す)
+    label: 'アグロ',
+    mulligan: { priorities: [], levelTiers: [[2], [3], [4], [5], [6]] },
+    attackUnwinnable: true, reasonFirst: false,
+  },
+  midrange: {  // ミッドレンジ: 中くらいのキャラで場を作る(仮の値。デッキに合わせて直す)
+    label: 'ミッドレンジ',
+    mulligan: { priorities: [], levelTiers: [[2], [4], [5], [6], [7]] },
+    attackUnwinnable: false, reasonFirst: false,
+  },
+};
