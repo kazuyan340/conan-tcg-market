@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   imageConfig: ipcRenderer.sendSync('image-config'),
   pickImageDir: () => ipcRenderer.invoke('pick-image-dir'),
   clearImageDir: () => ipcRenderer.invoke('clear-image-dir'),
+  saveCpuDecks: (text) => ipcRenderer.invoke('save-cpu-decks', text),
 });

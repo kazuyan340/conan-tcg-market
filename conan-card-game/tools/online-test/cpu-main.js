@@ -13,7 +13,7 @@ app.whenReady().then(async () => {
   await win.webContents.executeJavaScript(SEED);
   await win.loadFile(path.resolve(__dirname, '../../battle.html'));
   await win.webContents.executeJavaScript(`(function(){
-    localStorage.setItem('conanTcgDecksAI', JSON.stringify(loadSavedDecks().slice(1)));
+    window.CPU_PRESET_DECKS = loadSavedDecks().slice(1);
     document.getElementById('cpuModeChk').checked = true; document.getElementById('cpuModeChk').dispatchEvent(new Event('change')); document.getElementById('cpuTypeSelect').value = '${aiT}';
     document.getElementById('firstPlayerSelect').value = '${first}';
     document.getElementById('selfDeckSelect').value = '0'; document.getElementById('oppDeckSelect').value = '0';

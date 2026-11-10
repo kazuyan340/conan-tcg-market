@@ -64,6 +64,12 @@ app.whenReady().then(() => {
     const st = readSettings(); delete st.imageDir; writeSettings(st);
     return imageConfig();
   });
+  // AI用デッキ作成の「友達用に書き出す」: userData/cpu-decks.js に書く(友達用ビルドを作るとき、tools/build-friend.js がこれを data/ に入れる)
+  ipcMain.handle('save-cpu-decks', async (event, text) => {
+    const p = path.join(app.getPath('userData'), 'cpu-decks.js');
+    fs.writeFileSync(p, String(text), 'utf8');
+    return p;
+  });
   ipcMain.on('set-fullscreen', (event, flag) => {
     const senderWin = BrowserWindow.fromWebContents(event.sender) || win;
     if (senderWin && !senderWin.isDestroyed()) senderWin.setFullScreen(flag);

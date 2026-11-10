@@ -24,14 +24,21 @@
   }
   // CPU対戦のときは、右のデッキの選択肢を「AI用デッキ作成」で作ったデッキにする
   const oppSel = document.getElementById('oppDeckSelect');
+  // CPUが使えるデッキ: 同梱のもの(data/cpu-decks.js) + 自分の「AI用デッキ作成」で作ったもの
+  function cpuDeckList(){
+    const out = [];
+    (window.CPU_PRESET_DECKS || []).forEach(d => out.push({ label: d.name, deck: d }));
+    (typeof loadAiDecks === 'function' ? loadAiDecks() : []).forEach(d => out.push({ label: d.name + '(自作)', deck: d }));
+    return out;
+  }
   let normalOppOptions = null;
   function syncOppDecks(){
     const chk = document.getElementById('cpuModeChk');
     if (!oppSel) return;
     if (chk && chk.checked) {
       if (normalOppOptions === null) normalOppOptions = oppSel.innerHTML;
-      const ai = typeof loadAiDecks === 'function' ? loadAiDecks() : [];
-      oppSel.innerHTML = ai.length ? ai.map((d, i) => '<option value="' + i + '">' + d.name + '</option>').join('') : '<option value="">AI用デッキがありません(ホームの「AI用デッキ作成」で作る)</option>';
+      const list = cpuDeckList();
+      oppSel.innerHTML = list.length ? list.map((x, i) => '<option value="' + i + '">' + x.label + '</option>').join('') : '<option value="">CPU用のデッキがありません</option>';
     } else if (normalOppOptions !== null) { oppSel.innerHTML = normalOppOptions; normalOppOptions = null; }
   }
   const chkEl = document.getElementById('cpuModeChk');
@@ -42,8 +49,9 @@
     const chk = document.getElementById('cpuModeChk');
     if (!(chk && chk.checked)) return engineStart && engineStart.apply(this, arguments);
     const mine = loadSavedDecks()[Number(document.getElementById('selfDeckSelect').value)];
-    const ai = loadAiDecks()[Number(oppSel.value)];
-    if (!mine || !ai) { alert('左のデッキと、AI用デッキの両方が必要です'); return; }
+    const pick = cpuDeckList()[Number(oppSel.value)];
+    const ai = pick && pick.deck;
+    if (!mine || !ai) { alert('左のデッキと、CPUのデッキの両方が必要です'); return; }
     startMatchWith(mine, ai, document.getElementById('firstPlayerSelect').value === 'opponent' ? 'opponent' : 'self');
   };
   document.getElementById('startBtn').addEventListener('click', () => {

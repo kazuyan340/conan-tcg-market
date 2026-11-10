@@ -313,6 +313,7 @@
   <div style="display:flex; gap:10px;">
     <button class="back-btn" onclick="location.href='index.html'">← ホームに戻る</button>
     <button class="save-btn" id="saveBtn">デッキを保存</button>
+    <button class="save-btn" id="exportCpuBtn" style="display:none;">友達用に書き出す</button>
     <button class="menu-btn" id="menuBtn" aria-label="いまのデッキを見る" title="いまのデッキを見る">デッキ確認</button>
   </div>
 </header>
@@ -1101,6 +1102,18 @@
 if (/[?&]ai=1/.test(location.search)) {
   document.getElementById('pageTitle').textContent = '🤖 AI用デッキ作成';
   document.title = 'AI用デッキ作成';
+  // いまのAI用デッキを全部、友達用の配布版に入れる形で書き出す(友達用ビルドを作るときに自動で入る)
+  const eb = document.getElementById('exportCpuBtn');
+  if (eb && window.electronAPI && window.electronAPI.saveCpuDecks) {
+    eb.style.display = '';
+    eb.onclick = async () => {
+      const decks = loadAiDecks();
+      if (!decks.length) { alert('AI用デッキがまだありません。先にデッキを保存してください。'); return; }
+      const text = '// CPU対戦で、右側(CPU)が使える同梱デッキ(AI用デッキ作成から書き出したもの)\nwindow.CPU_PRESET_DECKS = ' + JSON.stringify(decks, null, 1) + ';\n';
+      try { const p = await window.electronAPI.saveCpuDecks(text); alert(decks.length + '個のAI用デッキを書き出しました。次に友達用のビルドを作ると、友達版に入ります。\n' + p); }
+      catch (e) { alert('書き出しに失敗しました: ' + e.message); }
+    };
+  }
 }
 </script>
 </body>
