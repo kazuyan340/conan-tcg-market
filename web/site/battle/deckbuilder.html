@@ -297,14 +297,14 @@
     }
   }
 </style>
-<script src="data/cards-data.js?v=mwahq191"></script>
-<script src="js/image-mode.js?v=mwahq191"></script>
-<script src="data/image-names.js?v=mwahq191"></script>
-<script src="js/card-images.js?v=mwahq191"></script>
-<script src="js/card-art.js?v=mwahq191"></script>
-<script src="js/card-detail.js?v=mwahq191"></script>
-<script src="data/unimplemented-ids.js?v=mwahq191"></script>
-<script src="js/deck-storage.js?v=mwahq191"></script>
+<script src="data/cards-data.js?v=mwahw3be"></script>
+<script src="js/image-mode.js?v=mwahw3be"></script>
+<script src="data/image-names.js?v=mwahw3be"></script>
+<script src="js/card-images.js?v=mwahw3be"></script>
+<script src="js/card-art.js?v=mwahw3be"></script>
+<script src="js/card-detail.js?v=mwahw3be"></script>
+<script src="data/unimplemented-ids.js?v=mwahw3be"></script>
+<script src="js/deck-storage.js?v=mwahw3be"></script>
 </head>
 <body>
 
@@ -1102,16 +1102,19 @@
 if (/[?&]ai=1/.test(location.search)) {
   document.getElementById('pageTitle').textContent = '🤖 AI用デッキ作成';
   document.title = 'AI用デッキ作成';
-  // いまのAI用デッキを全部、友達用の配布版に入れる形で書き出す(友達用ビルドを作るときに自動で入る)
+  // いまのAI用デッキの中身(カード名と枚数)を、Claude Code に渡せる文章にしてコピーする
   const eb = document.getElementById('exportCpuBtn');
-  if (eb && window.electronAPI && window.electronAPI.saveCpuDecks) {
-    eb.style.display = '';
+  if (eb) {
+    eb.style.display = ''; eb.textContent = 'デッキをコピー(Claude用)';
     eb.onclick = async () => {
       const decks = loadAiDecks();
       if (!decks.length) { alert('AI用デッキがまだありません。先にデッキを保存してください。'); return; }
-      const text = '// CPU対戦で、右側(CPU)が使える同梱デッキ(AI用デッキ作成から書き出したもの)\nwindow.CPU_PRESET_DECKS = ' + JSON.stringify(decks, null, 1) + ';\n';
-      try { const p = await window.electronAPI.saveCpuDecks(text); alert(decks.length + '個のAI用デッキを書き出しました。次に友達用のビルドを作ると、友達版に入ります。\n' + p); }
-      catch (e) { alert('書き出しに失敗しました: ' + e.message); }
+      const nameOf = id => { const c = (window.CARD_DATA || []).find(x => x.id === id); return c ? c.name + '(' + c.card_id + (c.level != null ? ' Lv' + c.level : '') + ')' : String(id); };
+      const text = decks.map(d => '■ ' + d.name + '\n' + 'パートナー: ' + nameOf(d.partnerCardId) + ' / 事件: ' + nameOf(d.caseCardId) + '\n' +
+        d.cards.slice().sort((x, y) => { const a = (window.CARD_DATA || []).find(c => c.id === x.id) || {}, b = (window.CARD_DATA || []).find(c => c.id === y.id) || {}; return (a.level || 0) - (b.level || 0); }).map(e => e.qty + '枚 ' + nameOf(e.id)).join('\n') +
+        '\n\nデッキデータ: ' + JSON.stringify(d)).join('\n\n');
+      try { await navigator.clipboard.writeText(text); alert(decks.length + '個のAI用デッキの中身をコピーしました。Claude Code に貼り付けて、使い方と一緒に伝えてください。'); }
+      catch (e) { prompt('コピーに失敗しました。下の文章を選んでコピーしてください', text); }
     };
   }
 }

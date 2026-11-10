@@ -36,12 +36,6 @@ fs.writeFileSync(path.join(stage, 'js', 'image-mode.js'),
 const r = cp.spawnSync('python', [path.join(root, 'tools', 'build_image_names.py')], { cwd: root, encoding: 'utf8' });
 if (r.status !== 0) { console.error('image-names.js の生成に失敗しました', r.stderr); process.exit(1); }
 fs.copyFileSync(path.join(root, 'data', 'image-names.js'), path.join(stage, 'data', 'image-names.js'));
-// AI用デッキ作成の「友達用に書き出す」で書いたCPUデッキがあれば、配布版の data/cpu-decks.js に入れる
-{
-  const exported = path.join(process.env.APPDATA || '', 'ConanTCGViewer', 'cpu-decks.js');
-  if (fs.existsSync(exported)) { fs.copyFileSync(exported, path.join(stage, 'data', 'cpu-decks.js')); console.log('CPUデッキを入れました:', exported); }
-  else console.log('CPUデッキは入っていません(AI用デッキ作成の「友達用に書き出す」で書き出すと入ります)');
-}
 // AI用デッキ作成は自分(かずやん)の画面だけに出す。配布用のホーム画面からは外す(CPU対戦は配布用にも入れる)
 {
   const ip = path.join(stage, 'index.html');

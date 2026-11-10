@@ -58,7 +58,10 @@
     const chk = document.getElementById('cpuModeChk');
     cpuOn = !!(chk && chk.checked);
     const sel = document.getElementById('cpuTypeSelect');
-    aiType = (window.CPU_AI_TYPES || {})[sel && sel.value] || (window.CPU_AI_TYPES || {}).control || {};
+    // デッキに aiType が決めてあれば(js/cpu-decks.js)それを使い、無ければ画面で選んだタイプ
+    const pickedDeck = (typeof cpuDeckList === 'function' ? cpuDeckList() : [])[Number((document.getElementById('oppDeckSelect') || {}).value)];
+    const types = window.CPU_AI_TYPES || {};
+    aiType = (pickedDeck && pickedDeck.deck.aiType && types[pickedDeck.deck.aiType]) || types[sel && sel.value] || types.control || {};
     document.body.classList.toggle('cpu-mode', cpuOn);
     tried.clear();
   });
