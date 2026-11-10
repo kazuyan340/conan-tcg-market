@@ -129,6 +129,11 @@
   // ---- マリガン: 優先度①〜⑤のルール(js/cpu-cards.js の CPU_MULLIGAN) ----
   function mulliganTier(cardId){
     const d = CARD_BY_ID.get(cardId); if (!d) return 9;
+    const lvTiers = (window.CPU_MULLIGAN && window.CPU_MULLIGAN.levelTiers) || [];
+    if (lvTiers.length && !((window.CPU_MULLIGAN.priorities || []).length)) {
+      if (d.card_type !== 'キャラ' || d.level == null) return 9;
+      const i = lvTiers.findIndex(lvs => lvs.includes(d.level)); return i === -1 ? 9 : i + 1;
+    }
     const pri = (window.CPU_MULLIGAN && window.CPU_MULLIGAN.priorities) || [];
     if (pri.length) { const i = pri.findIndex(ids => ids.map(String).includes(String(d.card_id))); return i === -1 ? 9 : i + 1; }
     // 優先度の指定が無いときは、レベルの低いキャラほど先に欲しいカードとみなす
