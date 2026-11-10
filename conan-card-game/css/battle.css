@@ -648,3 +648,7 @@
     display:flex; align-items:center; justify-content:center; gap:10px; padding:14px 0 0;
   }
   .replay-controls .step-count{ font-size:12px; opacity:.8; min-width:80px; text-align:center; }
+
+/* CPU対戦(仮): CPUの手札は裏向きにして、操作できないようにする */
+body.cpu-mode .zone[data-side="opponent"] .hand-row .hcard{ background-color:#5a3a22; background-image:var(--cardback-url, linear-gradient(#5a3a22, #5a3a22)); background-size:cover; background-position:center; border-radius:6px; pointer-events:none; }
+body.cpu-mode .zone[data-side="opponent"] .hand-row .hcard img{ visibility:hidden; }
