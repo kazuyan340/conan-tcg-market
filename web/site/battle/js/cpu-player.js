@@ -339,9 +339,15 @@
       const isLv4Shonen = c => { const d = defOfInst(c); return !!d && d.level === 4 && cardHasTrait(d, '少年探偵団'); };
       // 出す順番を組み合わせで探す。各枠のFILE枚数以下のレベルのカードしか出せない(高いレベルは早い枠でしか出せない)。
       // 事件にアクションできる突撃(歩美・青子)を並べるほど、アクションできる数が増える。除去役・黒羽快斗(リムーブエリアから青子を出す)も候補
-      const cands = mine.hand.filter(c => { const r = ruleOf(c.cardId); return r && (r.lethalCharge || r.removesFoe || r.summonsCharger); });
+      const cands = mine.hand.filter(c => { const r = ruleOf(c.cardId); return r && (r.lethalCharge || r.removesFoe || r.summonsCharger || r.stackCharge); });
       const evalPlan = plan => {
-        let atk = actors, entered = 0, willLv4 = false;
+        let atk = actors, entered = 0, willLv4 = false, bonus = 0;   // bonus: 5枚重ねの結成 少年探偵団が、アクションしたときに得る証拠(ガードされても得られる)
+        mine.field.forEach(c => {   // すでに現場にいる、下にカードが重なった結成(登場したターンでも、重なっていれば突撃でアクションできる)
+          const r = ruleOf(c.cardId); if (!r || !r.stackCharge || c.sleeping || tried.has(key('field', c.uid))) return;
+          const n = (c.under || []).length;
+          if (c.justEntered && n >= 1) atk++;
+          if (n >= 5) bonus++;
+        });
         const used = new Set();   // 効果で手札から登場させるカード(同じカードを2回は使えない)
         if (anchor) {   // すでに現場にいる登場役の宣言(手札に突撃があれば、それを出す。なければ、引ける確率が基準以上なら引く前提)
           const got = anchorRule.summonsCharger({ me: mine, chars: mine.field, file: fileNow, others: mine.hand.filter(h => !plan.includes(h)) });
@@ -352,7 +358,8 @@
         for (let k = 0; k < plan.length; k++) {
           const c = plan[k], r = ruleOf(c.cardId) || {}, fileK = fileNow - k;
           entered++;
-          if (r.lethalCharge && (!r.chargeMinFile || fileK >= r.chargeMinFile)) atk++;   // 歩美はFILE5以上で出たときだけ突撃を持つ
+          if (r.lethalCharge && (!r.chargeMinFile || fileK >= r.chargeMinFile)) atk++;
+          if (r.stackCharge) { const n = r.stackCharge(mine); if (n >= 1) atk++; if (n >= 5) bonus++; }   // 歩美はFILE5以上で出たときだけ突撃を持つ
           if (isLv4Shonen(c) || r.entersLv4) willLv4 = true;
           if (r.summonsCharger) {   // 効果で手札(または黒羽快斗のようにリムーブエリア)から突撃のキャラを登場させる
             const got = r.summonsCharger({ me: mine, chars, file: fileK, others: mine.hand.filter(h => !plan.includes(h) && !used.has(h.uid)) });
@@ -367,7 +374,7 @@
         plan.forEach((c, k) => { const r = ruleOf(c.cardId); if (r && r.removesFoe) removals += r.removesFoe({ me: mine, foe: theirs, willEnterLv4: lv4Later(k + 1) }, true); });
         const gambleAtk = Math.min(Math.max(0, slots - plan.length), gambleAvail, fileNow - plan.length >= 5 ? 99 : 0);
         const hits = Math.min(theirs.evidence.length, Math.max(0, atk + gambleAtk - Math.max(0, guards - removals)));
-        return mine.evidence.length + hits - lv;
+        return mine.evidence.length + bonus + hits - lv;
       };
       let best = null;
       const dfs = (plan, left) => {

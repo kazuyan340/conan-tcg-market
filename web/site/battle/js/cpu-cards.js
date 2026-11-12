@@ -29,7 +29,8 @@ Object.assign(window.CPU_CARD_RULES, {
             removesFoe: ctx => ctx.me.deckPile.length >= 15 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items),
             declares: [{ line: 'デッキのカードを上から5枚リムーブ', when: c => c.me.deckPile.length >= 15 }] },   // 山札切れに注意して、15枚以上あるときだけ肥やす
   // 結成 少年探偵団(Lv8): 名前の違う少年探偵団が5枚そろってから出して、5枚重ねにする
-  '0264': { playScore: c => { const n = cpuDistinct(cpuShonen(c.me)); return n >= 5 ? 88 : n === 4 ? 82 : -1; },
+  // stackCharge: 登場時に下へ重ねる枚数(リムーブエリアの名前違いの少年探偵団、最大5)。1枚以上で突撃、5枚で「アクションしたとき証拠を1つ得る」(ガードされても得られる)
+  '0264': { stackCharge: me => Math.min(5, cpuDistinct(cpuShonen(me))), playScore: c => { const n = cpuDistinct(cpuShonen(c.me)); return n >= 5 ? 88 : n === 4 ? 82 : -1; },
             // 重ねるカードは、五人囃子で使うレベル4をなるべく残して、レベルの低いものから選ぶ
             choose: (ctx, items) => items.length ? [[...items].sort((x, y) => ((cpuLv(x.cardId) === 4) - (cpuLv(y.cardId) === 4)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key] : null },
   // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
