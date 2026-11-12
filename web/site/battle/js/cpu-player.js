@@ -451,7 +451,10 @@
       const rule = ruleOf(c.cardId) || {};
       let target = rule.noAction || (aiType.reasonFirst && canUseReason(me, 'field', c.uid).ok) ? null : pickActionTarget(c, lethal);
       // 先攻3ターン目: 相手が全部アクティブ(アクションできる相手がいない)なら、事件へ突撃するのは歩美だけ。ほかのキャラはアクティブのまま、元からいたキャラだけが推理する
-      if (open === 3 && !lethal && target && theirs.case && target.uid === theirs.case.uid && (CARD_BY_ID.get(c.cardId) || {}).card_id !== '1175') target = null;
+      // ただし、相手のアクティブなキャラ(ガードできる相手)がすべて、このキャラよりAPが低いなら、ガードされても返り討ちにできるので、推理ではなく事件へアクションする
+      const foeActiveAp = theirs.field.filter(f => !f.sleeping).map(f => effectiveAp(match, f, 'self'));
+      const allWeaker = foeActiveAp.every(ap => ap < effectiveAp(match, c, 'opponent'));
+      if (open === 3 && !lethal && target && theirs.case && target.uid === theirs.case.uid && !allWeaker && (CARD_BY_ID.get(c.cardId) || {}).card_id !== '1175') target = null;
       if (target && canUseAction(me, c.uid).ok) {
         startAction(me, c.uid);
         if (actionState && actionState.step === 'target') { selectActionTarget(target.uid); if (actionState && actionState.step === 'target') { actionState = null; renderBoard(match); } }
