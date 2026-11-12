@@ -9,6 +9,7 @@
   let cpuOn = false;
   let aiType = (window.CPU_AI_TYPES || {}).control || {};
   let strategy = {};
+  let openPattern = 0;                // 先攻の2ターン目に選んだパターン(1か2)
   let deckCardIds = [];               // CPUのデッキ40枚のカードID(確率の計算に使う)
                   // デッキごとの戦い方の指定(js/cpu-decks.js の strategy)
   let busyUntil = 0, lastPendingAt = 0;
@@ -306,7 +307,11 @@
     // 1) 勝てるなら事件解決
     if (canSolveCase(me).ok && once(key('solve', 'case'))) { performSolveCase(me); return true; }
 
-    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs, lethal: lethalFlag }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
+    // 先攻のときの序盤の方針(strategy.opening): CPUの何ターン目か(先攻のときだけ。後攻や、方針なしのデッキは 0)
+    const open = strategy.opening && match.firstPlayer === 'opponent' ? (t.turnNumber + 1) / 2 : 0;
+    // 2ターン目のパターン: 手札にレベル4の少年探偵団があれば②(アシストしてレベル4)、なければ①(レベル2を出して、パートナーで推理)。そのターンの最初に決める
+    if (open === 2 && !tried.has(key('pattern', 'p'))) { tried.add(key('pattern', 'p')); openPattern = mine.hand.some(c => { const d = CARD_BY_ID.get(c.cardId); return d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団'); }) ? 2 : 1; }
+    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs, lethal: lethalFlag, open }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
     let lethalFlag = false;   // 勝ち筋の判定の結果(下で決まる。出す優先度の計算に使う)
     // 1.2) 勝ち筋の判定(相手のキャラの処理より、勝つことを優先する)
     //   事件が解決編・パートナーが起きている状態で、「いまの証拠 + このターンに証拠を取れそうな数」が事件レベル以上なら、勝ちを狙う。
@@ -415,7 +420,9 @@
     if (!lethal && !tried.has(key('assistFirst', 'p')) && canUseAssist(me).ok && !match.turn.playedCardThisTurn) {
       const fileNow = getEffectiveFileCount(me);
       const unlocks = mine.hand.some(c => { const lv = lvOf(c.cardId); return lv === fileNow + 1 && score(c) >= (mine.field.length >= maxFieldFor(me) ? 60 : 0); });
-      if (unlocks) { tried.add(key('assistFirst', 'p')); tried.add(key('partner', 'p')); performAssist(me); return true; }
+      // 先攻の序盤: 1ターン目は、アシストしてからレベル2を出す。2ターン目は、②ならアシストしてレベル4、①ならアシストしない
+      const openAssist = open === 1 || (open === 2 && openPattern === 2);
+      if ((open === 2 && openPattern === 1) ? false : (unlocks || openAssist)) { tried.add(key('assistFirst', 'p')); tried.add(key('partner', 'p')); performAssist(me); return true; }
     }
     const full = mine.field.length >= maxFieldFor(me);   // 現場が埋まっていると、1枚リムーブして入れ替えることになる。よほど強いカードだけ出す
     const playable = mine.hand.filter(c => canPlayHandCard(me, c.uid).ok && !tried.has(key('play', c.uid)) && !(isMRCard(c.cardId) && (mine.field.some(f => isMRCard(f.cardId)) || (mine.partnerMR && isMRCard(mine.partnerMR.cardId)))) && score(c) >= (full ? 60 : 0))
@@ -442,7 +449,9 @@
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
       const rule = ruleOf(c.cardId) || {};
-      const target = rule.noAction || (aiType.reasonFirst && canUseReason(me, 'field', c.uid).ok) ? null : pickActionTarget(c, lethal);
+      let target = rule.noAction || (aiType.reasonFirst && canUseReason(me, 'field', c.uid).ok) ? null : pickActionTarget(c, lethal);
+      // 先攻3ターン目: 相手が全部アクティブ(アクションできる相手がいない)なら、事件へ突撃するのは歩美だけ。ほかのキャラはアクティブのまま、元からいたキャラだけが推理する
+      if (open === 3 && !lethal && target && theirs.case && target.uid === theirs.case.uid && (CARD_BY_ID.get(c.cardId) || {}).card_id !== '1175') target = null;
       if (target && canUseAction(me, c.uid).ok) {
         startAction(me, c.uid);
         if (actionState && actionState.step === 'target') { selectActionTarget(target.uid); if (actionState && actionState.step === 'target') { actionState = null; renderBoard(match); } }
@@ -461,7 +470,8 @@
     // 4) パートナー: アシスト(解決編に近づける)か推理
     if (!tried.has(key('partner', 'p'))) {
       tried.add(key('partner', 'p'));
-      if (!lethal && canUseAssist(me).ok) { performAssist(me); return true; }
+      const reasonFirst = open === 2 && openPattern === 1 && canUseReason(me, 'partner', mine.partner && mine.partner.uid).ok;   // 先攻2ターン目の①は、パートナー推理
+      if (!reasonFirst && !lethal && canUseAssist(me).ok) { performAssist(me); return true; }
       if (canUseReason(me, 'partner', mine.partner && mine.partner.uid).ok) { performReason(me, 'partner', mine.partner.uid); return true; }
     }
 
