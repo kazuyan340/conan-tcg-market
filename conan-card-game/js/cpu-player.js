@@ -270,13 +270,6 @@
       if (want && once(key('hint', mine.file.length))) { startNextHint(me); return true; }
     }
 
-    // 2.5) 事件の宣言能力(解決編のとき)。使うかどうかは事件カードのルール(useCaseDeclare)で決める
-    if (mine.case && mine.case.resolved) {
-      const cr = ruleOf(mine.case.cardId);
-      const entered = mine.field.filter(c => c.justEntered).length;   // このターンに登場した枚数
-      if (cr && cr.useCaseDeclare && canDeclareGenericCase(me).ok && cr.useCaseDeclare({ me: mine, foe: theirs, turn: t, entered }) && once(key('caseDecl', 'c'))) { declareGenericCase(me); return true; }
-    }
-
     // 3) 起きているキャラで、アクションか推理
     for (const c of mine.field) {
       if (tried.has(key('field', c.uid))) continue;
@@ -289,6 +282,13 @@
         return true;
       }
       if (!rule.noReason && canUseReason(me, 'field', c.uid).ok) { performReason(me, 'field', c.uid); return true; }
+    }
+
+    // 3.5) 事件の宣言能力(解決編のとき)。キャラのアクション・推理が終わったあとに使う。使うかどうかは事件カードのルール(useCaseDeclare)で決める
+    if (mine.case && mine.case.resolved) {
+      const cr = ruleOf(mine.case.cardId);
+      const entered = mine.field.filter(c => c.justEntered).length;   // このターンに登場した枚数
+      if (cr && cr.useCaseDeclare && canDeclareGenericCase(me).ok && cr.useCaseDeclare({ me: mine, foe: theirs, turn: t, entered }) && once(key('caseDecl', 'c'))) { declareGenericCase(me); return true; }
     }
 
     // 4) パートナー: アシスト(解決編に近づける)か推理
