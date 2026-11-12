@@ -8,7 +8,9 @@
 
   let cpuOn = false;
   let aiType = (window.CPU_AI_TYPES || {}).control || {};
-  let strategy = {};                  // デッキごとの戦い方の指定(js/cpu-decks.js の strategy)
+  let strategy = {};
+  let deckCardIds = [];               // CPUのデッキ40枚のカードID(確率の計算に使う)
+                  // デッキごとの戦い方の指定(js/cpu-decks.js の strategy)
   let busyUntil = 0, lastPendingAt = 0;
   let stuckTicks = 0, stuckKey = '';
   const tried = new Set();            // このターンに試した操作(同じ操作を繰り返さない)
@@ -76,6 +78,7 @@
     const types = window.CPU_AI_TYPES || {};
     aiType = (pickedDeck && pickedDeck.deck.aiType && types[pickedDeck.deck.aiType]) || types[sel && sel.value] || types.control || {};
     strategy = (pickedDeck && pickedDeck.deck.strategy) || {};
+    deckCardIds = flattenDeck(pickedDeck && pickedDeck.deck);
     if (pickedDeck && pickedDeck.deck.mulligan) aiType = Object.assign({}, aiType, { mulligan: pickedDeck.deck.mulligan });   // デッキごとのマリガン指定を優先
     document.body.classList.toggle('cpu-mode', cpuOn);
     tried.clear();
@@ -229,6 +232,21 @@
     cards[0].click();
     return true;
   }
+  const flattenDeck = d => { const out = []; ((d && d.cards) || []).forEach(c => { for (let i = 0; i < c.qty; i++) out.push(c.id); }); return out; };
+  // 公開されている情報(手札・現場とその下のカード・リムーブエリア・表向きの証拠)を引いた、残りの未確認のカード(デッキ・FILE・裏向きの証拠のどこか)のうち、
+  // 突撃を持つレベル4(rule.lethalCharge)の割合 = ネクストヒントで突撃が来る確率の見積もり
+  function chargeProbability(){
+    if (!deckCardIds.length) return { p: 0, n: 0, c: 0 };
+    const me = match.opponent, left = deckCardIds.slice();
+    const take = id => { const i = left.indexOf(id); if (i !== -1) left.splice(i, 1); };
+    me.hand.forEach(c => take(c.cardId));
+    me.field.forEach(c => { take(c.cardId); (c.under || []).forEach(u => take(u.cardId)); });
+    me.remove.forEach(c => take(c.cardId));
+    me.evidence.filter(e => e.faceUp).forEach(e => take(e.cardId));
+    const c = left.filter(id => (ruleOf(id) || {}).lethalCharge).length;
+    return { p: left.length ? c / left.length : 0, n: left.length, c };
+  }
+
   // ---- マリガン: 優先度①〜⑤のルール(js/cpu-cards.js の CPU_AI_TYPES) ----
   function mulliganTier(cardId){
     const d = CARD_BY_ID.get(cardId); if (!d) return 9;
@@ -280,7 +298,11 @@
       if (!(theirs.case && theirs.evidence.length > 0)) return mine.evidence.length >= lv;
       const actors = mine.field.filter(c => !c.sleeping && !c.justEntered && !tried.has(key('field', c.uid))).length;
       const plays = (match.turn.playedCardThisTurn ? 0 : 1) + Math.max(0, mine.file.length - (strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : 5));
-      const chargers = getEffectiveFileCount(me) >= 5 ? Math.min(plays, mine.hand.filter(c => (ruleOf(c.cardId) || {}).lethalCharge).length) : 0;
+      const handChargers = mine.hand.filter(c => (ruleOf(c.cardId) || {}).lethalCharge).length;
+      // 手札に突撃が足りなくても、ネクストヒントで突撃(レベル4)が来る確率が基準以上なら、来る前提で走る(strategy.lethalGambleP)
+      const hints = Math.max(0, plays - 1), gp = strategy.lethalGambleP != null ? chargeProbability() : null;
+      const gamble = gp && gp.p >= strategy.lethalGambleP ? Math.min(hints, gp.c) : 0;
+      const chargers = getEffectiveFileCount(me) >= 5 ? Math.min(plays, handChargers + gamble) : 0;
       const guards = theirs.field.filter(c => !c.sleeping).length;   // 相手のアクティブなキャラは、ガードでアクションを1回ずつ止められる
       return mine.evidence.length + Math.min(theirs.evidence.length, Math.max(0, actors + chargers - guards)) >= lv;
     })();
@@ -410,9 +432,10 @@
     const types = window.CPU_AI_TYPES || {};
     aiType = (deck && deck.aiType && types[deck.aiType]) || types[typeKey] || types.control || {};
     strategy = (deck && deck.strategy) || {};
+    deckCardIds = flattenDeck(deck);
     if (deck && deck.mulligan) aiType = Object.assign({}, aiType, { mulligan: deck.mulligan });
     cpuOn = true; tried.clear();
     document.body.classList.add('cpu-mode');
   }
-  window.cpuPlayer = { startOnline, tick, mulliganReturnUids, get on(){ return cpuOn; } };
+  window.cpuPlayer = { startOnline, chargeProbability, tick, mulliganReturnUids, get on(){ return cpuOn; } };
 })();
