@@ -208,3 +208,14 @@ body.online .card-spotlight{ pointer-events:auto; cursor:pointer; }
 /* 1人で両方を操作: 相手側の手札も表向きで、押せるようにする */
 body.online.hotseat .zone[data-side="opponent"] .hand-row .hcard{ background-image:none; background-color:transparent; pointer-events:auto; }
 body.online.hotseat .zone[data-side="opponent"] .hand-row .hcard img{ visibility:visible; }
+
+/* 伏せた手札の裏(茶色)を、背景指定だけに頼らず、重ねた板でも塗る(スマホのSafariで透けて見える対策) */
+.hcard.hidden-card, body.online.host .zone[data-side="opponent"] .hand-row .hcard{ background:#5a3a22 var(--cardback-url, none) center/cover no-repeat !important; }
+.hcard.hidden-card::before, body.online.host .zone[data-side="opponent"] .hand-row .hcard::before{
+  content:''; position:absolute; top:0; right:0; bottom:0; left:0; z-index:0; border-radius:inherit; pointer-events:none;
+  background:#5a3a22 var(--cardback-url, none) center/cover no-repeat;
+}
+.hcard.hidden-card img, body.online.host .zone[data-side="opponent"] .hand-row .hcard img{ display:none !important; }
+body.online.hotseat .zone[data-side="opponent"] .hand-row .hcard{ background:transparent !important; }
+body.online.hotseat .zone[data-side="opponent"] .hand-row .hcard::before{ display:none; }
+body.online.hotseat .zone[data-side="opponent"] .hand-row .hcard img{ display:block !important; visibility:visible; }
