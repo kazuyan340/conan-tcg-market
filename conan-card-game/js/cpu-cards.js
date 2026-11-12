@@ -20,6 +20,7 @@ window.CPU_CARD_RULES = {
 const cpuRem = me => me.remove.map(c => CARD_BY_ID.get(c.cardId)).filter(Boolean);
 const cpuShonen = me => cpuRem(me).filter(d => d.card_type === 'キャラ' && cardHasTrait(d, '少年探偵団'));
 const cpuDistinct = list => new Set(list.map(d => d.name)).size;
+const ruleOf2 = cardId => { const d = CARD_BY_ID.get(cardId); return d && window.CPU_CARD_RULES[String(d.card_id)]; };
 const cpuLv = cardId => { const d = CARD_BY_ID.get(cardId); return d && d.level != null ? d.level : 99; };
 // 出す優先度は「レベル×10＋好み」。FILEエリアの枚数がネクストヒントのたびに減るので、レベルの高いカードから先に出す(Lv9→Lv8→Lv7)。条件に合わないときは -1(出さない)。
 Object.assign(window.CPU_CARD_RULES, {
@@ -41,7 +42,10 @@ Object.assign(window.CPU_CARD_RULES, {
   // 五人囃子(Lv7): リムーブエリアにレベル4の少年探偵団が(名前違いで)そろってから使う
   '1185': { entersLv4: true, playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
   // 黒羽快斗(Lv7): 手札を1枚リムーブして、リムーブエリアのLv5以下の青白の高校生(中森青子など)を登場させる
-  '1199': { playScore: c => { const ok = cpuRem(c.me).some(d => d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '高校生') && /青|白/.test(d.color)); return ok && c.hand.length >= 2 ? 78 : 71; } },
+  '1199': { summonsCharger: ctx => ctx.others.length >= 1 && ctx.chars.some(c => cardHasTrait(defOfInst(c), '探偵')) && cpuRem(ctx.me).some(d => d.card_id === '1200'),   // 現場に探偵(コナン)がいて、リムーブエリアに青子がいて、リムーブする手札がある
+            // リムーブする手札は、突撃を持たない(事件に使えない)カードのうち、レベルの低いものを選ぶ
+            choose: (ctx, items) => { const hand = items.filter(i => match.opponent.hand.some(h => h.uid === i.key)); if (!hand.length) return null; const charge = i => (ruleOf2(i.cardId) || {}).lethalCharge ? 1 : 0; return [[...hand].sort((x, y) => (charge(x) - charge(y)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key]; },
+            playScore: c => { const ok = cpuRem(c.me).some(d => d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '高校生') && /青|白/.test(d.color)); return ok && c.hand.length >= 2 ? 78 : 71; } },
   // 中森青子(Lv5): 事件が青白でパートナーが白のとき、通常の突撃(事件にもアクションできる)を持つ。FILE5でも出せるので、勝ち筋の最後の枠で出す
   '1200': { lethalCharge: true, playScore: c => c.lethal ? 5 : 50 },
 });

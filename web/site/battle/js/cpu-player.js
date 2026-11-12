@@ -294,28 +294,58 @@
     //   事件が解決編・パートナーが起きている状態で、「いまの証拠 + このターンに証拠を取れそうな数」が事件レベル以上なら、勝ちを狙う。
     //   取れそうな数 = アクションできるキャラ(名乗り状態でない起きているキャラ) + 手札の吉田歩美・中森青子(事件にもアクションできる突撃を持つので、ネクストヒントで出せる分。歩美はFILE5以上で出たとき) − 相手のアクティブなキャラの数(ガードで1回ずつ止められる)
     //   ブロックされるなどして足りなくなれば、この判定が外れて、ふつうの動き(キャラの処理など)に戻る
+    let lethalPlan = [];   // 勝ち筋のターンに、順番に出すカード(手札)
     const lethal = (() => {
       if (!mine.case || !mine.case.resolved || !mine.partner || mine.partner.sleeping) return false;
       const lv = getCaseLevel(me); if (lv == null) return false;
       if (!(theirs.case && theirs.evidence.length > 0)) return mine.evidence.length >= lv;
       const actors = mine.field.filter(c => !c.sleeping && !c.justEntered && !tried.has(key('field', c.uid))).length;
-      const plays = (match.turn.playedCardThisTurn ? 0 : 1) + Math.max(0, mine.file.length - (strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : 5));
-      const handChargers = mine.hand.filter(c => (ruleOf(c.cardId) || {}).lethalCharge).length;
-      // 手札に突撃が足りなくても、ネクストヒントで突撃(レベル4)が来る確率が基準以上なら、来る前提で走る(strategy.lethalGambleP)
-      const hints = Math.max(0, plays - 1), gp = strategy.lethalGambleP != null ? chargeProbability() : null;
-      const gamble = gp && gp.p >= strategy.lethalGambleP ? Math.min(hints, gp.c) : 0;
-      const chargers = getEffectiveFileCount(me) >= 5 ? Math.min(plays, handChargers + gamble) : 0;
-      let guards = theirs.field.filter(c => !c.sleeping).length;   // 相手のアクティブなキャラは、ガードでアクションを1回ずつ止められる
-      // このターンに出すカード(レベルの高い順。ネクストヒントのたびにFILEが1枚減る。最後の枠は突撃の歩美)と、場のカードの効果で、相手のアクティブなキャラを何枚除去できるか
-      const nonCharge = Math.max(0, plays - chargers), fileAt = getEffectiveFileCount(me);
-      const pool = mine.hand.filter(c => !(ruleOf(c.cardId) || {}).lethalCharge && score(c) >= 0).sort((a, b) => score(b) - score(a));
-      const planned = [];
-      for (let i = 0; i < nonCharge; i++) { const k = pool.findIndex(c => lvOf(c.cardId) <= fileAt - i); if (k === -1) break; planned.push(pool.splice(k, 1)[0]); }
-      const rctx = { me: mine, foe: theirs, planned, willEnterLv4: chargers > 0 || planned.some(c => (ruleOf(c.cardId) || {}).entersLv4) };
-      let removals = 0;
-      [...mine.field, ...planned].forEach(c => { const r = ruleOf(c.cardId); if (r && r.removesFoe) removals += r.removesFoe(rctx, planned.includes(c)); });
-      guards = Math.max(0, guards - removals);
-      return mine.evidence.length + Math.min(theirs.evidence.length, Math.max(0, actors + chargers - guards)) >= lv;
+      const keepL = strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : 5;
+      const hintsAvail = Math.max(0, mine.file.length - keepL);
+      const slots = ((!match.turn.playedCardThisTurn || match.turn.nextHintPending) ? 1 : 0) + hintsAvail;   // このターンに手札から出せる回数(ネクストヒントのたびにFILEが1枚減る)
+      const fileNow = getEffectiveFileCount(me);
+      const guards = theirs.field.filter(c => !c.sleeping).length;   // 相手のアクティブなキャラは、ガードでアクションを1回ずつ止められる
+      // 手札に突撃が足りなくても、ネクストヒントで突撃が来る確率が基準以上なら、来る前提で走る(strategy.lethalGambleP)
+      const gp = strategy.lethalGambleP != null ? chargeProbability() : null;
+      const gambleAvail = gp && gp.p >= strategy.lethalGambleP ? gp.c : 0;
+      const isLv4Shonen = c => { const d = defOfInst(c); return !!d && d.level === 4 && cardHasTrait(d, '少年探偵団'); };
+      // 出す順番を組み合わせで探す。各枠のFILE枚数以下のレベルのカードしか出せない(高いレベルは早い枠でしか出せない)。
+      // 事件にアクションできる突撃(歩美・青子)を並べるほど、アクションできる数が増える。除去役・黒羽快斗(リムーブエリアから青子を出す)も候補
+      const cands = mine.hand.filter(c => { const r = ruleOf(c.cardId); return r && (r.lethalCharge || r.removesFoe || r.summonsCharger); });
+      const evalPlan = plan => {
+        let atk = actors, entered = 0, willLv4 = false;
+        const chars = [...mine.field];
+        for (let k = 0; k < plan.length; k++) {
+          const c = plan[k], r = ruleOf(c.cardId) || {}, fileK = fileNow - k;
+          entered++;
+          if (r.lethalCharge && !(lvOf(c.cardId) === 4 && fileK < 5)) atk++;   // 歩美はFILE5以上で出たときだけ突撃を持つ
+          if (isLv4Shonen(c) || r.entersLv4) willLv4 = true;
+          if (r.summonsCharger && r.summonsCharger({ me: mine, chars, others: mine.hand.filter(h => !plan.includes(h)) })) { atk++; entered++; }
+          chars.push(c);
+        }
+        if (mine.field.length + entered > maxFieldFor(me)) return null;
+        let removals = 0;
+        const lv4Later = from => plan.slice(from).some(c => isLv4Shonen(c) || (ruleOf(c.cardId) || {}).entersLv4);   // 灰原哀の除去は、レベル4の少年探偵団が「そのあとに」登場したとき
+        mine.field.forEach(c => { const r = ruleOf(c.cardId); if (r && r.removesFoe) removals += r.removesFoe({ me: mine, foe: theirs, willEnterLv4: lv4Later(0) }, false); });
+        plan.forEach((c, k) => { const r = ruleOf(c.cardId); if (r && r.removesFoe) removals += r.removesFoe({ me: mine, foe: theirs, willEnterLv4: lv4Later(k + 1) }, true); });
+        const gambleAtk = Math.min(Math.max(0, slots - plan.length), gambleAvail, fileNow - plan.length >= 5 ? 99 : 0);
+        const hits = Math.min(theirs.evidence.length, Math.max(0, atk + gambleAtk - Math.max(0, guards - removals)));
+        return mine.evidence.length + hits - lv;
+      };
+      let best = null;
+      const dfs = (plan, left) => {
+        const m = evalPlan(plan);
+        if (m != null && (!best || m > best.m || (m === best.m && plan.length < best.plan.length))) best = { m, plan: plan.slice() };
+        if (plan.length >= slots) return;
+        left.forEach((c, i) => {
+          if (lvOf(c.cardId) > fileNow - plan.length) return;
+          dfs(plan.concat(c), left.filter((_, j) => j !== i));
+        });
+      };
+      dfs([], cands);
+      if (!best || best.m < 0) return false;
+      lethalPlan = best.plan;
+      return true;
     })();
 
     lethalFlag = lethal;
@@ -345,6 +375,7 @@
     const full = mine.field.length >= maxFieldFor(me);   // 現場が埋まっていると、1枚リムーブして入れ替えることになる。よほど強いカードだけ出す
     const playable = mine.hand.filter(c => canPlayHandCard(me, c.uid).ok && !tried.has(key('play', c.uid)) && !(isMRCard(c.cardId) && (mine.field.some(f => isMRCard(f.cardId)) || (mine.partnerMR && isMRCard(mine.partnerMR.cardId)))) && score(c) >= (full ? 60 : 0))
       .sort((a, b) => score(b) - score(a));
+    if (lethal && lethalPlan.length) { const first = lethalPlan[0]; const mine1 = playable.filter(c => c.uid === first.uid); if (mine1.length) playable.splice(0, playable.length, ...mine1); }   // 勝ち筋のターンは、組んだ順番で出す
     if (playable.length) {
       const c = playable[0]; tried.add(key('play', c.uid));
       const before = mine.hand.length;
@@ -357,7 +388,7 @@
     const hintKeep = lethal && strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : strategy.nextHintKeep;   // 勝ち筋のターンは、FILEをもっと切る(5枚まで)
     if (hintKeep != null && match.turn.playedCardThisTurn && !match.turn.nextHintPending && mine.file.length > hintKeep && canUseNextHint(me).ok) {
       const fileAfter = mine.file.length - 1 + (mine.partner && mine.partner.assisting ? 1 : 0);
-      const want = mine.hand.some(c => !tried.has(key('play', c.uid)) && lvOf(c.cardId) <= fileAfter && score(c) >= (full ? 60 : 0));
+      const want = lethal && lethalPlan.length ? lethalPlan.some(c => lvOf(c.cardId) <= fileAfter) : mine.hand.some(c => !tried.has(key('play', c.uid)) && lvOf(c.cardId) <= fileAfter && score(c) >= (full ? 60 : 0));
       if (want && once(key('hint', mine.file.length))) { startNextHint(me); return true; }
     }
 
