@@ -62,7 +62,7 @@ Object.assign(window.CPU_CARD_RULES, {
 //   contactCutIn(ctx) / contactDisguise(ctx): true なら使う。ctx = { me, foe, actor(自分の攻撃キャラ), tgt(相手のキャラ), myAp, foeAp }
 const cpuLv4Names = (field, excludeUid) => new Set(field.filter(c => c.uid !== excludeUid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
 const cpuTgtLv = ctx => { const d = defOfInst(ctx.tgt); return d && d.level != null ? d.level : 0; };
-const cpuHoldForContact = c => cpuLv4Names(c.me.field) >= 2 && c.foeField.some(f => f.sleeping);
+const cpuHoldForContact = c => cpuLv4Names(c.me.field) >= 2 && (c.foeField.some(f => f.sleeping) || ['1176', '1177'].includes(String(c.card.cardId && (CARD_BY_ID.get(c.card.cardId) || {}).card_id)));   // 元太・光彦は、ガードしてきた相手(事件アクション)を倒すのにも使うので、条件がそろっていれば手札に残す
 // カットインで「コンタクト中のキャラ」を選ぶ画面: 相手のキャラ(self-)を選ぶ。自分のキャラは選ばない
 const cpuChooseFoeContact = (ctx, items) => { const foe = items.filter(i => String(i.key).startsWith('self-')); return foe.length ? [foe[0].key] : []; };
 Object.assign(window.CPU_CARD_RULES, {

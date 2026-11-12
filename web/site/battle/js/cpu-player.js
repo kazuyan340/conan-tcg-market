@@ -198,7 +198,7 @@
   }
   function cpuContactDecide(){
     const ctx = contactCtx();
-    if (ctx && !ctx.used && ctx.targetType === 'char' && ctx.myAp < ctx.foeAp) {
+    if (ctx && !ctx.used && ctx.myAp < ctx.foeAp) {   // ガードされたコンタクト(事件アクション)でも、相手のキャラに勝てなければカットインを考える
       for (const c of match.opponent.hand) {
         const rule = ruleOf(c.cardId) || {};
         if (rule.contactCutIn && rule.contactCutIn(ctx) && contactState.cutinBlockedSide !== 'opponent' && hasCutInAbility(c.cardId, 'opponent')) { contactUseCutIn('opponent', c.uid); return; }
@@ -454,7 +454,9 @@
       const keeper = awake.find(f => (CARD_BY_ID.get(f.cardId) || {}).card_id === '0092') || awake.find(f => lvOf(f.cardId) === 2);
       keeperUid = keeper ? keeper.uid : null;
     }
-    for (const c of mine.field) {
+    // 手札に円谷光彦Lv4があって、現場にレベル4の名前違いの少年探偵団が2枚以上いるときは、いちばん弱いキャラから動く(光彦のカットインで勝てるので、弱いキャラでアクションしてよい。事件アクションが通れば、なお強い)
+    const koh = mine.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1177') && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
+    for (const c of (koh ? [...mine.field].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId)) : mine.field)) {
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
       if (c.uid === keeperUid) continue;
