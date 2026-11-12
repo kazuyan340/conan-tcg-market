@@ -331,9 +331,10 @@
       // FILEが0でも宣言できる登場役(灰原哀Lv6)が起きて現場にいれば、手札に出せる突撃がなくても、FILEを0まで切る間に突撃(コナンLv5など)を引ければ、それを出してアクションできる
       const anchor = mine.field.find(c => !c.sleeping && (ruleOf(c.cardId) || {}).summonsAnyFile);
       const anchorRule = anchor && ruleOf(anchor.cardId);
-      const anchorTarget = id => { const d = CARD_BY_ID.get(id), r = ruleOf(id); return !!d && !!r && !!r.lethalCharge && d.card_type === 'キャラ' && anchorRule.summonTarget(d); };
-      const anchorHasTarget = !!anchor && mine.hand.some(h => anchorTarget(h.cardId));
-      const anchorChance = anchor && !anchorHasTarget && strategy.lethalGambleP != null ? drawChance(anchorTarget, mine.file.length) : 0;
+      // 手札に突撃の登場候補があるか(歩美はFILE5以上のときだけ)と、FILEを0まで切って引く対象(FILE0では歩美は突撃を持たないので、コナンLv5など最低FILEの要らないカードだけ)
+      const anchorTarget = (id, file) => { const d = CARD_BY_ID.get(id), r = ruleOf(id); return !!d && !!r && !!r.lethalCharge && d.card_type === 'キャラ' && anchorRule.summonTarget(d) && (!r.chargeMinFile || file >= r.chargeMinFile); };
+      const anchorHasTarget = !!anchor && mine.hand.some(h => anchorTarget(h.cardId, getEffectiveFileCount(me)));
+      const anchorChance = anchor && !anchorHasTarget && strategy.lethalGambleP != null ? drawChance(id => anchorTarget(id, 0), mine.file.length) : 0;
       const anchorGamble = anchorChance >= (strategy.lethalGambleP != null ? strategy.lethalGambleP : 2);
       const isLv4Shonen = c => { const d = defOfInst(c); return !!d && d.level === 4 && cardHasTrait(d, '少年探偵団'); };
       // 出す順番を組み合わせで探す。各枠のFILE枚数以下のレベルのカードしか出せない(高いレベルは早い枠でしか出せない)。
@@ -343,7 +344,7 @@
         let atk = actors, entered = 0, willLv4 = false;
         const used = new Set();   // 効果で手札から登場させるカード(同じカードを2回は使えない)
         if (anchor) {   // すでに現場にいる登場役の宣言(手札に突撃があれば、それを出す。なければ、引ける確率が基準以上なら引く前提)
-          const got = anchorRule.summonsCharger({ me: mine, chars: mine.field, others: mine.hand.filter(h => !plan.includes(h)) });
+          const got = anchorRule.summonsCharger({ me: mine, chars: mine.field, file: fileNow, others: mine.hand.filter(h => !plan.includes(h)) });
           if (got) { atk++; entered++; if (got.uid) used.add(got.uid); }
           else if (anchorGamble) { atk++; entered++; }
         }
@@ -351,10 +352,10 @@
         for (let k = 0; k < plan.length; k++) {
           const c = plan[k], r = ruleOf(c.cardId) || {}, fileK = fileNow - k;
           entered++;
-          if (r.lethalCharge && !(lvOf(c.cardId) === 4 && fileK < 5)) atk++;   // 歩美はFILE5以上で出たときだけ突撃を持つ
+          if (r.lethalCharge && (!r.chargeMinFile || fileK >= r.chargeMinFile)) atk++;   // 歩美はFILE5以上で出たときだけ突撃を持つ
           if (isLv4Shonen(c) || r.entersLv4) willLv4 = true;
           if (r.summonsCharger) {   // 効果で手札(または黒羽快斗のようにリムーブエリア)から突撃のキャラを登場させる
-            const got = r.summonsCharger({ me: mine, chars, others: mine.hand.filter(h => !plan.includes(h) && !used.has(h.uid)) });
+            const got = r.summonsCharger({ me: mine, chars, file: fileK, others: mine.hand.filter(h => !plan.includes(h) && !used.has(h.uid)) });
             if (got) { atk++; entered++; if (got.uid) used.add(got.uid); }
           }
           chars.push(c);

@@ -72,7 +72,7 @@ Object.assign(window.CPU_CARD_RULES, {
   '1177': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
   // 吉田歩美(Lv4): 変装で攻撃キャラと入れ替わる。入れ替え後に名前違いのレベル4少年探偵団が3枚以上そろえば、レベル7以下のスリープ状態のキャラをリムーブして1枚引く
   // (勝ち筋: 事件にもアクションできる突撃を持つのは、FILE5以上で出た歩美と、中森青子。元太・光彦の突撃は［キャラ］限定なので、事件には行けない)
-  '1175': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
+  '1175': { lethalCharge: true, chargeMinFile: 5, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
 // 相手のキャラを選んで除去する効果の選び方: 相手の「アクティブ(ガードできる)」キャラを優先し、そのなかでAPの高いものを選ぶ。自分のキャラは選ばない
@@ -96,10 +96,11 @@ Object.assign(window.CPU_CARD_RULES, {
   // 灰原哀(Lv6): 宣言(スリープ)で、手札のレベル5以下の少年探偵団のキャラを1枚登場させる。突撃のコナンLv5や歩美を優先する
   // summonsAnyFile: 宣言がFILE枚数に関係なく使える(FILE0でも)。summonTarget: 宣言で登場させられるカード
   '0002': { summonsAnyFile: true, summonTarget: d => d.level <= 5 && cardHasTrait(d, '少年探偵団'), playScore: c => c.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '少年探偵団'); }) ? 66 : 15,
-            summonsCharger: ctx => ctx.others.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '0631') || ctx.others.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1175') || null,
+            // 歩美の突撃はFILE5以上で出たときだけ(ctx.file はそのときのFILE枚数)
+            summonsCharger: ctx => ctx.others.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '0631') || (ctx.file >= 5 ? ctx.others.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1175') : null) || null,
             // 勝ち筋でコナンを引きにいっている間は、突撃を持つ登場候補(コナンLv5・歩美)が手札に来るまで宣言を取っておく
-            declares: [{ line: 'レベル5以下の〚特徴［少年探偵団］〛のキャラを1枚まで登場', when: c => c.me.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '少年探偵団') && (!(window.cpuPlayer && window.cpuPlayer.drawing) || (window.CPU_CARD_RULES[String(d.card_id)] || {}).lethalCharge); }) }],
-            choose: (ctx, items) => { const hand = items.filter(i => match.opponent.hand.some(h => h.uid === i.key)); if (!hand.length) return null; const pri = i => { const id = (CARD_BY_ID.get(i.cardId) || {}).card_id; return id === '0631' ? 0 : id === '1175' ? 1 : 2; }; return [[...hand].sort((x, y) => pri(x) - pri(y) || cpuLv(y.cardId) - cpuLv(x.cardId))[0].key]; } },
+            declares: [{ line: 'レベル5以下の〚特徴［少年探偵団］〛のキャラを1枚まで登場', when: c => c.me.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '少年探偵団') && (!(window.cpuPlayer && window.cpuPlayer.drawing) || (((window.CPU_CARD_RULES[String(d.card_id)] || {}).lethalCharge) && getEffectiveFileCount('opponent') >= ((window.CPU_CARD_RULES[String(d.card_id)] || {}).chargeMinFile || 0))); }) }],
+            choose: (ctx, items) => { const hand = items.filter(i => match.opponent.hand.some(h => h.uid === i.key)); if (!hand.length) return null; const fileNow = getEffectiveFileCount('opponent'); const pri = i => { const id = (CARD_BY_ID.get(i.cardId) || {}).card_id; return id === '0631' ? 0 : id === '1175' && fileNow >= 5 ? 1 : id === '1175' ? 3 : 2; }; return [[...hand].sort((x, y) => pri(x) - pri(y) || cpuLv(y.cardId) - cpuLv(x.cardId))[0].key]; } },
 });
 // 事件「コナンVS怪盗キッド」: 4展開したら宣言する。選択は、自分のいちばんレベルの低いキャラをリムーブ → 相手の現場のキャラ(レベルの高い順)を手札に戻す
 window.CPU_CARD_RULES['1261'] = {
