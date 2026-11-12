@@ -19,6 +19,7 @@ app.whenReady().then(async () => {
     document.getElementById('cpuStart').click();
     window.__human = setInterval(() => {
       if (!match || match.gameOver) return;
+      if (hiramekiState && hiramekiState.side === 'self') { declineHirameki(); return; }
       if (mulliganPhase === 'self') { document.getElementById('mulliganConfirmBtn').click(); return; }
       if (match.turn && match.turn.activeSide === 'self' && match.turn.phase === 'main' && !choiceState && !actionState && !contactState && !handDiscardState) { try { endTurn(); } catch (e) {} }
     }, 700);
@@ -28,6 +29,8 @@ app.whenReady().then(async () => {
     me: { hand: m.self.hand.length, field: m.self.field.length, ev: m.self.evidence.length },
     pending: ['choiceState','handDiscardState','evidencePickState','deckPeekState','actionState','contactState','mulliganPhase'].filter(k => { try { return !!eval(k); } catch (e) { return false; } }) }); })()`;
   for (let t = 0; t < secs; t += 5) { await sleep(5000); console.log(await win.webContents.executeJavaScript(snap)); }
+  console.log('STUCK', await win.webContents.executeJavaScript(`JSON.stringify({vis:[...document.querySelectorAll('[id]')].filter(e=>/overlay|panel/i.test(e.id) && getComputedStyle(e).display!=='none' && e.offsetParent!==null).map(e=>e.id), txt:(document.getElementById('actionHintBar')||{}).textContent, turn: match.turn, ev: match.events.slice(-4).map(e=>e.type)})`));
+  console.log('LOG', await win.webContents.executeJavaScript(`JSON.stringify(match.events.filter(e => e.side === 'opponent' && /play|declare|caseDecl|handDiscard|deckMill|remove/i.test(e.type)).slice(-60).map(e => e.type + ':' + (e.uid ? (CARD_BY_ID.get(uidToCardId(e.uid)) || {}).name : '')))`));
   console.log('DBG', await win.webContents.executeJavaScript(`JSON.stringify({dp: deckPeekState && {step: deckPeekState.step, side: deckPeekState.side, actor: deckPeekState.actor, dest: deckPeekState.destination, rev: (deckPeekState.revealedUids||[]).length, mand: deckPeekState.mandatory, forceRemove: deckPeekState.forceRemove, pending: deckPeekState.pendingUid, chosen: deckPeekState.chosenUid}, ov: document.getElementById('deckPeekOverlay').style.display, btns: [...document.querySelectorAll('#deckPeekOverlay button')].map(b => b.id + ':' + b.style.display + ':' + b.textContent)})`));
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'cpu.png'), (await win.webContents.capturePage()).toPNG());

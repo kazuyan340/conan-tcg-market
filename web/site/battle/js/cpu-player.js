@@ -74,6 +74,7 @@
     const pickedDeck = (typeof cpuDeckList === 'function' ? cpuDeckList() : [])[Number((document.getElementById('oppDeckSelect') || {}).value)];
     const types = window.CPU_AI_TYPES || {};
     aiType = (pickedDeck && pickedDeck.deck.aiType && types[pickedDeck.deck.aiType]) || types[sel && sel.value] || types.control || {};
+    if (pickedDeck && pickedDeck.deck.mulligan) aiType = Object.assign({}, aiType, { mulligan: pickedDeck.deck.mulligan });   // デッキごとのマリガン指定を優先
     document.body.classList.toggle('cpu-mode', cpuOn);
     tried.clear();
   });
@@ -115,6 +116,12 @@
   // ---- CPUの番に出る選択画面を自動で進める ----
   function resolvePending(){
     if (mulliganPhase === 'opponent') { performMulligan('opponent', mulliganReturnUids()); return true; }
+    if (switchState && switchState.side === 'opponent') {   // 現場が埋まっているときのスイッチ: いちばんレベルの低いキャラをリムーブして入れ替える
+      const c = [...match.opponent.field].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId))[0];
+      if (c) { selectSwitchTarget(c.uid); return true; }
+      switchState = null; return true;
+    }
+    if (hiramekiState && hiramekiState.side === 'opponent') { activateHirameki(); return true; }   // ヒラメキは「発動する」
     if (disguiseReactState) { skipDisguiseReact(); return true; }
     if (misleadState) { skipMislead(); return true; }
     if (evidencePickState) {
@@ -188,6 +195,7 @@
       const i = lvTiers.findIndex(lvs => lvs.includes(d.level)); return i === -1 ? 9 : i + 1;
     }
     const pri = mg.priorities || [];
+    if (pri.length) { const i = pri.findIndex(list => list.includes(String(d.card_id))); return i === -1 ? 9 : i + 1; }   // card_id で指定した優先度
     // 優先度の指定が無いときは、レベルの低いキャラほど先に欲しいカードとみなす
     if (d.card_type === 'キャラ' && d.level != null) return d.level <= 2 ? 1 : d.level === 3 ? 2 : d.level === 4 ? 3 : d.level === 5 ? 4 : 9;
     return d.level != null && d.level <= 2 ? 3 : 9;
@@ -218,15 +226,38 @@
     // 1) 勝てるなら事件解決
     if (canSolveCase(me).ok && once(key('solve', 'case'))) { performSolveCase(me); return true; }
 
+    // 1.5) 宣言能力(カード別ルールの declares)。例: デッキを5枚リムーブして肥やす
+    for (const c of mine.field) {
+      const rule = ruleOf(c.cardId); if (!rule || !rule.declares) continue;
+      for (const dc of rule.declares) {
+        if (tried.has(key('decl:' + dc.line, c.uid))) continue;
+        if (dc.when && !dc.when({ me: mine, foe: theirs, turn: t, card: c })) continue;
+        const d = geeDeclareDefs(c.cardId).find(x => (x.lineText || '').includes(dc.line));
+        if (!d || d.check(me, c.uid)) continue;
+        tried.add(key('decl:' + dc.line, c.uid));
+        if (d.sleepCost) recordEvent({ type: 'declareSleepCost', side: me, uid: c.uid });
+        d.run(me, c.uid);
+        return true;
+      }
+    }
+
     // 2) 出せるカード(レベルの高い順に)
-    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
-    const playable = mine.hand.filter(c => canPlayHandCard(me, c.uid).ok && !tried.has(key('play', c.uid)) && score(c) >= 0)
+    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
+    const full = mine.field.length >= maxFieldFor(me);   // 現場が埋まっていると、1枚リムーブして入れ替えることになる。よほど強いカードだけ出す
+    const playable = mine.hand.filter(c => canPlayHandCard(me, c.uid).ok && !tried.has(key('play', c.uid)) && score(c) >= (full ? 60 : 0))
       .sort((a, b) => score(b) - score(a));
     if (playable.length) {
       const c = playable[0]; tried.add(key('play', c.uid));
       const before = mine.hand.length;
       playCard(me, c.uid);
       return true;
+    }
+
+    // 2.5) 事件の宣言能力(解決編のとき)。使うかどうかは事件カードのルール(useCaseDeclare)で決める
+    if (mine.case && mine.case.resolved) {
+      const cr = ruleOf(mine.case.cardId);
+      const entered = mine.field.filter(c => c.justEntered).length;   // このターンに登場した枚数
+      if (cr && cr.useCaseDeclare && canDeclareGenericCase(me).ok && once(key('caseDecl', 'c')) && cr.useCaseDeclare({ me: mine, foe: theirs, turn: t, entered })) { declareGenericCase(me); return true; }
     }
 
     // 3) 起きているキャラで、アクションか推理
@@ -298,6 +329,7 @@
   function startOnline(deck, typeKey){
     const types = window.CPU_AI_TYPES || {};
     aiType = (deck && deck.aiType && types[deck.aiType]) || types[typeKey] || types.control || {};
+    if (deck && deck.mulligan) aiType = Object.assign({}, aiType, { mulligan: deck.mulligan });
     cpuOn = true; tried.clear();
     document.body.classList.add('cpu-mode');
   }
