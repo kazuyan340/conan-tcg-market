@@ -25,17 +25,21 @@ const cpuLv = cardId => { const d = CARD_BY_ID.get(cardId); return d && d.level 
 Object.assign(window.CPU_CARD_RULES, {
   // 怪盗キッド&黒羽快斗(Lv9): 宣言でデッキを5枚リムーブ(肥やす)
   '0547': { playScore: c => c.me.deckPile.length < 10 ? 91 : 99,
+            removesFoe: ctx => ctx.me.deckPile.length >= 15 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items),
             declares: [{ line: 'デッキのカードを上から5枚リムーブ', when: c => c.me.deckPile.length >= 15 }] },   // 山札切れに注意して、15枚以上あるときだけ肥やす
   // 結成 少年探偵団(Lv8): 名前の違う少年探偵団が5枚そろってから出して、5枚重ねにする
   '0264': { playScore: c => { const n = cpuDistinct(cpuShonen(c.me)); return n >= 5 ? 88 : n === 4 ? 82 : -1; },
             // 重ねるカードは、五人囃子で使うレベル4をなるべく残して、レベルの低いものから選ぶ
             choose: (ctx, items) => items.length ? [[...items].sort((x, y) => ((cpuLv(x.cardId) === 4) - (cpuLv(y.cardId) === 4)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key] : null },
   // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
-  '0036': { playScore: c => c.me.deckPile.length < 10 ? -1 : cpuDistinct(cpuShonen(c.me)) < 5 ? 86 : 81 },
-  '1197': { playScore: () => 80 },
-  '1171': { playScore: () => 83 },
+  '0036': { playScore: c => c.me.deckPile.length < 10 ? -1 : cpuDistinct(cpuShonen(c.me)) < 5 ? 86 : 81,
+            removesFoe: (ctx, planned) => planned && ctx.me.deckPile.length >= 10 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
+  // 怪盗キッド(Lv8): 宣言で相手のキャラをスリープさせる(お互いの証拠が合わせて5つ以上のとき)
+  '1197': { playScore: () => 80, removesFoe: ctx => ctx.me.evidence.length + ctx.foe.evidence.length >= 5 ? 1 : 0 },
+  // 灰原哀(Lv8): 自分ターン中、レベル4の少年探偵団が登場したとき(ターン1)、AP8000以下のキャラをリムーブ
+  '1171': { playScore: () => 83, removesFoe: ctx => ctx.willEnterLv4 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
   // 五人囃子(Lv7): リムーブエリアにレベル4の少年探偵団が(名前違いで)そろってから使う
-  '1185': { playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
+  '1185': { entersLv4: true, playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
   // 黒羽快斗(Lv7): 手札を1枚リムーブして、リムーブエリアのLv5以下の青白の高校生(中森青子など)を登場させる
   '1199': { playScore: c => { const ok = cpuRem(c.me).some(d => d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '高校生') && /青|白/.test(d.color)); return ok && c.hand.length >= 2 ? 78 : 71; } },
   '1200': { playScore: () => 50 },
@@ -58,6 +62,15 @@ Object.assign(window.CPU_CARD_RULES, {
   '1175': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
+// 相手のキャラを選んで除去する効果の選び方: 相手の「アクティブ(ガードできる)」キャラを優先し、そのなかでAPの高いものを選ぶ。自分のキャラは選ばない
+const cpuPickFoeActive = (ctx, items) => {
+  if (!/AP8000以下|リムーブ|デッキの下|スリープ/.test(String(ctx.hint || ''))) return null;
+  const foe = items.filter(i => String(i.key).startsWith('self-'));
+  if (!foe.length) return null;
+  const inst = i => match.self.field.find(f => f.uid === i.key);
+  foe.sort((a, b) => (((inst(a) || {}).sleeping ? 1 : 0) - ((inst(b) || {}).sleeping ? 1 : 0)) || (effectiveAp(match, inst(b), 'self') - effectiveAp(match, inst(a), 'self')));
+  return [foe[0].key];
+};
 // 事件「コナンVS怪盗キッド」: 4展開したら宣言する。選択は、自分のいちばんレベルの低いキャラをリムーブ → 相手の現場のキャラ(レベルの高い順)を手札に戻す
 window.CPU_CARD_RULES['1261'] = {
   useCaseDeclare: ctx => ctx.entered >= 4,

@@ -288,6 +288,8 @@
     // 1) 勝てるなら事件解決
     if (canSolveCase(me).ok && once(key('solve', 'case'))) { performSolveCase(me); return true; }
 
+    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs, lethal: lethalFlag }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
+    let lethalFlag = false;   // 勝ち筋の判定の結果(下で決まる。出す優先度の計算に使う)
     // 1.2) 勝ち筋の判定(相手のキャラの処理より、勝つことを優先する)
     //   事件が解決編・パートナーが起きている状態で、「いまの証拠 + このターンに証拠を取れそうな数」が事件レベル以上なら、勝ちを狙う。
     //   取れそうな数 = アクションできるキャラ(名乗り状態でない起きているキャラ) + 手札の吉田歩美(FILE5以上で登場すると事件にもアクションできる突撃を持つので、ネクストヒントで出せる分) − 相手のアクティブなキャラの数(ガードで1回ずつ止められる)
@@ -303,10 +305,21 @@
       const hints = Math.max(0, plays - 1), gp = strategy.lethalGambleP != null ? chargeProbability() : null;
       const gamble = gp && gp.p >= strategy.lethalGambleP ? Math.min(hints, gp.c) : 0;
       const chargers = getEffectiveFileCount(me) >= 5 ? Math.min(plays, handChargers + gamble) : 0;
-      const guards = theirs.field.filter(c => !c.sleeping).length;   // 相手のアクティブなキャラは、ガードでアクションを1回ずつ止められる
+      let guards = theirs.field.filter(c => !c.sleeping).length;   // 相手のアクティブなキャラは、ガードでアクションを1回ずつ止められる
+      // このターンに出すカード(レベルの高い順。ネクストヒントのたびにFILEが1枚減る。最後の枠は突撃の歩美)と、場のカードの効果で、相手のアクティブなキャラを何枚除去できるか
+      const nonCharge = Math.max(0, plays - chargers), fileAt = getEffectiveFileCount(me);
+      const pool = mine.hand.filter(c => !(ruleOf(c.cardId) || {}).lethalCharge && score(c) >= 0).sort((a, b) => score(b) - score(a));
+      const planned = [];
+      for (let i = 0; i < nonCharge; i++) { const k = pool.findIndex(c => lvOf(c.cardId) <= fileAt - i); if (k === -1) break; planned.push(pool.splice(k, 1)[0]); }
+      const rctx = { me: mine, foe: theirs, planned, willEnterLv4: chargers > 0 || planned.some(c => (ruleOf(c.cardId) || {}).entersLv4) };
+      let removals = 0;
+      [...mine.field, ...planned].forEach(c => { const r = ruleOf(c.cardId); if (r && r.removesFoe) removals += r.removesFoe(rctx, planned.includes(c)); });
+      guards = Math.max(0, guards - removals);
       return mine.evidence.length + Math.min(theirs.evidence.length, Math.max(0, actors + chargers - guards)) >= lv;
     })();
 
+    lethalFlag = lethal;
+    window.cpuPlayer && (window.cpuPlayer.lastLethal = lethal);
     // 1.5) 宣言能力(カード別ルールの declares)。例: デッキを5枚リムーブして肥やす
     for (const c of mine.field) {
       const rule = ruleOf(c.cardId); if (!rule || !rule.declares) continue;
@@ -323,7 +336,6 @@
     }
 
     // 2) 出せるカード(レベルの高い順に)
-    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs, lethal }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
     // 2.0) アシストを先にする: アシスト(パートナーがFILEエリアに入って、FILE枚数が1枚増える)で、いま出せないカードが出せるようになるとき
     if (!lethal && !tried.has(key('assistFirst', 'p')) && canUseAssist(me).ok && !match.turn.playedCardThisTurn) {
       const fileNow = getEffectiveFileCount(me);
