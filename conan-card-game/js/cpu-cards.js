@@ -111,7 +111,7 @@ window.CPU_CARD_RULES['1261'] = {
     const h = String(ctx.hint || '');
     const own = items.filter(i => String(i.key).startsWith('opponent-')), foe = items.filter(i => String(i.key).startsWith('self-'));
     if (/自分の現場にいるキャラを1枚リムーブしてもよい/.test(h)) return ['yes'];
-    if (/キャラを1枚選び、リムーブ/.test(h) && own.length) return [own.sort((a, b) => cpuLv(a.cardId) - cpuLv(b.cardId))[0].key];
+    if (/キャラを1枚選び、リムーブ/.test(h) && own.length) return [own.sort((a, b) => (cpuLv(a.cardId) + ((CARD_BY_ID.get(a.cardId) || {}).card_id === '0092' ? 10 : 0)) - (cpuLv(b.cardId) + ((CARD_BY_ID.get(b.cardId) || {}).card_id === '0092' ? 10 : 0)))[0].key];
     if (/手札に移/.test(h)) return foe.length ? [foe.sort((a, b) => cpuLv(b.cardId) - cpuLv(a.cardId))[0].key] : [];
     return null;
   },

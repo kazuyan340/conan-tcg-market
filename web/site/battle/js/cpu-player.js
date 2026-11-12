@@ -123,7 +123,7 @@
   function resolvePending(){
     if (mulliganPhase === 'opponent') { performMulligan('opponent', mulliganReturnUids()); return true; }
     if (switchState && switchState.side === 'opponent') {   // 現場が埋まっているときのスイッチ: いちばんレベルの低いキャラをリムーブして入れ替える
-      const c = [...match.opponent.field].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId))[0];
+      const c = [...match.opponent.field].sort((a, b) => keepLv(a.cardId) - keepLv(b.cardId))[0];
       if (c) { selectSwitchTarget(c.uid); return true; }
       switchState = null; return true;
     }
@@ -140,7 +140,7 @@
       return true;
     }
     if (handDiscardState) {
-      const h = [...match[handDiscardState.side].hand].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId))[0];
+      const h = [...match[handDiscardState.side].hand].sort((a, b) => keepLv(a.cardId) - keepLv(b.cardId))[0];
       if (h) selectHandDiscardTarget(h.uid); else handDiscardState = null;
       return true;
     }
@@ -228,7 +228,7 @@
   // 手札を1枚選ぶ画面: いちばんレベルの低いカードを押す
   function clickLowestHand(side){
     const cards = [...document.querySelectorAll('.zone[data-side="' + side + '"] .hand-row .hcard[data-uid]')];
-    cards.sort((x, y) => lvOf(uidToCardId(x.dataset.uid)) - lvOf(uidToCardId(y.dataset.uid)));
+    cards.sort((x, y) => keepLv(uidToCardId(x.dataset.uid)) - keepLv(uidToCardId(y.dataset.uid)));
     if (!cards.length) return false;
     cards[0].click();
     return true;
@@ -295,6 +295,8 @@
     return hand.filter(x => !keep.has(x.c.uid)).map(x => x.c.uid);
   }
   const ruleOf = cardId => { const d = CARD_BY_ID.get(cardId); return (d && (window.CPU_CARD_RULES || {})[String(d.card_id)]) || null; };
+  // 手札を捨てる・現場からリムーブするときの「大事さ」(低いものから手放す)。江戸川コナンLv4(0092)は大事にする
+  const keepLv = cardId => { const d = CARD_BY_ID.get(cardId); return (d && d.level != null ? d.level : 0) + (d && d.card_id === '0092' ? 10 : 0); };
   const lvOf = cardId => { const d = CARD_BY_ID.get(cardId); return d && d.level != null ? d.level : 0; };
 
   // ---- メインフェイズの手 ----
@@ -445,9 +447,17 @@
     }
 
     // 3) 起きているキャラで、アクションか推理
+    // 先攻3ターン目に歩美でアクションするときは、全部スリープにならないよう、アクティブで残すキャラを決める: 江戸川コナンLv4がいればそれだけ、いなければレベル2を1枚。そのキャラはアクションも推理もしない
+    let keeperUid = null;
+    if (open === 3 && mine.field.some(f => (CARD_BY_ID.get(f.cardId) || {}).card_id === '1175')) {
+      const awake = mine.field.filter(f => !f.sleeping && (CARD_BY_ID.get(f.cardId) || {}).card_id !== '1175');
+      const keeper = awake.find(f => (CARD_BY_ID.get(f.cardId) || {}).card_id === '0092') || awake.find(f => lvOf(f.cardId) === 2);
+      keeperUid = keeper ? keeper.uid : null;
+    }
     for (const c of mine.field) {
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
+      if (c.uid === keeperUid) continue;
       const rule = ruleOf(c.cardId) || {};
       let target = rule.noAction || (aiType.reasonFirst && canUseReason(me, 'field', c.uid).ok) ? null : pickActionTarget(c, lethal);
       // 先攻3ターン目: 相手が全部アクティブ(アクションできる相手がいない)なら、事件へ突撃するのは歩美だけ。ほかのキャラはアクティブのまま、元からいたキャラだけが推理する
