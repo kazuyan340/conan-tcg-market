@@ -160,7 +160,7 @@
       if (card) { card.click(); const yes = document.getElementById('deckPeekYesBtn'); if (yes) yes.click(); return true; }
       finalizeAction(null); return true;
     }
-    if (contactState && contactState.queue && contactState.queue[0] === 'opponent') { contactPass(); return true; }
+    if (contactState && contactState.queue && contactState.queue[0] === 'opponent') { cpuContactDecide(); return true; }
     if (deckPeekState) {
       const st = deckPeekState;
       if (st.step === 'reorder') { finalizeDeckPeek((st.remainingUids || []).slice()); return true; }
@@ -178,6 +178,47 @@
       if (visible(b) && b.offsetParent && /しない|スキップ|キャンセル|閉じる|発動しない/.test(b.textContent)) { b.click(); return true; }
     }
     return false;
+  }
+
+  // ---- コンタクト中(CPUの番): 攻撃側のとき、勝てなければ手札のカットイン・変装で勝てるか考える ----
+  //   カードごとの判断は js/cpu-cards.js の contactCutIn(ctx) / contactDisguise(ctx)(true なら使う)。AP＋N だけのカットインは、勝てるようになるなら使う。
+  function contactCtx(){
+    const cs = contactState;
+    if (!cs || cs.attackerSide !== 'opponent') return null;
+    const actor = match.opponent.field.find(c => c.uid === cs.attackerUid);
+    const tgt = match[cs.defenderSide].field.find(c => c.uid === cs.defenderUid);
+    if (!actor || !tgt) return null;
+    const bonus = sk => (cs.apBuffs || []).filter(b => b.side === sk).reduce((s, b) => s + b.amount, 0);
+    return { me: match.opponent, foe: match.self, actor, tgt, targetType: cs.targetType,
+      myAp: effectiveAp(match, actor, 'opponent') + bonus('opponent'), foeAp: effectiveAp(match, tgt, cs.defenderSide) + bonus(cs.defenderSide), used: !!(cs.usedCutIn && cs.usedCutIn.opponent) };
+  }
+  function cpuContactDecide(){
+    const ctx = contactCtx();
+    if (ctx && !ctx.used && ctx.targetType === 'char' && ctx.myAp < ctx.foeAp) {
+      for (const c of match.opponent.hand) {
+        const rule = ruleOf(c.cardId) || {};
+        if (rule.contactCutIn && rule.contactCutIn(ctx) && contactState.cutinBlockedSide !== 'opponent' && hasCutInAbility(c.cardId, 'opponent')) { contactUseCutIn('opponent', c.uid); return; }
+        if (rule.contactDisguise && rule.contactDisguise(ctx) && canUseDisguise('opponent', c.uid)) { contactUseDisguise('opponent', c.uid); return; }
+        if (!rule.contactCutIn && contactState.cutinBlockedSide !== 'opponent') {   // AP＋N だけのカットイン
+          const amt = getCutInEffects(c.cardId, 'opponent').reduce((m, a) => Math.max(m, a), 0);
+          if (amt > 0 && ctx.myAp + amt >= ctx.foeAp) { contactUseCutIn('opponent', c.uid); return; }
+        }
+      }
+    }
+    contactPass();
+  }
+  // 変装の条件(FILE枚数・パートナーの色・事件の色)を、いま満たしているか(コンタクト中でなくても調べられる)
+  function disguiseOkNow(cardId){
+    const cond = getDisguiseCondition(cardId); if (!cond) return false;
+    if (cond.fileMin != null && getEffectiveFileCount('opponent') < cond.fileMin) return false;
+    if (cond.partnerColor && !partnerHasColor('opponent', cond.partnerColor)) return false;
+    if (cond.caseColors && !(match.opponent.case && cond.caseColors.some(col => cardHasColor(CARD_BY_ID.get(match.opponent.case.cardId), col)))) return false;
+    return true;
+  }
+  // アクション前の見積もり: 手札のカットイン・変装で、このターゲットを倒せるか
+  function winnableByHand(actor, tgt){
+    const cs = { me: match.opponent, foe: match.self, actor, tgt, targetType: 'char', myAp: effectiveAp(match, actor, 'opponent'), foeAp: effectiveAp(match, tgt, 'self'), used: false };
+    return match.opponent.hand.some(c => { const r = ruleOf(c.cardId) || {}; return (r.contactCutIn && r.contactCutIn(cs)) || (r.contactDisguise && r.contactDisguise(cs) && disguiseOkNow(c.cardId)); });
   }
 
   // 手札を1枚選ぶ画面: いちばんレベルの低いカードを押す
@@ -229,6 +270,21 @@
     // 1) 勝てるなら事件解決
     if (canSolveCase(me).ok && once(key('solve', 'case'))) { performSolveCase(me); return true; }
 
+    // 1.2) 勝ち筋の判定(相手のキャラの処理より、勝つことを優先する)
+    //   事件が解決編・パートナーが起きている状態で、「いまの証拠 + このターンに証拠を取れそうな数」が事件レベル以上なら、勝ちを狙う。
+    //   取れそうな数 = アクションできるキャラ(名乗り状態でない起きているキャラ) + 手札のレベル4少年探偵団(FILE5以上で登場すると突撃を持つので、ネクストヒントで出せる分) − 相手のアクティブなキャラの数(ガードで1回ずつ止められる)
+    //   ブロックされるなどして足りなくなれば、この判定が外れて、ふつうの動き(キャラの処理など)に戻る
+    const lethal = (() => {
+      if (!mine.case || !mine.case.resolved || !mine.partner || mine.partner.sleeping) return false;
+      const lv = getCaseLevel(me); if (lv == null) return false;
+      if (!(theirs.case && theirs.evidence.length > 0)) return mine.evidence.length >= lv;
+      const actors = mine.field.filter(c => !c.sleeping && !c.justEntered && !tried.has(key('field', c.uid))).length;
+      const plays = (match.turn.playedCardThisTurn ? 0 : 1) + Math.max(0, mine.file.length - (strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : 5));
+      const chargers = getEffectiveFileCount(me) >= 5 ? Math.min(plays, mine.hand.filter(c => (ruleOf(c.cardId) || {}).lethalCharge).length) : 0;
+      const guards = theirs.field.filter(c => !c.sleeping).length;   // 相手のアクティブなキャラは、ガードでアクションを1回ずつ止められる
+      return mine.evidence.length + Math.min(theirs.evidence.length, Math.max(0, actors + chargers - guards)) >= lv;
+    })();
+
     // 1.5) 宣言能力(カード別ルールの declares)。例: デッキを5枚リムーブして肥やす
     for (const c of mine.field) {
       const rule = ruleOf(c.cardId); if (!rule || !rule.declares) continue;
@@ -245,9 +301,9 @@
     }
 
     // 2) 出せるカード(レベルの高い順に)
-    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
+    const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs, lethal }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
     // 2.0) アシストを先にする: アシスト(パートナーがFILEエリアに入って、FILE枚数が1枚増える)で、いま出せないカードが出せるようになるとき
-    if (!tried.has(key('assistFirst', 'p')) && canUseAssist(me).ok && !match.turn.playedCardThisTurn) {
+    if (!lethal && !tried.has(key('assistFirst', 'p')) && canUseAssist(me).ok && !match.turn.playedCardThisTurn) {
       const fileNow = getEffectiveFileCount(me);
       const unlocks = mine.hand.some(c => { const lv = lvOf(c.cardId); return lv === fileNow + 1 && score(c) >= (mine.field.length >= maxFieldFor(me) ? 60 : 0); });
       if (unlocks) { tried.add(key('assistFirst', 'p')); tried.add(key('partner', 'p')); performAssist(me); return true; }
@@ -264,7 +320,8 @@
 
     // 2.3) ネクストヒント: 1枚使ったあと、FILEエリアが strategy.nextHintKeep 枚より多く、次に出したいカードがあれば使う
     //      (FILEの一番上が手札に入り、FILEが1枚減ったレベルまでのカードをもう1枚使える)
-    if (strategy.nextHintKeep != null && match.turn.playedCardThisTurn && !match.turn.nextHintPending && mine.file.length > strategy.nextHintKeep && canUseNextHint(me).ok) {
+    const hintKeep = lethal && strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : strategy.nextHintKeep;   // 勝ち筋のターンは、FILEをもっと切る(5枚まで)
+    if (hintKeep != null && match.turn.playedCardThisTurn && !match.turn.nextHintPending && mine.file.length > hintKeep && canUseNextHint(me).ok) {
       const fileAfter = mine.file.length - 1 + (mine.partner && mine.partner.assisting ? 1 : 0);
       const want = mine.hand.some(c => !tried.has(key('play', c.uid)) && lvOf(c.cardId) <= fileAfter && score(c) >= (full ? 60 : 0));
       if (want && once(key('hint', mine.file.length))) { startNextHint(me); return true; }
@@ -275,7 +332,7 @@
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
       const rule = ruleOf(c.cardId) || {};
-      const target = rule.noAction || (aiType.reasonFirst && canUseReason(me, 'field', c.uid).ok) ? null : pickActionTarget(c);
+      const target = rule.noAction || (aiType.reasonFirst && canUseReason(me, 'field', c.uid).ok) ? null : pickActionTarget(c, lethal);
       if (target && canUseAction(me, c.uid).ok) {
         startAction(me, c.uid);
         if (actionState && actionState.step === 'target') { selectActionTarget(target.uid); if (actionState && actionState.step === 'target') { actionState = null; renderBoard(match); } }
@@ -285,7 +342,7 @@
     }
 
     // 3.5) 事件の宣言能力(解決編のとき)。キャラのアクション・推理が終わったあとに使う。使うかどうかは事件カードのルール(useCaseDeclare)で決める
-    if (mine.case && mine.case.resolved) {
+    if (mine.case && mine.case.resolved && !lethal) {   // 勝ち筋のターンは、事件効果より勝つことを優先する
       const cr = ruleOf(mine.case.cardId);
       const entered = mine.field.filter(c => c.justEntered).length;   // このターンに登場した枚数
       if (cr && cr.useCaseDeclare && canDeclareGenericCase(me).ok && cr.useCaseDeclare({ me: mine, foe: theirs, turn: t, entered }) && once(key('caseDecl', 'c'))) { declareGenericCase(me); return true; }
@@ -294,7 +351,7 @@
     // 4) パートナー: アシスト(解決編に近づける)か推理
     if (!tried.has(key('partner', 'p'))) {
       tried.add(key('partner', 'p'));
-      if (canUseAssist(me).ok) { performAssist(me); return true; }
+      if (!lethal && canUseAssist(me).ok) { performAssist(me); return true; }
       if (canUseReason(me, 'partner', mine.partner && mine.partner.uid).ok) { performReason(me, 'partner', mine.partner.uid); return true; }
     }
 
@@ -304,19 +361,23 @@
   }
 
   // 相手のスリープ状態のキャラのうち、こちらのAPが上回るものを優先。無ければ証拠のある事件
-  function pickActionTarget(actor){
+  function pickActionTarget(actor, lethal){
     const foe = match.self;
+    if (lethal && foe.case && foe.evidence.length > 0) return { uid: foe.case.uid };   // 勝ち筋のターンは、証拠を取る(事件へのアクション)
     const ap = effectiveAp(match, actor, 'opponent');
     const ok = c => c.sleeping && !hasActionLockRestriction(defOfInst(c)) && !isProtectedByLowLevelGuard('self', defOfInst(c)) && limitedChargeAllows(actor, defOfInst(c));
     const cands = foe.field.filter(ok).map(c => ({ uid: c.uid, ap: effectiveAp(match, c, 'self') })).sort((a, b) => a.ap - b.ap);
-    const winnable = cands.filter(x => x.ap < ap);
+    const winnable = cands.filter(x => x.ap <= ap);   // APが同じなら、アクションした側が勝つ
     if (winnable.length) return winnable[winnable.length - 1];
+    const byHand = cands.filter(x => winnableByHand(actor, foe.field.find(f => f.uid === x.uid)));   // 手札のカットイン・変装で倒せる相手
+    if (byHand.length) return byHand[byHand.length - 1];
     if (foe.case && foe.evidence.length > 0) return { uid: foe.case.uid };
     return aiType.attackUnwinnable ? (cands[0] || null) : null;   // 勝てないアクションは、アグロ以外はしない
   }
 
   function tick(){
     if (!cpuOn || typeof match === 'undefined' || !match || match.gameOver || replayMode) return;
+    if (match.events && match.events.some(e => e.type === 'solveCase' || e.type === 'solveCaseEvidenceMill')) return;   // 事件が解決されて勝負がついたら、もう動かない
     if (Date.now() < busyUntil || animating()) return;
     let who;
     try { who = ownerNow(); } catch (e) { return; }

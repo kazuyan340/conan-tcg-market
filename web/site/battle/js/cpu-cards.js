@@ -40,6 +40,23 @@ Object.assign(window.CPU_CARD_RULES, {
   '1199': { playScore: c => { const ok = cpuRem(c.me).some(d => d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '高校生') && /青|白/.test(d.color)); return ok && c.hand.length >= 2 ? 78 : 71; } },
   '1200': { playScore: () => 50 },
 });
+// ---- コンタクト中に手札から使うカード(アクションで勝てないとき) ----
+//   contactCutIn(ctx) / contactDisguise(ctx): true なら使う。ctx = { me, foe, actor(自分の攻撃キャラ), tgt(相手のキャラ), myAp, foeAp }
+const cpuLv4Names = (field, excludeUid) => new Set(field.filter(c => c.uid !== excludeUid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
+const cpuTgtLv = ctx => { const d = defOfInst(ctx.tgt); return d && d.level != null ? d.level : 0; };
+const cpuHoldForContact = c => cpuLv4Names(c.me.field) >= 2 && c.foeField.some(f => f.sleeping);
+// カットインで「コンタクト中のキャラ」を選ぶ画面: 相手のキャラ(self-)を選ぶ。自分のキャラは選ばない
+const cpuChooseFoeContact = (ctx, items) => { const foe = items.filter(i => String(i.key).startsWith('self-')); return foe.length ? [foe[0].key] : []; };
+Object.assign(window.CPU_CARD_RULES, {
+  // 小嶋元太(Lv4): 自分の現場にレベル4の名前違いの少年探偵団が2枚以上いれば、コンタクト中のレベル8以上のキャラをリムーブして1枚引く
+  // 手札に残す: 条件がそろっていて(場にレベル4の名前違いが2枚以上)、相手にスリープ状態のキャラがいるときは、コンタクト用に出さずに持っておく
+  '1176': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) >= 8, choose: cpuChooseFoeContact },
+  // 円谷光彦(Lv4): 同じ条件で、コンタクト中のレベル7以下のキャラをリムーブして1枚引く
+  '1177': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
+  // 吉田歩美(Lv4): 変装で攻撃キャラと入れ替わる。入れ替え後に名前違いのレベル4少年探偵団が3枚以上そろえば、レベル7以下のスリープ状態のキャラをリムーブして1枚引く
+  '1175': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
+});
+
 // 事件「コナンVS怪盗キッド」: 4展開したら宣言する。選択は、自分のいちばんレベルの低いキャラをリムーブ → 相手の現場のキャラ(レベルの高い順)を手札に戻す
 window.CPU_CARD_RULES['1261'] = {
   useCaseDeclare: ctx => ctx.entered >= 4,
