@@ -8,6 +8,8 @@ window.CPU_PRESET_DECKS = [
   { id: 'cpu-Wax1Ojeec', name: '青白探偵団', registered: '2026.11.13', aiType: 'control',
     // マリガン(仮): ①Lv2 ②Lv4 ③Lv8のキッド(リムーブを肥やす) ④五人囃子・黒羽快斗 ⑤Lv9キッド&快斗・結成・灰原
     mulligan: { priorities: [['0100', '0491', '0496', '0957'], ['0092', '1175', '1176', '1177'], ['0036', '1197'], ['1185', '1199'], ['0547', '0264', '1171']] },
+    // 戦い方: アシストでFILE9→Lv9/8を1枚、ネクストヒントでFILE8→Lv8を1枚、ネクストヒントでFILE7→五人囃子か黒羽快斗(2展開)。FILEは6枚(パートナー込みで7)残す
+    strategy: { nextHintKeep: 6 },
     partnerCardId: 67, caseCardId: 3018,
     cards: [{ id: 171, qty: 2 },{ id: 1228, qty: 2 },{ id: 1238, qty: 2 },{ id: 2406, qty: 1 },{ id: 947, qty: 2 },{ id: 163, qty: 3 },{ id: 2871, qty: 3 },{ id: 2873, qty: 3 },{ id: 2875, qty: 3 },{ id: 2918, qty: 3 },{ id: 2887, qty: 3 },{ id: 2916, qty: 2 },{ id: 71, qty: 1 },{ id: 1242, qty: 3 },{ id: 2864, qty: 3 },{ id: 2911, qty: 2 },{ id: 1167, qty: 2 }] },
 ];

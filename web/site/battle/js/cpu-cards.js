@@ -21,21 +21,24 @@ const cpuRem = me => me.remove.map(c => CARD_BY_ID.get(c.cardId)).filter(Boolean
 const cpuShonen = me => cpuRem(me).filter(d => d.card_type === 'キャラ' && cardHasTrait(d, '少年探偵団'));
 const cpuDistinct = list => new Set(list.map(d => d.name)).size;
 const cpuLv = cardId => { const d = CARD_BY_ID.get(cardId); return d && d.level != null ? d.level : 99; };
+// 出す優先度は「レベル×10＋好み」。FILEエリアの枚数がネクストヒントのたびに減るので、レベルの高いカードから先に出す(Lv9→Lv8→Lv7)。条件に合わないときは -1(出さない)。
 Object.assign(window.CPU_CARD_RULES, {
-  // 五人囃子: リムーブエリアにレベル4の少年探偵団が(名前違いで)そろってから使う
-  '1185': { playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 100 : n === 2 ? 70 : -1; } },
-  // 結成 少年探偵団: 名前の違う少年探偵団が5枚そろってから出して、5枚重ねにする
-  '0264': { playScore: c => { const n = cpuDistinct(cpuShonen(c.me)); return n >= 5 ? 95 : n === 4 ? 30 : -1; } },
-  // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
-  '0036': { playScore: c => c.me.deckPile.length < 10 ? -1 : cpuDistinct(cpuShonen(c.me)) < 5 ? 85 : 20 },
   // 怪盗キッド&黒羽快斗(Lv9): 宣言でデッキを5枚リムーブ(肥やす)
-  '0547': { playScore: c => c.me.deckPile.length < 10 ? 30 : 80,
+  '0547': { playScore: c => c.me.deckPile.length < 10 ? 91 : 99,
             declares: [{ line: 'デッキのカードを上から5枚リムーブ', when: c => c.me.deckPile.length >= 15 }] },   // 山札切れに注意して、15枚以上あるときだけ肥やす
+  // 結成 少年探偵団(Lv8): 名前の違う少年探偵団が5枚そろってから出して、5枚重ねにする
+  '0264': { playScore: c => { const n = cpuDistinct(cpuShonen(c.me)); return n >= 5 ? 88 : n === 4 ? 82 : -1; },
+            // 重ねるカードは、五人囃子で使うレベル4をなるべく残して、レベルの低いものから選ぶ
+            choose: (ctx, items) => items.length ? [[...items].sort((x, y) => ((cpuLv(x.cardId) === 4) - (cpuLv(y.cardId) === 4)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key] : null },
+  // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
+  '0036': { playScore: c => c.me.deckPile.length < 10 ? -1 : cpuDistinct(cpuShonen(c.me)) < 5 ? 86 : 81 },
+  '1197': { playScore: () => 80 },
+  '1171': { playScore: () => 83 },
+  // 五人囃子(Lv7): リムーブエリアにレベル4の少年探偵団が(名前違いで)そろってから使う
+  '1185': { playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
   // 黒羽快斗(Lv7): 手札を1枚リムーブして、リムーブエリアのLv5以下の青白の高校生(中森青子など)を登場させる
-  '1199': { playScore: c => { const ok = cpuRem(c.me).some(d => d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '高校生') && /青|白/.test(d.color)); return ok && c.hand.length >= 2 ? 90 : 35; } },
-  '1200': { playScore: () => 45 },
-  '1171': { playScore: () => 50 },
-  '1197': { playScore: () => 40 },
+  '1199': { playScore: c => { const ok = cpuRem(c.me).some(d => d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '高校生') && /青|白/.test(d.color)); return ok && c.hand.length >= 2 ? 78 : 71; } },
+  '1200': { playScore: () => 50 },
 });
 // 事件「コナンVS怪盗キッド」: 4展開したら宣言する。選択は、自分のいちばんレベルの低いキャラをリムーブ → 相手の現場のキャラ(レベルの高い順)を手札に戻す
 window.CPU_CARD_RULES['1261'] = {

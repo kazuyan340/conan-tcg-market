@@ -8,7 +8,8 @@
 
   let cpuOn = false;
   let aiType = (window.CPU_AI_TYPES || {}).control || {};
-  let busyUntil = 0;
+  let strategy = {};                  // デッキごとの戦い方の指定(js/cpu-decks.js の strategy)
+  let busyUntil = 0, lastPendingAt = 0;
   let stuckTicks = 0, stuckKey = '';
   const tried = new Set();            // このターンに試した操作(同じ操作を繰り返さない)
   let choiceOwnerCpu = null;
@@ -74,6 +75,7 @@
     const pickedDeck = (typeof cpuDeckList === 'function' ? cpuDeckList() : [])[Number((document.getElementById('oppDeckSelect') || {}).value)];
     const types = window.CPU_AI_TYPES || {};
     aiType = (pickedDeck && pickedDeck.deck.aiType && types[pickedDeck.deck.aiType]) || types[sel && sel.value] || types.control || {};
+    strategy = (pickedDeck && pickedDeck.deck.strategy) || {};
     if (pickedDeck && pickedDeck.deck.mulligan) aiType = Object.assign({}, aiType, { mulligan: pickedDeck.deck.mulligan });   // デッキごとのマリガン指定を優先
     document.body.classList.toggle('cpu-mode', cpuOn);
     tried.clear();
@@ -121,6 +123,7 @@
       if (c) { selectSwitchTarget(c.uid); return true; }
       switchState = null; return true;
     }
+    if (mrReplaceState && mrReplaceState.side === 'opponent') { selectMrReplaceTarget(mrReplaceState.otherUid); return true; }   // MRが重なったときは、前からいた方をリムーブして新しい方を残す
     if (hiramekiState && hiramekiState.side === 'opponent') { activateHirameki(); return true; }   // ヒラメキは「発動する」
     if (disguiseReactState) { skipDisguiseReact(); return true; }
     if (misleadState) { skipMislead(); return true; }
@@ -243,8 +246,14 @@
 
     // 2) 出せるカード(レベルの高い順に)
     const score = c => { const r = ruleOf(c.cardId); const ctx = { card: c, hand: mine.hand, field: mine.field, foeField: theirs.field, turn: t, me: mine, foe: theirs }; return r && r.playScore ? r.playScore(ctx) : lvOf(c.cardId); };
+    // 2.0) アシストを先にする: アシスト(パートナーがFILEエリアに入って、FILE枚数が1枚増える)で、いま出せないカードが出せるようになるとき
+    if (!tried.has(key('assistFirst', 'p')) && canUseAssist(me).ok && !match.turn.playedCardThisTurn) {
+      const fileNow = getEffectiveFileCount(me);
+      const unlocks = mine.hand.some(c => { const lv = lvOf(c.cardId); return lv === fileNow + 1 && score(c) >= (mine.field.length >= maxFieldFor(me) ? 60 : 0); });
+      if (unlocks) { tried.add(key('assistFirst', 'p')); tried.add(key('partner', 'p')); performAssist(me); return true; }
+    }
     const full = mine.field.length >= maxFieldFor(me);   // 現場が埋まっていると、1枚リムーブして入れ替えることになる。よほど強いカードだけ出す
-    const playable = mine.hand.filter(c => canPlayHandCard(me, c.uid).ok && !tried.has(key('play', c.uid)) && score(c) >= (full ? 60 : 0))
+    const playable = mine.hand.filter(c => canPlayHandCard(me, c.uid).ok && !tried.has(key('play', c.uid)) && !(isMRCard(c.cardId) && (mine.field.some(f => isMRCard(f.cardId)) || (mine.partnerMR && isMRCard(mine.partnerMR.cardId)))) && score(c) >= (full ? 60 : 0))
       .sort((a, b) => score(b) - score(a));
     if (playable.length) {
       const c = playable[0]; tried.add(key('play', c.uid));
@@ -253,11 +262,19 @@
       return true;
     }
 
+    // 2.3) ネクストヒント: 1枚使ったあと、FILEエリアが strategy.nextHintKeep 枚より多く、次に出したいカードがあれば使う
+    //      (FILEの一番上が手札に入り、FILEが1枚減ったレベルまでのカードをもう1枚使える)
+    if (strategy.nextHintKeep != null && match.turn.playedCardThisTurn && !match.turn.nextHintPending && mine.file.length > strategy.nextHintKeep && canUseNextHint(me).ok) {
+      const fileAfter = mine.file.length - 1 + (mine.partner && mine.partner.assisting ? 1 : 0);
+      const want = mine.hand.some(c => !tried.has(key('play', c.uid)) && lvOf(c.cardId) <= fileAfter && score(c) >= (full ? 60 : 0));
+      if (want && once(key('hint', mine.file.length))) { startNextHint(me); return true; }
+    }
+
     // 2.5) 事件の宣言能力(解決編のとき)。使うかどうかは事件カードのルール(useCaseDeclare)で決める
     if (mine.case && mine.case.resolved) {
       const cr = ruleOf(mine.case.cardId);
       const entered = mine.field.filter(c => c.justEntered).length;   // このターンに登場した枚数
-      if (cr && cr.useCaseDeclare && canDeclareGenericCase(me).ok && once(key('caseDecl', 'c')) && cr.useCaseDeclare({ me: mine, foe: theirs, turn: t, entered })) { declareGenericCase(me); return true; }
+      if (cr && cr.useCaseDeclare && canDeclareGenericCase(me).ok && cr.useCaseDeclare({ me: mine, foe: theirs, turn: t, entered }) && once(key('caseDecl', 'c'))) { declareGenericCase(me); return true; }
     }
 
     // 3) 起きているキャラで、アクションか推理
@@ -315,11 +332,13 @@
           busyUntil = Date.now() + 500; return;
         }
         resolvePending();
+        lastPendingAt = Date.now();
         busyUntil = Date.now() + 600;
         return;
       }
       stuckTicks = 0;
       if (!match.turn || match.turn.activeSide !== 'opponent' || match.turn.phase !== 'main') return;
+      if (Date.now() - lastPendingAt < 1500) return;   // 効果の処理が続いている途中(選択画面と選択画面のすきま)では、次の手に進まない
       myTurnMain();
       busyUntil = Date.now() + 900;
     } catch (e) { console.error('cpu', e); busyUntil = Date.now() + 1500; }
@@ -329,6 +348,7 @@
   function startOnline(deck, typeKey){
     const types = window.CPU_AI_TYPES || {};
     aiType = (deck && deck.aiType && types[deck.aiType]) || types[typeKey] || types.control || {};
+    strategy = (deck && deck.strategy) || {};
     if (deck && deck.mulligan) aiType = Object.assign({}, aiType, { mulligan: deck.mulligan });
     cpuOn = true; tried.clear();
     document.body.classList.add('cpu-mode');
