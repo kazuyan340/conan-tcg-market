@@ -247,6 +247,24 @@
     return { p: left.length ? c / left.length : 0, n: left.length, c };
   }
 
+  // 公開情報から数えた「残りの未確認のカード」(デッキ・FILE・裏向きの証拠のどこか)
+  function unknownPool(){
+    const me = match.opponent, left = deckCardIds.slice();
+    const take = id => { const i = left.indexOf(id); if (i !== -1) left.splice(i, 1); };
+    me.hand.forEach(c => take(c.cardId));
+    me.field.forEach(c => { take(c.cardId); (c.under || []).forEach(u => take(u.cardId)); });
+    me.remove.forEach(c => take(c.cardId));
+    me.evidence.filter(e => e.faceUp).forEach(e => take(e.cardId));
+    return left;
+  }
+  // 未確認のカードからk枚(ネクストヒントでFILEの上から手札に来る枚数)引いたとき、条件(pred)に合うカードが1枚以上ある確率
+  function drawChance(pred, k){
+    const left = unknownPool(), n = left.length, c = left.filter(pred).length;
+    if (!n || !c || k <= 0) return 0;
+    let none = 1; for (let i = 0; i < Math.min(k, n); i++) none *= Math.max(0, (n - c - i)) / (n - i);
+    return 1 - none;
+  }
+
   // ---- マリガン: 優先度①〜⑤のルール(js/cpu-cards.js の CPU_AI_TYPES) ----
   function mulliganTier(cardId){
     const d = CARD_BY_ID.get(cardId); if (!d) return 9;
@@ -294,13 +312,15 @@
     //   事件が解決編・パートナーが起きている状態で、「いまの証拠 + このターンに証拠を取れそうな数」が事件レベル以上なら、勝ちを狙う。
     //   取れそうな数 = アクションできるキャラ(名乗り状態でない起きているキャラ) + 手札の吉田歩美・中森青子(事件にもアクションできる突撃を持つので、ネクストヒントで出せる分。歩美はFILE5以上で出たとき) − 相手のアクティブなキャラの数(ガードで1回ずつ止められる)
     //   ブロックされるなどして足りなくなれば、この判定が外れて、ふつうの動き(キャラの処理など)に戻る
-    let lethalPlan = [];   // 勝ち筋のターンに、順番に出すカード(手札)
+    let lethalPlan = [];
+    let drawForAnchor = false;   // 灰原哀の宣言で出す突撃を引きにいく(FILEを0まで切る)   // 勝ち筋のターンに、順番に出すカード(手札)
     const lethal = (() => {
       if (!mine.case || !mine.case.resolved || !mine.partner || mine.partner.sleeping) return false;
       const lv = getCaseLevel(me); if (lv == null) return false;
       if (!(theirs.case && theirs.evidence.length > 0)) return mine.evidence.length >= lv;
       const actors = mine.field.filter(c => !c.sleeping && !c.justEntered && !tried.has(key('field', c.uid))).length;
       const keepL = strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : 5;
+      drawForAnchor = false;
       const hintsAvail = Math.max(0, mine.file.length - keepL);
       const slots = ((!match.turn.playedCardThisTurn || match.turn.nextHintPending) ? 1 : 0) + hintsAvail;   // このターンに手札から出せる回数(ネクストヒントのたびにFILEが1枚減る)
       const fileNow = getEffectiveFileCount(me);
@@ -308,6 +328,13 @@
       // 手札に突撃が足りなくても、ネクストヒントで突撃が来る確率が基準以上なら、来る前提で走る(strategy.lethalGambleP)
       const gp = strategy.lethalGambleP != null ? chargeProbability() : null;
       const gambleAvail = gp && gp.p >= strategy.lethalGambleP ? gp.c : 0;
+      // FILEが0でも宣言できる登場役(灰原哀Lv6)が起きて現場にいれば、手札に出せる突撃がなくても、FILEを0まで切る間に突撃(コナンLv5など)を引ければ、それを出してアクションできる
+      const anchor = mine.field.find(c => !c.sleeping && (ruleOf(c.cardId) || {}).summonsAnyFile);
+      const anchorRule = anchor && ruleOf(anchor.cardId);
+      const anchorTarget = id => { const d = CARD_BY_ID.get(id), r = ruleOf(id); return !!d && !!r && !!r.lethalCharge && d.card_type === 'キャラ' && anchorRule.summonTarget(d); };
+      const anchorHasTarget = !!anchor && mine.hand.some(h => anchorTarget(h.cardId));
+      const anchorChance = anchor && !anchorHasTarget && strategy.lethalGambleP != null ? drawChance(anchorTarget, mine.file.length) : 0;
+      const anchorGamble = anchorChance >= (strategy.lethalGambleP != null ? strategy.lethalGambleP : 2);
       const isLv4Shonen = c => { const d = defOfInst(c); return !!d && d.level === 4 && cardHasTrait(d, '少年探偵団'); };
       // 出す順番を組み合わせで探す。各枠のFILE枚数以下のレベルのカードしか出せない(高いレベルは早い枠でしか出せない)。
       // 事件にアクションできる突撃(歩美・青子)を並べるほど、アクションできる数が増える。除去役・黒羽快斗(リムーブエリアから青子を出す)も候補
@@ -315,6 +342,11 @@
       const evalPlan = plan => {
         let atk = actors, entered = 0, willLv4 = false;
         const used = new Set();   // 効果で手札から登場させるカード(同じカードを2回は使えない)
+        if (anchor) {   // すでに現場にいる登場役の宣言(手札に突撃があれば、それを出す。なければ、引ける確率が基準以上なら引く前提)
+          const got = anchorRule.summonsCharger({ me: mine, chars: mine.field, others: mine.hand.filter(h => !plan.includes(h)) });
+          if (got) { atk++; entered++; if (got.uid) used.add(got.uid); }
+          else if (anchorGamble) { atk++; entered++; }
+        }
         const chars = [...mine.field];
         for (let k = 0; k < plan.length; k++) {
           const c = plan[k], r = ruleOf(c.cardId) || {}, fileK = fileNow - k;
@@ -349,11 +381,12 @@
       dfs([], cands);
       if (!best || best.m < 0) return false;
       lethalPlan = best.plan;
+      drawForAnchor = !!anchor && !anchorHasTarget && anchorGamble;   // 勝ち筋が「引けたら」を前提にしているときは、引くためにFILEを0まで切る
       return true;
     })();
 
     lethalFlag = lethal;
-    window.cpuPlayer && (window.cpuPlayer.lastLethal = lethal, window.cpuPlayer.lastPlan = lethalPlan.map(c => c.uid));
+    window.cpuPlayer && (window.cpuPlayer.lastLethal = lethal, window.cpuPlayer.lastPlan = lethalPlan.map(c => c.uid), window.cpuPlayer.drawing = lethal && drawForAnchor);
     // 1.5) 宣言能力(カード別ルールの declares)。例: デッキを5枚リムーブして肥やす
     for (const c of mine.field) {
       const rule = ruleOf(c.cardId); if (!rule || !rule.declares) continue;
@@ -389,10 +422,10 @@
 
     // 2.3) ネクストヒント: 1枚使ったあと、FILEエリアが strategy.nextHintKeep 枚より多く、次に出したいカードがあれば使う
     //      (FILEの一番上が手札に入り、FILEが1枚減ったレベルまでのカードをもう1枚使える)
-    const hintKeep = lethal && strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : strategy.nextHintKeep;   // 勝ち筋のターンは、FILEをもっと切る(5枚まで)
+    const hintKeep = lethal && drawForAnchor ? 0 : lethal && strategy.nextHintKeepLethal != null ? strategy.nextHintKeepLethal : strategy.nextHintKeep;   // 勝ち筋のターンは、FILEをもっと切る(5枚まで)
     if (hintKeep != null && match.turn.playedCardThisTurn && !match.turn.nextHintPending && mine.file.length > hintKeep && canUseNextHint(me).ok) {
       const fileAfter = mine.file.length - 1 + (mine.partner && mine.partner.assisting ? 1 : 0);
-      const want = lethal && lethalPlan.length ? lethalPlan.some(c => lvOf(c.cardId) <= fileAfter) : mine.hand.some(c => !tried.has(key('play', c.uid)) && lvOf(c.cardId) <= fileAfter && score(c) >= (full ? 60 : 0));
+      const want = lethal && drawForAnchor ? true : lethal && lethalPlan.length ? lethalPlan.some(c => lvOf(c.cardId) <= fileAfter) : mine.hand.some(c => !tried.has(key('play', c.uid)) && lvOf(c.cardId) <= fileAfter && score(c) >= (full ? 60 : 0));
       if (want && once(key('hint', mine.file.length))) { startNextHint(me); return true; }
     }
 
