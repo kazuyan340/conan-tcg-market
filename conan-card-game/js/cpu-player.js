@@ -349,7 +349,7 @@
     })();
 
     lethalFlag = lethal;
-    window.cpuPlayer && (window.cpuPlayer.lastLethal = lethal);
+    window.cpuPlayer && (window.cpuPlayer.lastLethal = lethal, window.cpuPlayer.lastPlan = lethalPlan.map(c => c.uid));
     // 1.5) 宣言能力(カード別ルールの declares)。例: デッキを5枚リムーブして肥やす
     for (const c of mine.field) {
       const rule = ruleOf(c.cardId); if (!rule || !rule.declares) continue;
