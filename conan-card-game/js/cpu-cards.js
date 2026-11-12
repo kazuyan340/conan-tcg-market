@@ -42,7 +42,8 @@ Object.assign(window.CPU_CARD_RULES, {
   '1185': { entersLv4: true, playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
   // 黒羽快斗(Lv7): 手札を1枚リムーブして、リムーブエリアのLv5以下の青白の高校生(中森青子など)を登場させる
   '1199': { playScore: c => { const ok = cpuRem(c.me).some(d => d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '高校生') && /青|白/.test(d.color)); return ok && c.hand.length >= 2 ? 78 : 71; } },
-  '1200': { playScore: () => 50 },
+  // 中森青子(Lv5): 事件が青白でパートナーが白のとき、通常の突撃(事件にもアクションできる)を持つ。FILE5でも出せるので、勝ち筋の最後の枠で出す
+  '1200': { lethalCharge: true, playScore: c => c.lethal ? 5 : 50 },
 });
 // ---- コンタクト中に手札から使うカード(アクションで勝てないとき) ----
 //   contactCutIn(ctx) / contactDisguise(ctx): true なら使う。ctx = { me, foe, actor(自分の攻撃キャラ), tgt(相手のキャラ), myAp, foeAp }
@@ -58,7 +59,7 @@ Object.assign(window.CPU_CARD_RULES, {
   // 円谷光彦(Lv4): 同じ条件で、コンタクト中のレベル7以下のキャラをリムーブして1枚引く
   '1177': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
   // 吉田歩美(Lv4): 変装で攻撃キャラと入れ替わる。入れ替え後に名前違いのレベル4少年探偵団が3枚以上そろえば、レベル7以下のスリープ状態のキャラをリムーブして1枚引く
-  // (勝ち筋: FILE5以上で出た歩美だけが、事件にもアクションできる突撃を持つ。元太・光彦の突撃は［キャラ］限定なので、事件には行けない)
+  // (勝ち筋: 事件にもアクションできる突撃を持つのは、FILE5以上で出た歩美と、中森青子。元太・光彦の突撃は［キャラ］限定なので、事件には行けない)
   '1175': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
