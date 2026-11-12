@@ -41,7 +41,17 @@
       const list = cpuDeckList();
       oppSel.innerHTML = list.length ? list.map((x, i) => '<option value="' + i + '">' + x.label + '</option>').join('') : '<option value="">CPU用のデッキがありません</option>';
     } else if (normalOppOptions !== null) { oppSel.innerHTML = normalOppOptions; normalOppOptions = null; }
+    showDeckDate();
   }
+  // CPUデッキの登録日を、選択の下に薄灰色で出す
+  function showDeckDate(){
+    const chk = document.getElementById('cpuModeChk');
+    let el = document.getElementById('cpuDeckDate');
+    if (!el) { el = document.createElement('div'); el.id = 'cpuDeckDate'; el.style.cssText = 'font-size:11px; color:#aaa; margin-top:3px;'; if (oppSel && oppSel.parentNode) oppSel.parentNode.appendChild(el); }
+    const pick = chk && chk.checked ? cpuDeckList()[Number(oppSel.value)] : null;
+    el.textContent = pick && pick.deck.registered ? '登録日: ' + pick.deck.registered : '';
+  }
+  if (oppSel) oppSel.addEventListener('change', showDeckDate);
   const chkEl = document.getElementById('cpuModeChk');
   if (chkEl) chkEl.addEventListener('change', syncOppDecks);
   // 開始ボタン: CPU対戦なら、AI用デッキを右側にして始める
