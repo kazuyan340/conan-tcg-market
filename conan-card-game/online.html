@@ -308,6 +308,13 @@
     <select id="lobbyDeck"></select>
     <div class="note" id="deckNote"></div>
   </div>
+  <div class="panel" id="hotseatPanel">
+    <label for="hotDeck2">👥 1人で両方を操作(上の「使うデッキ」と、ここで選ぶデッキで対戦。手札は両方見えます)</label>
+    <select id="hotDeck2"></select>
+    <label for="hotFirst" style="margin-top:8px;">先攻</label>
+    <select id="hotFirst"><option value="self">上で選んだデッキ(下側)</option><option value="opponent">ここで選んだデッキ(上側)</option></select>
+    <div class="row"><button class="btn" id="hotStart">1人で両方操作して対戦開始</button></div>
+  </div>
   <div class="panel" id="cpuPanel">
     <label for="cpuDeck">🤖 CPUと対戦(一人で遊べます。上の「使うデッキ」で戦います)</label>
     <select id="cpuDeck"></select>

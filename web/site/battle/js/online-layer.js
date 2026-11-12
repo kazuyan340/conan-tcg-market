@@ -146,6 +146,7 @@
     const mine = canAct(owner, mySide);
     document.body.classList.toggle('wait-overlays', role === 'host' && !mine);
     b.className = mine ? 'mine' : '';
+    if (hotseat) { const nm = side => (match && match[side] && match[side].deckName) || ''; b.className = 'mine'; b.textContent = owner == null || owner === 'both' ? '' : '▶ ' + nm(owner) + 'の操作です'; return; }
     b.textContent = owner == null ? '' : mine ? '▶ あなたの操作です' : '⏳ 相手の操作待ちです';
   }
   function flash(text){
@@ -197,10 +198,29 @@
     };
     $('lobbyCancel').onclick = () => { if (abortCtl) abortCtl.abort(); };
     initCpuLobby(decks, sel);
+    initHotseatLobby(decks, sel);
+  }
+
+  // ============ 1人で両方を操作(ネットワークなし。両方の手札が見え、どちらの側も操作できる) ============
+  function initHotseatLobby(decks, sel){
+    const panel = $('hotseatPanel'); if (!panel) return;
+    const d2 = $('hotDeck2');
+    d2.innerHTML = sel.innerHTML;
+    if (d2.options.length > 1) d2.selectedIndex = 1;
+    $('hotStart').disabled = !decks.length;
+    $('hotStart').onclick = () => {
+      const a = decks[Number(sel.value)], b = decks[Number(d2.value)];
+      if (!a || !b) { lobbyStatus('デッキを選んでください', 'ng'); return; }
+      myDeck = a; myName = a.name || 'デッキ1';
+      guestDeck = b; guestName = (b.name || 'デッキ2') + (b === a ? '(2)' : '');
+      cpuGame = true; hotseat = true; role = 'host'; conn = null; mySide = 'self'; forceBoth = true;
+      document.body.classList.add('host', 'hotseat');
+      startAsHost($('hotFirst').value);
+    };
   }
 
   // ============ CPU対戦(ネットワークなし。自分がホスト、右側はCPUが操作) ============
-  let cpuGame = false;
+  let cpuGame = false, hotseat = false;
   function initCpuLobby(decks, sel){
     const panel = $('cpuPanel'); if (!panel) return;
     const cpuDecks = [];
@@ -382,6 +402,7 @@
     const btn = document.createElement('button');
     btn.className = 'btn ghost small'; btn.textContent = '🔓 どちらも操作可';
     btn.title = '操作が止まったときだけ使う(お互いの操作制限を外す)';
+    if (hotseat) return;   // 1人で両方操作のときは、最初から両方操作できる
     btn.onclick = () => { forceBoth = !forceBoth; btn.textContent = forceBoth ? '🔒 操作を元に戻す' : '🔓 どちらも操作可'; owner = computeOwner(); updateBanner(); scheduleSnap(0); };
     new MutationObserver(() => { if (!btn.isConnected) act.appendChild(btn); }).observe(act, { childList: true });
     act.appendChild(btn);

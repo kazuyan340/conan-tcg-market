@@ -204,3 +204,7 @@ body.online .card-spotlight{ pointer-events:auto; cursor:pointer; }
   body.online .zone .handfan{ height:100%; min-width:0; width:202px; margin-left:auto; justify-content:flex-start; padding:0; box-sizing:border-box; }
   body.online .board{ overflow:visible; }
 }
+
+/* 1人で両方を操作: 相手側の手札も表向きで、押せるようにする */
+body.online.hotseat .zone[data-side="opponent"] .hand-row .hcard{ background-image:none; background-color:transparent; pointer-events:auto; }
+body.online.hotseat .zone[data-side="opponent"] .hand-row .hcard img{ visibility:visible; }
