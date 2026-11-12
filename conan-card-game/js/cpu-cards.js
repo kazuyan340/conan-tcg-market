@@ -84,6 +84,21 @@ const cpuPickFoeActive = (ctx, items) => {
   foe.sort((a, b) => (((inst(a) || {}).sleeping ? 1 : 0) - ((inst(b) || {}).sleeping ? 1 : 0)) || (effectiveAp(match, inst(b), 'self') - effectiveAp(match, inst(a), 'self')));
   return [foe[0].key];
 };
+// ---- 2026.11.13 に入れたカード(コナンLv5・妃英理・灰原哀Lv6) ----
+const cpuHandOf = (me, cardId) => me.hand.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === cardId);
+Object.assign(window.CPU_CARD_RULES, {
+  // 江戸川コナン(Lv5): 【解決編】突撃(事件にもアクションできる)。登場時にデッキを1枚リムーブして、リムーブエリアの探偵・少年探偵団を2枚まで下に重ねる(AP＋1000ずつ)
+  '0631': { lethalCharge: true, playScore: c => c.lethal ? 5 : 55 },
+  // 妃英理(Lv7): 登場時に自分をスリープして、手札のレベル6以下の毛利探偵事務所のキャラ(コナンLv5など)を1枚登場させて1枚引く。勝ち筋では、手札のコナンLv5を登場させる(突撃)
+  '0513': { playScore: c => (cpuHandOf(c.me, '0631') || cpuHandOf(c.me, '0092')) ? 77 : 20,
+            summonsCharger: ctx => ctx.others.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '0631') || null,
+            choose: (ctx, items) => { const hand = items.filter(i => match.opponent.hand.some(h => h.uid === i.key)); const k = hand.find(i => (CARD_BY_ID.get(i.cardId) || {}).card_id === '0631') || hand[0]; return k ? [k.key] : null; } },
+  // 灰原哀(Lv6): 宣言(スリープ)で、手札のレベル5以下の少年探偵団のキャラを1枚登場させる。突撃のコナンLv5や歩美を優先する
+  '0002': { playScore: c => c.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '少年探偵団'); }) ? 66 : 15,
+            summonsCharger: ctx => ctx.others.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '0631') || ctx.others.find(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1175') || null,
+            declares: [{ line: 'レベル5以下の〚特徴［少年探偵団］〛のキャラを1枚まで登場', when: c => c.me.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level <= 5 && cardHasTrait(d, '少年探偵団'); }) }],
+            choose: (ctx, items) => { const hand = items.filter(i => match.opponent.hand.some(h => h.uid === i.key)); if (!hand.length) return null; const pri = i => { const id = (CARD_BY_ID.get(i.cardId) || {}).card_id; return id === '0631' ? 0 : id === '1175' ? 1 : 2; }; return [[...hand].sort((x, y) => pri(x) - pri(y) || cpuLv(y.cardId) - cpuLv(x.cardId))[0].key]; } },
+});
 // 事件「コナンVS怪盗キッド」: 4展開したら宣言する。選択は、自分のいちばんレベルの低いキャラをリムーブ → 相手の現場のキャラ(レベルの高い順)を手札に戻す
 window.CPU_CARD_RULES['1261'] = {
   useCaseDeclare: ctx => ctx.entered >= 4,

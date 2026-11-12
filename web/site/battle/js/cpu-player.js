@@ -314,13 +314,17 @@
       const cands = mine.hand.filter(c => { const r = ruleOf(c.cardId); return r && (r.lethalCharge || r.removesFoe || r.summonsCharger); });
       const evalPlan = plan => {
         let atk = actors, entered = 0, willLv4 = false;
+        const used = new Set();   // 効果で手札から登場させるカード(同じカードを2回は使えない)
         const chars = [...mine.field];
         for (let k = 0; k < plan.length; k++) {
           const c = plan[k], r = ruleOf(c.cardId) || {}, fileK = fileNow - k;
           entered++;
           if (r.lethalCharge && !(lvOf(c.cardId) === 4 && fileK < 5)) atk++;   // 歩美はFILE5以上で出たときだけ突撃を持つ
           if (isLv4Shonen(c) || r.entersLv4) willLv4 = true;
-          if (r.summonsCharger && r.summonsCharger({ me: mine, chars, others: mine.hand.filter(h => !plan.includes(h)) })) { atk++; entered++; }
+          if (r.summonsCharger) {   // 効果で手札(または黒羽快斗のようにリムーブエリア)から突撃のキャラを登場させる
+            const got = r.summonsCharger({ me: mine, chars, others: mine.hand.filter(h => !plan.includes(h) && !used.has(h.uid)) });
+            if (got) { atk++; entered++; if (got.uid) used.add(got.uid); }
+          }
           chars.push(c);
         }
         if (mine.field.length + entered > maxFieldFor(me)) return null;
@@ -356,11 +360,11 @@
       for (const dc of rule.declares) {
         if (tried.has(key('decl:' + dc.line, c.uid))) continue;
         if (dc.when && !dc.when({ me: mine, foe: theirs, turn: t, card: c })) continue;
-        const d = geeDeclareDefs(c.cardId).find(x => (x.lineText || '').includes(dc.line));
-        if (!d || d.check(me, c.uid)) continue;
+        const e = getAllDeclaresFor(me, c.uid).find(x => ((x.def && x.def.lineText) || '').includes(dc.line) || (x.matched || '').includes(dc.line));   // 汎用の宣言も、カード個別の宣言も探す
+        if (!e || e.def.check(me, c.uid, e.params)) continue;
         tried.add(key('decl:' + dc.line, c.uid));
-        if (d.sleepCost) recordEvent({ type: 'declareSleepCost', side: me, uid: c.uid });
-        d.run(me, c.uid);
+        if (e.def.sleepCost) recordEvent({ type: 'declareSleepCost', side: me, uid: c.uid });
+        e.def.run(me, c.uid, e.params);
         return true;
       }
     }
