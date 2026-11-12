@@ -50,10 +50,11 @@ const cpuChooseFoeContact = (ctx, items) => { const foe = items.filter(i => Stri
 Object.assign(window.CPU_CARD_RULES, {
   // 小嶋元太(Lv4): 自分の現場にレベル4の名前違いの少年探偵団が2枚以上いれば、コンタクト中のレベル8以上のキャラをリムーブして1枚引く
   // 手札に残す: 条件がそろっていて(場にレベル4の名前違いが2枚以上)、相手にスリープ状態のキャラがいるときは、コンタクト用に出さずに持っておく
-  '1176': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) >= 8, choose: cpuChooseFoeContact },
+  '1176': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) >= 8, choose: cpuChooseFoeContact },
   // 円谷光彦(Lv4): 同じ条件で、コンタクト中のレベル7以下のキャラをリムーブして1枚引く
-  '1177': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
+  '1177': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
   // 吉田歩美(Lv4): 変装で攻撃キャラと入れ替わる。入れ替え後に名前違いのレベル4少年探偵団が3枚以上そろえば、レベル7以下のスリープ状態のキャラをリムーブして1枚引く
+  // (勝ち筋: FILE5以上で出た歩美だけが、事件にもアクションできる突撃を持つ。元太・光彦の突撃は［キャラ］限定なので、事件には行けない)
   '1175': { lethalCharge: true, playScore: c => c.lethal ? 5 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
