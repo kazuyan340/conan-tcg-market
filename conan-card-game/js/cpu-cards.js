@@ -30,27 +30,31 @@ Object.assign(window.CPU_CARD_RULES, {
             declares: [{ line: 'デッキのカードを上から5枚リムーブ', when: c => c.me.deckPile.length >= 15 }] },   // 山札切れに注意して、15枚以上あるときだけ肥やす
   // 結成 少年探偵団(Lv8): 名前の違う少年探偵団が5枚そろってから出して、5枚重ねにする
   // stackCharge: 登場時に下へ重ねる枚数(リムーブエリアの名前違いの少年探偵団、最大5)。1枚以上で突撃、5枚で「アクションしたとき証拠を1つ得る」(ガードされても得られる)
-  '0264': { stackCharge: me => Math.min(5, cpuDistinct(cpuShonen(me))), playScore: c => {
+  '0264': { stackCharge: me => { const n = cpuDistinct(cpuShonen(me)); return n >= 5 ? 5 : n >= 3 ? 3 : n >= 1 ? 1 : 0; }, playScore: c => {
               // 事件がまだ解決編でなく、アシストで解決編になるときは、手札を1枚リムーブする。手札のレベル4の少年探偵団(リムーブエリアにいない名前)を捨てて、重ねる材料にできる(+1枚)
               const inRem = new Set(cpuShonen(c.me).map(d => d.name));
               const feed = c.me.case && !c.me.case.resolved && c.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !inRem.has(d.name); }) ? 1 : 0;
-              const n = cpuDistinct(cpuShonen(c.me)) + feed; return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 80 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
+              const n = cpuDistinct(cpuShonen(c.me)) + feed; return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 80 : n >= 1 ? 70 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
             // 重ねるカード: 1枚以上で突撃になるので、相手を倒すことを優先する。手札に五人囃子があるときは、五人囃子でリクルートするレベル4(名前違い3枚)を残すところまでにして、重ねるのを止める。
             //   重ねるときは、レベルが4でないものを先に、次に、同じ名前がリムーブエリアに複数あるレベル4(名前違いの数が減らない)、そのほかはレベルの低い順
             choose: (ctx, items) => {
               if (!items.length) return null;
               const me = match.opponent, hint = String(ctx.hint || '');
-              const km = hint.match(/（(\d+)\/\d+）/), k = km ? Number(km[1]) : 1;
-              if (k <= 1) window.__ketsuPicked = [];
+              const km = hint.match(/（(\d+)\/\d+）/), k = km ? Number(km[1]) : 0;   // 見出しの（N/5）は、いま重ねた枚数
+              if (k === 0) window.__ketsuPicked = [];
               const picked = window.__ketsuPicked || [];
               const lv4 = d => d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団');
               const copies = d => me.remove.filter(r => { const x = CARD_BY_ID.get(r.cardId); return x && x.name === d.name && lv4(x); }).length;
               const foeBig = match.self.field.some(f => f.sleeping && (defOfInst(f) || {}).level >= 8);
               const rank = i => { const d = CARD_BY_ID.get(i.cardId); return [lv4(d) ? 1 : 0, lv4(d) && copies(d) >= 2 ? 0 : 1, d.level, d.card_id === '1176' && foeBig ? 1 : 0]; };   // 元太は、相手にスリープのレベル8以上がいるとき、カットイン用に重ねずに残す
               const best = [...items].sort((x, y) => { const rx = rank(x), ry = rank(y); return (rx[0] - ry[0]) || (rx[1] - ry[1]) || (rx[2] - ry[2]) || (rx[3] - ry[3]); })[0];
-              if (k >= 2 && cpuHandOf(me, '1185')) {
-                const left = me.remove.filter(r => !picked.includes(r.uid) && r.uid !== best.key).map(r => CARD_BY_ID.get(r.cardId)).filter(lv4);
-                if (cpuDistinct(left) < 3) return 'skip';
+              // 重ねる枚数は、1枚・3枚・5枚のどれかだけ(2枚・4枚で止めない)。いま重ねた枚数 p が奇数なら、あと2枚重ねられて(五人囃子の分も残る)ときだけ続ける
+              const p = picked.length, total = p + items.length;
+              if (p === 5 || (p >= 1 && p % 2 === 1)) {
+                const sorted = [...items].sort((x, y) => { const rx = rank(x), ry = rank(y); return (rx[0] - ry[0]) || (rx[1] - ry[1]) || (rx[2] - ry[2]) || (rx[3] - ry[3]); });
+                const nextTwo = sorted.slice(0, 2).map(i => i.key);
+                const leftOk = !cpuHandOf(me, '1185') || cpuDistinct(me.remove.filter(r => !picked.includes(r.uid) && !nextTwo.includes(r.uid)).map(r => CARD_BY_ID.get(r.cardId)).filter(lv4)) >= 3;
+                if (p === 5 || total < p + 2 || !leftOk) return 'skip';
               }
               picked.push(best.key);
               return [best.key];
