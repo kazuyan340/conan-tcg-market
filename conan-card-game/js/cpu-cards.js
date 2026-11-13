@@ -35,9 +35,25 @@ Object.assign(window.CPU_CARD_RULES, {
               const inRem = new Set(cpuShonen(c.me).map(d => d.name));
               const feed = c.me.case && !c.me.case.resolved && c.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !inRem.has(d.name); }) ? 1 : 0;
               const n = cpuDistinct(cpuShonen(c.me)) + feed; return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 80 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
-            // 重ねるカードは、五人囃子で使うレベル4をなるべく残して、レベルの低いものから選ぶ
-            choose: (ctx, items) => items.length ? [[...items].sort((x, y) => ((cpuLv(x.cardId) === 4) - (cpuLv(y.cardId) === 4)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key] : null },
-  // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
+            // 重ねるカード: 1枚以上で突撃になるので、相手を倒すことを優先する。手札に五人囃子があるときは、五人囃子でリクルートするレベル4(名前違い3枚)を残すところまでにして、重ねるのを止める。
+            //   重ねるときは、レベルが4でないものを先に、次に、同じ名前がリムーブエリアに複数あるレベル4(名前違いの数が減らない)、そのほかはレベルの低い順
+            choose: (ctx, items) => {
+              if (!items.length) return null;
+              const me = match.opponent, hint = String(ctx.hint || '');
+              const km = hint.match(/（(\d+)\/\d+）/), k = km ? Number(km[1]) : 1;
+              if (k <= 1) window.__ketsuPicked = [];
+              const picked = window.__ketsuPicked || [];
+              const lv4 = d => d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団');
+              const copies = d => me.remove.filter(r => { const x = CARD_BY_ID.get(r.cardId); return x && x.name === d.name && lv4(x); }).length;
+              const rank = i => { const d = CARD_BY_ID.get(i.cardId); return [lv4(d) ? 1 : 0, lv4(d) && copies(d) >= 2 ? 0 : 1, d.level]; };
+              const best = [...items].sort((x, y) => { const rx = rank(x), ry = rank(y); return (rx[0] - ry[0]) || (rx[1] - ry[1]) || (rx[2] - ry[2]); })[0];
+              if (k >= 2 && cpuHandOf(me, '1185')) {
+                const left = me.remove.filter(r => !picked.includes(r.uid) && r.uid !== best.key).map(r => CARD_BY_ID.get(r.cardId)).filter(lv4);
+                if (cpuDistinct(left) < 3) return 'skip';
+              }
+              picked.push(best.key);
+              return [best.key];
+            } },  // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
   '0036': { playScore: c => c.me.deckPile.length < 10 ? -1 : cpuDistinct(cpuShonen(c.me)) < 5 ? 86 : 81,
             removesFoe: (ctx, planned) => planned && ctx.me.deckPile.length >= 10 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
   // 怪盗キッド(Lv8): 宣言で相手のキャラをスリープさせる(お互いの証拠が合わせて5つ以上のとき)

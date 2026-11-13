@@ -149,6 +149,7 @@
       let keys;
       const rule = cs.sourceCardId != null ? ruleOf(cs.sourceCardId) : null;
       if (rule && rule.choose) keys = rule.choose({ sourceCardId: cs.sourceCardId, hint: cs.hint, min: cs.min, max: cs.max }, items);
+      if (keys === 'skip') { finishChoice([]); return true; }   // ルールが「ここで選ぶのをやめる」と答えたとき
       if (keys && keys.length) { /* カード別の指定を使う */ }
       else if (items.some(it => it.key === 'yes')) keys = ['yes'];
       else keys = items.slice(0, Math.min(cs.max || 1, Math.max(cs.min || 0, 1))).map(it => it.key);
