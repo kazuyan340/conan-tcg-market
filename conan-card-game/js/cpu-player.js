@@ -308,6 +308,11 @@
       return keepForContact ? 60 : -5;
     }
     if (!r || !r.playScore || r.contactCutIn || r.contactDisguise) return keepLv(h.cardId) + (r && (r.contactCutIn || r.contactDisguise) ? 60 : 0);
+    // 結成 少年探偵団(突撃)は、相手のスリープのキャラ(APが8000以下)を、出したターンにすぐ倒せる。倒せる相手がいるときは、五人囃子などより残す
+    const base = (() => { try { return r.playScore({ card: h, hand: me.hand, field: me.field, foeField: foe.field, turn: match.turn, me, foe, lethal: false, open: 0 }); } catch (e) { return keepLv(h.cardId); } })();
+    const hdef = CARD_BY_ID.get(h.cardId);
+    if (hdef && hdef.card_id === '0264' && base >= 0 && foe.field.some(f => f.sleeping && effectiveAp(match, f, 'self') <= 8000)) return base + 30;
+    return base;
     try { return r.playScore({ card: h, hand: me.hand, field: me.field, foeField: foe.field, turn: match.turn, me, foe, lethal: false, open: 0 }); } catch (e) { return keepLv(h.cardId); }
   }
   const keepLv = cardId => { const d = CARD_BY_ID.get(cardId); return (d && d.level != null ? d.level : 0) + (d && d.card_id === '0092' ? 10 : 0); };
