@@ -919,6 +919,20 @@
   {
    "site": "竜のしっぽ",
    "raw_key": "レンチキュラー",
+   "rarity": "P093",
+   "price": 100,
+   "hint": "",
+   "product_name": "工藤新一/灰原哀/小さくなった新一(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5031312f3234303236353537342e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97970",
+   "listing_count": 1,
+   "prices": [
+    100
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "レンチキュラー",
    "rarity": "P094",
    "price": 100,
    "hint": "",
@@ -1016,6 +1030,20 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "A03094",
+   "rarity": "C",
+   "price": 550,
+   "hint": "",
+   "product_name": "萩原千速",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427091&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427091",
+   "listing_count": 1,
+   "prices": [
+    550
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "A04016P",
    "rarity": "CP",
    "price": 340,
@@ -1072,20 +1100,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A03004",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "江戸川コナン",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427084&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427084",
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "A04049",
    "rarity": "R",
    "price": 160,
@@ -1093,34 +1107,6 @@
    "product_name": "沖矢昴",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427106&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU427106",
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "A03030",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "伊織無我",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427087&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427087",
-   "listing_count": 1,
-   "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "A03089",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "黒田兵衛",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427090&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427090",
    "listing_count": 1,
    "prices": [
     160
