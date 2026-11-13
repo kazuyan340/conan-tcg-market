@@ -455,7 +455,7 @@
       keeperUid = keeper ? keeper.uid : null;
     }
     // 手札に円谷光彦Lv4があって、現場にレベル4の名前違いの少年探偵団が2枚以上いるときは、いちばん弱いキャラから動く(光彦のカットインで勝てるので、弱いキャラでアクションしてよい。事件アクションが通れば、なお強い)
-    const koh = mine.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1177') && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
+    const koh = mine.hand.some(h => ['1176', '1177'].includes((CARD_BY_ID.get(h.cardId) || {}).card_id)) && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
     for (const c of (koh ? [...mine.field].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId)) : mine.field)) {
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
@@ -496,12 +496,21 @@
   }
 
   // 相手のスリープ状態のキャラのうち、こちらのAPが上回るものを優先。無ければ証拠のある事件
+  let genTurn = -1;   // 元太のカットインを合わせる最初のアクションを決めたターン
   function pickActionTarget(actor, lethal){
     const foe = match.self;
     if (lethal && foe.case && foe.evidence.length > 0) return { uid: foe.case.uid };   // 勝ち筋のターンは、証拠を取る(事件へのアクション)
     const ap = effectiveAp(match, actor, 'opponent');
     const ok = c => c.sleeping && !hasActionLockRestriction(defOfInst(c)) && !isProtectedByLowLevelGuard('self', defOfInst(c)) && limitedChargeAllows(actor, defOfInst(c));
     const cands = foe.field.filter(ok).map(c => ({ uid: c.uid, ap: effectiveAp(match, c, 'self') })).sort((a, b) => a.ap - b.ap);
+    // 手札に元太Lv4があり、現場にレベル4の名前違いの少年探偵団が2枚以上いるとき: 相手のレベル8以上のキャラ(いちばんAPが高いもの)は、いちばん弱いキャラのアクションに元太のカットインを合わせて除去する。
+    // 強いキャラは、残りのキャラ(レベル8以上でない相手など)に回せる(弱いキャラから順に動くので、ここは最初のアクションだけ)
+    const mineF = match.opponent;
+    if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok && genTurn !== match.turn.turnNumber && mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1176')
+        && new Set(mineF.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size >= 2) {
+      const big = cands.filter(x => { const d = defOfInst(foe.field.find(f => f.uid === x.uid)); return d && d.level >= 8; });
+      if (big.length) { genTurn = match.turn.turnNumber; return big[big.length - 1]; }
+    }
     const winnable = cands.filter(x => x.ap <= ap);   // APが同じなら、アクションした側が勝つ
     if (winnable.length) return winnable[winnable.length - 1];
     const byHand = cands.filter(x => winnableByHand(actor, foe.field.find(f => f.uid === x.uid)));   // 手札のカットイン・変装で倒せる相手
