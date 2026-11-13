@@ -34,7 +34,7 @@ Object.assign(window.CPU_CARD_RULES, {
               // 事件がまだ解決編でなく、アシストで解決編になるときは、手札を1枚リムーブする。手札のレベル4の少年探偵団(リムーブエリアにいない名前)を捨てて、重ねる材料にできる(+1枚)
               const inRem = new Set(cpuShonen(c.me).map(d => d.name));
               const feed = c.me.case && !c.me.case.resolved && c.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !inRem.has(d.name); }) ? 1 : 0;
-              const n = cpuDistinct(cpuShonen(c.me)) + feed; return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 76 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
+              const n = cpuDistinct(cpuShonen(c.me)) + feed; return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 80 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
             // 重ねるカードは、五人囃子で使うレベル4をなるべく残して、レベルの低いものから選ぶ
             choose: (ctx, items) => items.length ? [[...items].sort((x, y) => ((cpuLv(x.cardId) === 4) - (cpuLv(y.cardId) === 4)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key] : null },
   // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
