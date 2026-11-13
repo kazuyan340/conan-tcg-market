@@ -513,6 +513,10 @@
       //   元太(カットイン): レベル8以上 / 光彦(カットイン): レベル7以下 / 歩美(変装): レベル7以下(スリープ。歩美自身を除いて2枚以上)
       for (const [cid, inRange, need, lv4Only, excl] of [['1176', lv => lv >= 8, 2, false, null], ['1177', lv => lv <= 7, 2, true, null], ['1175', lv => lv <= 7, 2, true, actor.uid]]) {
         if (genTurn[cid] === match.turn.turnNumber || (lv4Only && !actorIsLv4)) continue;
+        // ガードされても大丈夫なときだけ: 相手のアクティブなキャラ(ガードできる)が、すべて「このキャラ以下のAP」か「手札のカットインで除去できるレベル」であること
+        const covers = [['1176', lv => lv >= 8], ['1177', lv => lv <= 7]].filter(([c2]) => mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === c2) && lv4n(null) >= 2);
+        const myAp = effectiveAp(match, actor, 'opponent');
+        if (!foe.field.filter(f => !f.sleeping).every(f => { const d = defOfInst(f); return effectiveAp(match, f, 'self') <= myAp || (d && d.level != null && covers.some(([, r]) => r(d.level))); })) continue;
         if (!mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === cid) || lv4n(excl) < need) continue;
         const pick = cands.filter(x => { const d = defOfInst(foe.field.find(f => f.uid === x.uid)); return d && d.level != null && inRange(d.level); });
         if (pick.length) { genTurn[cid] = match.turn.turnNumber; return pick[pick.length - 1]; }
