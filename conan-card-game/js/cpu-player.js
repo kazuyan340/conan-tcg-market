@@ -301,6 +301,12 @@
   //   カットイン・変装で手札に残しているカード(元太・光彦・歩美)は残す
   function discardValue(h){
     const me = match.opponent, foe = match.self, r = ruleOf(h.cardId);
+    // レベル4の少年探偵団キャラは、五人囃子でリクルートできるので、捨てやすい(リムーブエリアに送ると、五人囃子・結成の材料になる)。カットイン・変装で使う元太・光彦・歩美は、条件がそろっているあいだ残す
+    const hd = defOfInst(h);
+    if (hd && hd.card_type === 'キャラ' && hd.level === 4 && cardHasTrait(hd, '少年探偵団')) {
+      const keepForContact = r && (r.contactCutIn || r.contactDisguise) && new Set(me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size >= 2;
+      return keepForContact ? 60 : -5;
+    }
     if (!r || !r.playScore || r.contactCutIn || r.contactDisguise) return keepLv(h.cardId) + (r && (r.contactCutIn || r.contactDisguise) ? 60 : 0);
     try { return r.playScore({ card: h, hand: me.hand, field: me.field, foeField: foe.field, turn: match.turn, me, foe, lethal: false, open: 0 }); } catch (e) { return keepLv(h.cardId); }
   }
