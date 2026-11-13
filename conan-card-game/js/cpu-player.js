@@ -452,6 +452,7 @@
     if (lethal && lethalPlan.length) { const first = lethalPlan[0]; const mine1 = playable.filter(c => c.uid === first.uid); if (mine1.length) playable.splice(0, playable.length, ...mine1); }   // 勝ち筋のターンは、組んだ順番で出す
     if (playable.length) {
       const c = playable[0]; tried.add(key('play', c.uid));
+      { const pd = CARD_BY_ID.get(c.cardId); lastPlayAt = Date.now(); lastPlayWait = pd && pd.card_type !== 'キャラ' ? 4500 : 1500; }   // イベント(五人囃子など)は、選択画面が何段階か続くので、終わるまで次の手に進まない
       const before = mine.hand.length;
       playCard(me, c.uid);
       return true;
@@ -516,7 +517,8 @@
   }
 
   // 相手のスリープ状態のキャラのうち、こちらのAPが上回るものを優先。無ければ証拠のある事件
-  const genTurn = {};   // 元太のカットインを合わせる最初のアクションを決めたターン
+  const genTurn = {};
+  let lastPlayAt = 0, lastPlayWait = 0, lastEvLen = 0, lastEvAt = 0;   // 元太のカットインを合わせる最初のアクションを決めたターン
   function pickActionTarget(actor, lethal){
     const foe = match.self;
     if (lethal && foe.case && foe.evidence.length > 0) return { uid: foe.case.uid };   // 勝ち筋のターンは、証拠を取る(事件へのアクション)
@@ -574,7 +576,10 @@
       }
       stuckTicks = 0;
       if (!match.turn || match.turn.activeSide !== 'opponent' || match.turn.phase !== 'main') return;
-      if (Date.now() - lastPendingAt < 1500) return;   // 効果の処理が続いている途中(選択画面と選択画面のすきま)では、次の手に進まない
+      if (Date.now() - lastPendingAt < 1500) return;
+      if (match.events && match.events.length !== lastEvLen) { lastEvLen = match.events.length; lastEvAt = Date.now(); }
+      if (Date.now() - lastEvAt < 1200) return;   // 直前に何か起きたばかり(効果の続きが出てくるかもしれない)ときは、少し待つ
+      if (Date.now() - lastPlayAt < lastPlayWait) return;   // 効果の処理が続いている途中(選択画面と選択画面のすきま)では、次の手に進まない
       myTurnMain();
       busyUntil = Date.now() + 900;
     } catch (e) { console.error('cpu', e); busyUntil = Date.now() + 1500; }

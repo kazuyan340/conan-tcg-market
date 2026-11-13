@@ -45,8 +45,9 @@ Object.assign(window.CPU_CARD_RULES, {
               const picked = window.__ketsuPicked || [];
               const lv4 = d => d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団');
               const copies = d => me.remove.filter(r => { const x = CARD_BY_ID.get(r.cardId); return x && x.name === d.name && lv4(x); }).length;
-              const rank = i => { const d = CARD_BY_ID.get(i.cardId); return [lv4(d) ? 1 : 0, lv4(d) && copies(d) >= 2 ? 0 : 1, d.level]; };
-              const best = [...items].sort((x, y) => { const rx = rank(x), ry = rank(y); return (rx[0] - ry[0]) || (rx[1] - ry[1]) || (rx[2] - ry[2]); })[0];
+              const foeBig = match.self.field.some(f => f.sleeping && (defOfInst(f) || {}).level >= 8);
+              const rank = i => { const d = CARD_BY_ID.get(i.cardId); return [lv4(d) ? 1 : 0, lv4(d) && copies(d) >= 2 ? 0 : 1, d.level, d.card_id === '1176' && foeBig ? 1 : 0]; };   // 元太は、相手にスリープのレベル8以上がいるとき、カットイン用に重ねずに残す
+              const best = [...items].sort((x, y) => { const rx = rank(x), ry = rank(y); return (rx[0] - ry[0]) || (rx[1] - ry[1]) || (rx[2] - ry[2]) || (rx[3] - ry[3]); })[0];
               if (k >= 2 && cpuHandOf(me, '1185')) {
                 const left = me.remove.filter(r => !picked.includes(r.uid) && r.uid !== best.key).map(r => CARD_BY_ID.get(r.cardId)).filter(lv4);
                 if (cpuDistinct(left) < 3) return 'skip';
