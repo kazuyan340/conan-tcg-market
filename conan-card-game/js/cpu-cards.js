@@ -30,7 +30,11 @@ Object.assign(window.CPU_CARD_RULES, {
             declares: [{ line: 'デッキのカードを上から5枚リムーブ', when: c => c.me.deckPile.length >= 15 }] },   // 山札切れに注意して、15枚以上あるときだけ肥やす
   // 結成 少年探偵団(Lv8): 名前の違う少年探偵団が5枚そろってから出して、5枚重ねにする
   // stackCharge: 登場時に下へ重ねる枚数(リムーブエリアの名前違いの少年探偵団、最大5)。1枚以上で突撃、5枚で「アクションしたとき証拠を1つ得る」(ガードされても得られる)
-  '0264': { stackCharge: me => Math.min(5, cpuDistinct(cpuShonen(me))), playScore: c => { const n = cpuDistinct(cpuShonen(c.me)); return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 76 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
+  '0264': { stackCharge: me => Math.min(5, cpuDistinct(cpuShonen(me))), playScore: c => {
+              // 事件がまだ解決編でなく、アシストで解決編になるときは、手札を1枚リムーブする。手札のレベル4の少年探偵団(リムーブエリアにいない名前)を捨てて、重ねる材料にできる(+1枚)
+              const inRem = new Set(cpuShonen(c.me).map(d => d.name));
+              const feed = c.me.case && !c.me.case.resolved && c.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !inRem.has(d.name); }) ? 1 : 0;
+              const n = cpuDistinct(cpuShonen(c.me)) + feed; return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 76 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
             // 重ねるカードは、五人囃子で使うレベル4をなるべく残して、レベルの低いものから選ぶ
             choose: (ctx, items) => items.length ? [[...items].sort((x, y) => ((cpuLv(x.cardId) === 4) - (cpuLv(y.cardId) === 4)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key] : null },
   // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
