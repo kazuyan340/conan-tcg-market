@@ -140,7 +140,7 @@
       return true;
     }
     if (handDiscardState) {
-      const h = [...match[handDiscardState.side].hand].sort((a, b) => keepLv(a.cardId) - keepLv(b.cardId))[0];
+      const h = [...match[handDiscardState.side].hand].sort((a, b) => discardValue(a) - discardValue(b))[0];
       if (h) selectHandDiscardTarget(h.uid); else handDiscardState = null;
       return true;
     }
@@ -296,6 +296,14 @@
   }
   const ruleOf = cardId => { const d = CARD_BY_ID.get(cardId); return (d && (window.CPU_CARD_RULES || {})[String(d.card_id)]) || null; };
   // 手札を捨てる・現場からリムーブするときの「大事さ」(低いものから手放す)。江戸川コナンLv4(0092)は大事にする
+  // 手札を1枚捨てる(リムーブする)ときの、残したい度合い。小さいほど先に捨てる。
+  //   そのターンに出せないカード(出す条件が足りない)を先に、出せるものは出す優先度(playScore)の低いものから。ルールのないカードはレベル。
+  //   カットイン・変装で手札に残しているカード(元太・光彦・歩美)は残す
+  function discardValue(h){
+    const me = match.opponent, foe = match.self, r = ruleOf(h.cardId);
+    if (!r || !r.playScore || r.contactCutIn || r.contactDisguise) return keepLv(h.cardId) + (r && (r.contactCutIn || r.contactDisguise) ? 60 : 0);
+    try { return r.playScore({ card: h, hand: me.hand, field: me.field, foeField: foe.field, turn: match.turn, me, foe, lethal: false, open: 0 }); } catch (e) { return keepLv(h.cardId); }
+  }
   const keepLv = cardId => { const d = CARD_BY_ID.get(cardId); return (d && d.level != null ? d.level : 0) + (d && d.card_id === '0092' ? 10 : 0); };
   const lvOf = cardId => { const d = CARD_BY_ID.get(cardId); return d && d.level != null ? d.level : 0; };
 
