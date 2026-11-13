@@ -140,7 +140,7 @@
       return true;
     }
     if (handDiscardState) {
-      const h = [...match[handDiscardState.side].hand].sort((a, b) => keepLv(a.cardId) - keepLv(b.cardId))[0];
+      const h = [...match[handDiscardState.side].hand].sort((a, b) => discardValue(a) - discardValue(b))[0];
       if (h) selectHandDiscardTarget(h.uid); else handDiscardState = null;
       return true;
     }
@@ -149,6 +149,7 @@
       let keys;
       const rule = cs.sourceCardId != null ? ruleOf(cs.sourceCardId) : null;
       if (rule && rule.choose) keys = rule.choose({ sourceCardId: cs.sourceCardId, hint: cs.hint, min: cs.min, max: cs.max }, items);
+      if (keys === 'skip') { finishChoice([]); return true; }   // ルールが「ここで選ぶのをやめる」と答えたとき
       if (keys && keys.length) { /* カード別の指定を使う */ }
       else if (items.some(it => it.key === 'yes')) keys = ['yes'];
       else keys = items.slice(0, Math.min(cs.max || 1, Math.max(cs.min || 0, 1))).map(it => it.key);
@@ -296,6 +297,25 @@
   }
   const ruleOf = cardId => { const d = CARD_BY_ID.get(cardId); return (d && (window.CPU_CARD_RULES || {})[String(d.card_id)]) || null; };
   // 手札を捨てる・現場からリムーブするときの「大事さ」(低いものから手放す)。江戸川コナンLv4(0092)は大事にする
+  // 手札を1枚捨てる(リムーブする)ときの、残したい度合い。小さいほど先に捨てる。
+  //   そのターンに出せないカード(出す条件が足りない)を先に、出せるものは出す優先度(playScore)の低いものから。ルールのないカードはレベル。
+  //   カットイン・変装で手札に残しているカード(元太・光彦・歩美)は残す
+  function discardValue(h){
+    const me = match.opponent, foe = match.self, r = ruleOf(h.cardId);
+    // レベル4の少年探偵団キャラは、五人囃子でリクルートできるので、捨てやすい(リムーブエリアに送ると、五人囃子・結成の材料になる)。カットイン・変装で使う元太・光彦・歩美は、条件がそろっているあいだ残す
+    const hd = defOfInst(h);
+    if (hd && hd.card_type === 'キャラ' && hd.level === 4 && cardHasTrait(hd, '少年探偵団')) {
+      const keepForContact = r && (r.contactCutIn || r.contactDisguise) && new Set(me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size >= 2;
+      return keepForContact ? 60 : -5;
+    }
+    if (!r || !r.playScore || r.contactCutIn || r.contactDisguise) return keepLv(h.cardId) + (r && (r.contactCutIn || r.contactDisguise) ? 60 : 0);
+    // 結成 少年探偵団(突撃)は、相手のスリープのキャラ(APが8000以下)を、出したターンにすぐ倒せる。倒せる相手がいるときは、五人囃子などより残す
+    const base = (() => { try { return r.playScore({ card: h, hand: me.hand, field: me.field, foeField: foe.field, turn: match.turn, me, foe, lethal: false, open: 0 }); } catch (e) { return keepLv(h.cardId); } })();
+    const hdef = CARD_BY_ID.get(h.cardId);
+    if (hdef && hdef.card_id === '0264' && base >= 0 && foe.field.some(f => f.sleeping && effectiveAp(match, f, 'self') <= 8000)) return base + 30;
+    return base;
+    try { return r.playScore({ card: h, hand: me.hand, field: me.field, foeField: foe.field, turn: match.turn, me, foe, lethal: false, open: 0 }); } catch (e) { return keepLv(h.cardId); }
+  }
   const keepLv = cardId => { const d = CARD_BY_ID.get(cardId); return (d && d.level != null ? d.level : 0) + (d && d.card_id === '0092' ? 10 : 0); };
   const lvOf = cardId => { const d = CARD_BY_ID.get(cardId); return d && d.level != null ? d.level : 0; };
 
@@ -432,6 +452,7 @@
     if (lethal && lethalPlan.length) { const first = lethalPlan[0]; const mine1 = playable.filter(c => c.uid === first.uid); if (mine1.length) playable.splice(0, playable.length, ...mine1); }   // 勝ち筋のターンは、組んだ順番で出す
     if (playable.length) {
       const c = playable[0]; tried.add(key('play', c.uid));
+      { const pd = CARD_BY_ID.get(c.cardId); lastPlayAt = Date.now(); lastPlayWait = pd && pd.card_type !== 'キャラ' ? 4500 : 1500; }   // イベント(五人囃子など)は、選択画面が何段階か続くので、終わるまで次の手に進まない
       const before = mine.hand.length;
       playCard(me, c.uid);
       return true;
@@ -455,7 +476,7 @@
       keeperUid = keeper ? keeper.uid : null;
     }
     // 手札に円谷光彦Lv4があって、現場にレベル4の名前違いの少年探偵団が2枚以上いるときは、いちばん弱いキャラから動く(光彦のカットインで勝てるので、弱いキャラでアクションしてよい。事件アクションが通れば、なお強い)
-    const koh = mine.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1177') && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
+    const koh = mine.hand.some(h => ['1175', '1176', '1177'].includes((CARD_BY_ID.get(h.cardId) || {}).card_id)) && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
     for (const c of (koh ? [...mine.field].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId)) : mine.field)) {
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
@@ -496,12 +517,33 @@
   }
 
   // 相手のスリープ状態のキャラのうち、こちらのAPが上回るものを優先。無ければ証拠のある事件
+  const genTurn = {};
+  let lastPlayAt = 0, lastPlayWait = 0, lastEvLen = 0, lastEvAt = 0;   // 元太のカットインを合わせる最初のアクションを決めたターン
   function pickActionTarget(actor, lethal){
     const foe = match.self;
     if (lethal && foe.case && foe.evidence.length > 0) return { uid: foe.case.uid };   // 勝ち筋のターンは、証拠を取る(事件へのアクション)
     const ap = effectiveAp(match, actor, 'opponent');
     const ok = c => c.sleeping && !hasActionLockRestriction(defOfInst(c)) && !isProtectedByLowLevelGuard('self', defOfInst(c)) && limitedChargeAllows(actor, defOfInst(c));
     const cands = foe.field.filter(ok).map(c => ({ uid: c.uid, ap: effectiveAp(match, c, 'self') })).sort((a, b) => a.ap - b.ap);
+    // 手札に元太Lv4があり、現場にレベル4の名前違いの少年探偵団が2枚以上いるとき: 相手のレベル8以上のキャラ(いちばんAPが高いもの)は、いちばん弱いキャラのアクションに元太のカットインを合わせて除去する。
+    // 強いキャラは、残りのキャラ(レベル8以上でない相手など)に回せる(弱いキャラから順に動くので、ここは最初のアクションだけ)
+    const mineF = match.opponent;
+    if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok) {
+      const ad = defOfInst(actor), actorIsLv4 = !!ad && ad.level === 4 && cardHasTrait(ad, '少年探偵団');
+      const lv4n = excl => new Set(mineF.field.filter(f => f.uid !== excl).map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
+      // [カードID, 相手の対象レベル, 必要な現場のレベル4の枚数, レベル4の少年探偵団のキャラだけに任せる]
+      //   元太(カットイン): レベル8以上 / 光彦(カットイン): レベル7以下 / 歩美(変装): レベル7以下(スリープ。歩美自身を除いて2枚以上)
+      for (const [cid, inRange, need, lv4Only, excl] of [['1176', lv => lv >= 8, 2, false, null], ['1177', lv => lv <= 7, 2, true, null], ['1175', lv => lv <= 7, 2, true, actor.uid]]) {
+        if (genTurn[cid] === match.turn.turnNumber || (lv4Only && !actorIsLv4)) continue;
+        // ガードされても大丈夫なときだけ: 相手のアクティブなキャラ(ガードできる)が、すべて「このキャラ以下のAP」か「手札のカットインで除去できるレベル」であること
+        const covers = [['1176', lv => lv >= 8], ['1177', lv => lv <= 7]].filter(([c2]) => mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === c2) && lv4n(null) >= 2);
+        const myAp = effectiveAp(match, actor, 'opponent');
+        if (!foe.field.filter(f => !f.sleeping).every(f => { const d = defOfInst(f); return effectiveAp(match, f, 'self') <= myAp || (d && d.level != null && covers.some(([, r]) => r(d.level))); })) continue;
+        if (!mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === cid) || lv4n(excl) < need) continue;
+        const pick = cands.filter(x => { const d = defOfInst(foe.field.find(f => f.uid === x.uid)); return d && d.level != null && inRange(d.level); });
+        if (pick.length) { genTurn[cid] = match.turn.turnNumber; return pick[pick.length - 1]; }
+      }
+    }
     const winnable = cands.filter(x => x.ap <= ap);   // APが同じなら、アクションした側が勝つ
     if (winnable.length) return winnable[winnable.length - 1];
     const byHand = cands.filter(x => winnableByHand(actor, foe.field.find(f => f.uid === x.uid)));   // 手札のカットイン・変装で倒せる相手
@@ -534,7 +576,10 @@
       }
       stuckTicks = 0;
       if (!match.turn || match.turn.activeSide !== 'opponent' || match.turn.phase !== 'main') return;
-      if (Date.now() - lastPendingAt < 1500) return;   // 効果の処理が続いている途中(選択画面と選択画面のすきま)では、次の手に進まない
+      if (Date.now() - lastPendingAt < 1500) return;
+      if (match.events && match.events.length !== lastEvLen) { lastEvLen = match.events.length; lastEvAt = Date.now(); }
+      if (Date.now() - lastEvAt < 1200) return;   // 直前に何か起きたばかり(効果の続きが出てくるかもしれない)ときは、少し待つ
+      if (Date.now() - lastPlayAt < lastPlayWait) return;   // 効果の処理が続いている途中(選択画面と選択画面のすきま)では、次の手に進まない
       myTurnMain();
       busyUntil = Date.now() + 900;
     } catch (e) { console.error('cpu', e); busyUntil = Date.now() + 1500; }

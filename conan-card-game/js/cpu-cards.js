@@ -101,18 +101,21 @@ Object.assign(window.CPU_CARD_RULES, {
 const cpuLv4Names = (field, excludeUid) => new Set(field.filter(c => c.uid !== excludeUid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
 const cpuTgtLv = ctx => { const d = defOfInst(ctx.tgt); return d && d.level != null ? d.level : 0; };
 const cpuHoldForContact = c => cpuLv4Names(c.me.field) >= 2 && (c.foeField.some(f => f.sleeping) || ['1176', '1177'].includes(String(c.card.cardId && (CARD_BY_ID.get(c.card.cardId) || {}).card_id)));   // 元太・光彦は、ガードしてきた相手(事件アクション)を倒すのにも使うので、条件がそろっていれば手札に残す
+// 現場のレベル4が足りない(2枚未満)とき: 手札のレベル4少年探偵団(元太・光彦以外)で名前違いを足せるなら、それを先に出し、元太・光彦はカットイン用に残す
+const cpuBuildOthers = c => { const have = new Set(c.me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); const out = []; for (const h of c.hand) { const d = CARD_BY_ID.get(h.cardId); if (d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !['1176', '1177'].includes(String(d.card_id)) && !have.has(d.name) && !out.includes(d.name)) out.push(d.name); } return { have: have.size, add: out.length }; };
+const cpuBuildHold = c => { if (cpuLv4Names(c.me.field) >= 2 || !c.foeField.some(f => f.sleeping)) return false; const b = cpuBuildOthers(c); return b.have + b.add >= 2 && b.add >= 1; };
 // カットインで「コンタクト中のキャラ」を選ぶ画面: 相手のキャラ(self-)を選ぶ。自分のキャラは選ばない
 const cpuChooseFoeContact = (ctx, items) => { const foe = items.filter(i => String(i.key).startsWith('self-')); return foe.length ? [foe[0].key] : []; };
 Object.assign(window.CPU_CARD_RULES, {
   // 小嶋元太(Lv4): 自分の現場にレベル4の名前違いの少年探偵団が2枚以上いれば、コンタクト中のレベル8以上のキャラをリムーブして1枚引く
   // 手札に残す: 条件がそろっていて(場にレベル4の名前違いが2枚以上)、相手にスリープ状態のキャラがいるときは、コンタクト用に出さずに持っておく
-  '1176': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) >= 8, choose: cpuChooseFoeContact },
+  '1176': { playScore: c => cpuHoldForContact(c) || cpuBuildHold(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) >= 8, choose: cpuChooseFoeContact },
   // 円谷光彦(Lv4): 同じ条件で、コンタクト中のレベル7以下のキャラをリムーブして1枚引く
-  '1177': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
+  '1177': { playScore: c => cpuHoldForContact(c) || cpuBuildHold(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
   // 吉田歩美(Lv4): 変装で攻撃キャラと入れ替わる。入れ替え後に名前違いのレベル4少年探偵団が3枚以上そろえば、レベル7以下のスリープ状態のキャラをリムーブして1枚引く
   // (勝ち筋: 事件にもアクションできる突撃を持つのは、FILE5以上で出た歩美と、中森青子。元太・光彦の突撃は［キャラ］限定なので、事件には行けない)
   // 先攻3ターン目: 相手が全部アクティブで、FILE5以上なら、歩美を出して事件へ突撃する
-  '1175': { lethalCharge: true, chargeMinFile: 5, playScore: c => c.lethal ? 5 : (c.open === 3 && c.foeField.length && c.foeField.every(f => !f.sleeping) && getEffectiveFileCount('opponent') >= 5) ? 60 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
+  '1175': { lethalCharge: true, chargeMinFile: 5, playScore: c => c.lethal ? 5 : (c.open === 3 && c.foeField.length && c.foeField.every(f => !f.sleeping) && getEffectiveFileCount('opponent') >= 5) ? 60 : cpuHoldForContact(c) ? -1 : cpuBuildHold(c) ? 6 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
 // 相手のキャラを選んで除去する効果の選び方: 相手の「アクティブ(ガードできる)」キャラを優先し、そのなかでAPの高いものを選ぶ。自分のキャラは選ばない

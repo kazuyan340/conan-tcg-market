@@ -30,10 +30,35 @@ Object.assign(window.CPU_CARD_RULES, {
             declares: [{ line: 'デッキのカードを上から5枚リムーブ', when: c => c.me.deckPile.length >= 15 }] },   // 山札切れに注意して、15枚以上あるときだけ肥やす
   // 結成 少年探偵団(Lv8): 名前の違う少年探偵団が5枚そろってから出して、5枚重ねにする
   // stackCharge: 登場時に下へ重ねる枚数(リムーブエリアの名前違いの少年探偵団、最大5)。1枚以上で突撃、5枚で「アクションしたとき証拠を1つ得る」(ガードされても得られる)
-  '0264': { stackCharge: me => Math.min(5, cpuDistinct(cpuShonen(me))), playScore: c => { const n = cpuDistinct(cpuShonen(c.me)); return n >= 5 ? 88 : n === 4 ? 82 : -1; },
-            // 重ねるカードは、五人囃子で使うレベル4をなるべく残して、レベルの低いものから選ぶ
-            choose: (ctx, items) => items.length ? [[...items].sort((x, y) => ((cpuLv(x.cardId) === 4) - (cpuLv(y.cardId) === 4)) || (cpuLv(x.cardId) - cpuLv(y.cardId)))[0].key] : null },
-  // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
+  '0264': { stackCharge: me => { const n = cpuDistinct(cpuShonen(me)); return n >= 5 ? 5 : n >= 3 ? 3 : n >= 1 ? 1 : 0; }, playScore: c => {
+              // 事件がまだ解決編でなく、アシストで解決編になるときは、手札を1枚リムーブする。手札のレベル4の少年探偵団(リムーブエリアにいない名前)を捨てて、重ねる材料にできる(+1枚)
+              const inRem = new Set(cpuShonen(c.me).map(d => d.name));
+              const feed = c.me.case && !c.me.case.resolved && c.hand.some(h => { const d = CARD_BY_ID.get(h.cardId); return d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !inRem.has(d.name); }) ? 1 : 0;
+              const n = cpuDistinct(cpuShonen(c.me)) + feed; return n >= 5 ? 88 : n === 4 ? 82 : n === 3 ? 80 : n >= 1 ? 70 : -1; },   // 3枚でも突撃とワンドローが使える(5枚重ねはできたらラッキー)
+            // 重ねるカード: 1枚以上で突撃になるので、相手を倒すことを優先する。手札に五人囃子があるときは、五人囃子でリクルートするレベル4(名前違い3枚)を残すところまでにして、重ねるのを止める。
+            //   重ねるときは、レベルが4でないものを先に、次に、同じ名前がリムーブエリアに複数あるレベル4(名前違いの数が減らない)、そのほかはレベルの低い順
+            choose: (ctx, items) => {
+              if (!items.length) return null;
+              const me = match.opponent, hint = String(ctx.hint || '');
+              const km = hint.match(/（(\d+)\/\d+）/), k = km ? Number(km[1]) : 0;   // 見出しの（N/5）は、いま重ねた枚数
+              if (k === 0) window.__ketsuPicked = [];
+              const picked = window.__ketsuPicked || [];
+              const lv4 = d => d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団');
+              const copies = d => me.remove.filter(r => { const x = CARD_BY_ID.get(r.cardId); return x && x.name === d.name && lv4(x); }).length;
+              const foeBig = match.self.field.some(f => f.sleeping && (defOfInst(f) || {}).level >= 8);
+              const rank = i => { const d = CARD_BY_ID.get(i.cardId); return [lv4(d) ? 1 : 0, lv4(d) && copies(d) >= 2 ? 0 : 1, d.level, d.card_id === '1176' && foeBig ? 1 : 0]; };   // 元太は、相手にスリープのレベル8以上がいるとき、カットイン用に重ねずに残す
+              const best = [...items].sort((x, y) => { const rx = rank(x), ry = rank(y); return (rx[0] - ry[0]) || (rx[1] - ry[1]) || (rx[2] - ry[2]) || (rx[3] - ry[3]); })[0];
+              // 重ねる枚数は、1枚・3枚・5枚のどれかだけ(2枚・4枚で止めない)。いま重ねた枚数 p が奇数なら、あと2枚重ねられて(五人囃子の分も残る)ときだけ続ける
+              const p = picked.length, total = p + items.length;
+              if (p === 5 || (p >= 1 && p % 2 === 1)) {
+                const sorted = [...items].sort((x, y) => { const rx = rank(x), ry = rank(y); return (rx[0] - ry[0]) || (rx[1] - ry[1]) || (rx[2] - ry[2]) || (rx[3] - ry[3]); });
+                const nextTwo = sorted.slice(0, 2).map(i => i.key);
+                const leftOk = !cpuHandOf(me, '1185') || cpuDistinct(me.remove.filter(r => !picked.includes(r.uid) && !nextTwo.includes(r.uid)).map(r => CARD_BY_ID.get(r.cardId)).filter(lv4)) >= 3;
+                if (p === 5 || total < p + 2 || !leftOk) return 'skip';
+              }
+              picked.push(best.key);
+              return [best.key];
+            } },  // 怪盗キッド(Lv8): 登場時にデッキを7枚リムーブ(肥やす)。少年探偵団がそろっていないうちに出す
   '0036': { playScore: c => c.me.deckPile.length < 10 ? -1 : cpuDistinct(cpuShonen(c.me)) < 5 ? 86 : 81,
             removesFoe: (ctx, planned) => planned && ctx.me.deckPile.length >= 10 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
   // 怪盗キッド(Lv8): 宣言で相手のキャラをスリープさせる(お互いの証拠が合わせて5つ以上のとき)
@@ -41,7 +66,20 @@ Object.assign(window.CPU_CARD_RULES, {
   // 灰原哀(Lv8): 自分ターン中、レベル4の少年探偵団が登場したとき(ターン1)、AP8000以下のキャラをリムーブ
   '1171': { playScore: () => 83, removesFoe: ctx => ctx.willEnterLv4 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
   // 五人囃子(Lv7): リムーブエリアにレベル4の少年探偵団が(名前違いで)そろってから使う
-  '1185': { entersLv4: true, playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
+  //   リクルートする3枚のうち、手札に残す1枚(元太: 相手にスリープのLv8以上がいるとき / 光彦: スリープのLv7以下がいるとき)を決め、残りの2枚を登場させる。
+  //   登場した2枚のレベル4(名前違い)で、手札のカットインの条件(レベル4が2枚以上)を満たして、相手のスリープのキャラを処理できる
+  '1185': { entersLv4: true,
+            choose: (ctx, items) => {
+              const hint = String(ctx.hint || '');
+              if (!/登場させます/.test(hint)) return null;   // 3枚を選ぶ段階は、ふつうに選ぶ
+              const idOf = i => { const d = CARD_BY_ID.get(i.cardId); return d && String(d.card_id); };
+              const foeSleep = match.self.field.filter(f => f.sleeping).map(f => defOfInst(f)).filter(d => d && d.level != null);
+              const held = foeSleep.some(d => d.level >= 8) ? '1176' : foeSleep.some(d => d.level <= 7) ? '1177' : null;
+              const others = items.filter(i => idOf(i) !== held);
+              if (held && items.some(i => idOf(i) === held) && others.length) return [others[0].key];
+              return null;
+            },
+            playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
   // 黒羽快斗(Lv7): 手札を1枚リムーブして、リムーブエリアのLv5以下の青白の高校生(中森青子など)を登場させる
   '1199': { // 現場に探偵(コナン)がいて、リムーブする手札がある。復活させる青子は、リムーブエリアにいるか、コストで手札の青子を捨てて(リムーブエリアに入れて)用意する
             summonsCharger: ctx => ctx.others.length >= 1 && ctx.chars.some(c => cardHasTrait(defOfInst(c), '探偵')) && (cpuRem(ctx.me).some(d => d.card_id === '1200') || ctx.others.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1200')),
@@ -63,18 +101,21 @@ Object.assign(window.CPU_CARD_RULES, {
 const cpuLv4Names = (field, excludeUid) => new Set(field.filter(c => c.uid !== excludeUid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
 const cpuTgtLv = ctx => { const d = defOfInst(ctx.tgt); return d && d.level != null ? d.level : 0; };
 const cpuHoldForContact = c => cpuLv4Names(c.me.field) >= 2 && (c.foeField.some(f => f.sleeping) || ['1176', '1177'].includes(String(c.card.cardId && (CARD_BY_ID.get(c.card.cardId) || {}).card_id)));   // 元太・光彦は、ガードしてきた相手(事件アクション)を倒すのにも使うので、条件がそろっていれば手札に残す
+// 現場のレベル4が足りない(2枚未満)とき: 手札のレベル4少年探偵団(元太・光彦以外)で名前違いを足せるなら、それを先に出し、元太・光彦はカットイン用に残す
+const cpuBuildOthers = c => { const have = new Set(c.me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); const out = []; for (const h of c.hand) { const d = CARD_BY_ID.get(h.cardId); if (d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !['1176', '1177'].includes(String(d.card_id)) && !have.has(d.name) && !out.includes(d.name)) out.push(d.name); } return { have: have.size, add: out.length }; };
+const cpuBuildHold = c => { if (cpuLv4Names(c.me.field) >= 2 || !c.foeField.some(f => f.sleeping)) return false; const b = cpuBuildOthers(c); return b.have + b.add >= 2 && b.add >= 1; };
 // カットインで「コンタクト中のキャラ」を選ぶ画面: 相手のキャラ(self-)を選ぶ。自分のキャラは選ばない
 const cpuChooseFoeContact = (ctx, items) => { const foe = items.filter(i => String(i.key).startsWith('self-')); return foe.length ? [foe[0].key] : []; };
 Object.assign(window.CPU_CARD_RULES, {
   // 小嶋元太(Lv4): 自分の現場にレベル4の名前違いの少年探偵団が2枚以上いれば、コンタクト中のレベル8以上のキャラをリムーブして1枚引く
   // 手札に残す: 条件がそろっていて(場にレベル4の名前違いが2枚以上)、相手にスリープ状態のキャラがいるときは、コンタクト用に出さずに持っておく
-  '1176': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) >= 8, choose: cpuChooseFoeContact },
+  '1176': { playScore: c => cpuHoldForContact(c) || cpuBuildHold(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) >= 8, choose: cpuChooseFoeContact },
   // 円谷光彦(Lv4): 同じ条件で、コンタクト中のレベル7以下のキャラをリムーブして1枚引く
-  '1177': { playScore: c => cpuHoldForContact(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
+  '1177': { playScore: c => cpuHoldForContact(c) || cpuBuildHold(c) ? -1 : 4, contactCutIn: ctx => cpuLv4Names(ctx.me.field) >= 2 && cpuTgtLv(ctx) <= 7, choose: cpuChooseFoeContact },
   // 吉田歩美(Lv4): 変装で攻撃キャラと入れ替わる。入れ替え後に名前違いのレベル4少年探偵団が3枚以上そろえば、レベル7以下のスリープ状態のキャラをリムーブして1枚引く
   // (勝ち筋: 事件にもアクションできる突撃を持つのは、FILE5以上で出た歩美と、中森青子。元太・光彦の突撃は［キャラ］限定なので、事件には行けない)
   // 先攻3ターン目: 相手が全部アクティブで、FILE5以上なら、歩美を出して事件へ突撃する
-  '1175': { lethalCharge: true, chargeMinFile: 5, playScore: c => c.lethal ? 5 : (c.open === 3 && c.foeField.length && c.foeField.every(f => !f.sleeping) && getEffectiveFileCount('opponent') >= 5) ? 60 : cpuHoldForContact(c) ? -1 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
+  '1175': { lethalCharge: true, chargeMinFile: 5, playScore: c => c.lethal ? 5 : (c.open === 3 && c.foeField.length && c.foeField.every(f => !f.sleeping) && getEffectiveFileCount('opponent') >= 5) ? 60 : cpuHoldForContact(c) ? -1 : cpuBuildHold(c) ? 6 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
 // 相手のキャラを選んで除去する効果の選び方: 相手の「アクティブ(ガードできる)」キャラを優先し、そのなかでAPの高いものを選ぶ。自分のキャラは選ばない

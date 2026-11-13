@@ -4263,7 +4263,7 @@
     for (const raw of plainText(actor.cardId).split('\n')) {
       const line = raw.trim();
       let mm;
-      if ((mm = line.match(/^((?:【[^】]*】)*)このキャラがアクションしたとき、カードを1枚引く。$/)) && tagsOk(side, mm[1])) {
+      if ((mm = line.match(/^((?:【[^】]*】)*)このキャラがアクションしたとき、カードを1枚引く。$/)) && !/【\d+枚以上】/.test(mm[1]) && tagsOk(side, mm[1])) {   // 【N枚以上】は重なり枚数の能力(activeStackEntriesで処理)。ここで拾うと、重なりが足りなくても引いてしまう
         if (mm[1].includes('【ターン1】')) {
           const key = romanceDeclareKey(actorUid, 'actionDraw');
           if (match.turn.declaredAbilityUids.includes(key)) continue;
