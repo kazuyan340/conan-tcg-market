@@ -455,7 +455,7 @@
       keeperUid = keeper ? keeper.uid : null;
     }
     // 手札に円谷光彦Lv4があって、現場にレベル4の名前違いの少年探偵団が2枚以上いるときは、いちばん弱いキャラから動く(光彦のカットインで勝てるので、弱いキャラでアクションしてよい。事件アクションが通れば、なお強い)
-    const koh = mine.hand.some(h => ['1176', '1177'].includes((CARD_BY_ID.get(h.cardId) || {}).card_id)) && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
+    const koh = mine.hand.some(h => ['1175', '1176', '1177'].includes((CARD_BY_ID.get(h.cardId) || {}).card_id)) && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
     for (const c of (koh ? [...mine.field].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId)) : mine.field)) {
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
@@ -496,7 +496,7 @@
   }
 
   // 相手のスリープ状態のキャラのうち、こちらのAPが上回るものを優先。無ければ証拠のある事件
-  let genTurn = -1;   // 元太のカットインを合わせる最初のアクションを決めたターン
+  const genTurn = {};   // 元太のカットインを合わせる最初のアクションを決めたターン
   function pickActionTarget(actor, lethal){
     const foe = match.self;
     if (lethal && foe.case && foe.evidence.length > 0) return { uid: foe.case.uid };   // 勝ち筋のターンは、証拠を取る(事件へのアクション)
@@ -506,10 +506,17 @@
     // 手札に元太Lv4があり、現場にレベル4の名前違いの少年探偵団が2枚以上いるとき: 相手のレベル8以上のキャラ(いちばんAPが高いもの)は、いちばん弱いキャラのアクションに元太のカットインを合わせて除去する。
     // 強いキャラは、残りのキャラ(レベル8以上でない相手など)に回せる(弱いキャラから順に動くので、ここは最初のアクションだけ)
     const mineF = match.opponent;
-    if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok && genTurn !== match.turn.turnNumber && mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1176')
-        && new Set(mineF.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size >= 2) {
-      const big = cands.filter(x => { const d = defOfInst(foe.field.find(f => f.uid === x.uid)); return d && d.level >= 8; });
-      if (big.length) { genTurn = match.turn.turnNumber; return big[big.length - 1]; }
+    if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok) {
+      const ad = defOfInst(actor), actorIsLv4 = !!ad && ad.level === 4 && cardHasTrait(ad, '少年探偵団');
+      const lv4n = excl => new Set(mineF.field.filter(f => f.uid !== excl).map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
+      // [カードID, 相手の対象レベル, 必要な現場のレベル4の枚数, レベル4の少年探偵団のキャラだけに任せる]
+      //   元太(カットイン): レベル8以上 / 光彦(カットイン): レベル7以下 / 歩美(変装): レベル7以下(スリープ。歩美自身を除いて2枚以上)
+      for (const [cid, inRange, need, lv4Only, excl] of [['1176', lv => lv >= 8, 2, false, null], ['1177', lv => lv <= 7, 2, true, null], ['1175', lv => lv <= 7, 2, true, actor.uid]]) {
+        if (genTurn[cid] === match.turn.turnNumber || (lv4Only && !actorIsLv4)) continue;
+        if (!mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === cid) || lv4n(excl) < need) continue;
+        const pick = cands.filter(x => { const d = defOfInst(foe.field.find(f => f.uid === x.uid)); return d && d.level != null && inRange(d.level); });
+        if (pick.length) { genTurn[cid] = match.turn.turnNumber; return pick[pick.length - 1]; }
+      }
     }
     const winnable = cands.filter(x => x.ap <= ap);   // APが同じなら、アクションした側が勝つ
     if (winnable.length) return winnable[winnable.length - 1];
