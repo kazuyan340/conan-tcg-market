@@ -230,6 +230,9 @@
     dsel.innerHTML = cpuDecks.length ? cpuDecks.map((x, i) => '<option value="' + i + '">' + x.label + '</option>').join('') : '<option value="">CPU用のデッキはまだありません</option>';
     const types = window.CPU_AI_TYPES || {};
     tsel.innerHTML = Object.keys(types).map(k => '<option value="' + k + '">' + types[k].label + '</option>').join('');
+    const dateEl = $('cpuDeckDate');
+    const showDate = () => { const p = cpuDecks[Number(dsel.value)]; if (dateEl) dateEl.textContent = p && p.deck.registered ? '登録日: ' + p.deck.registered : ''; };
+    dsel.onchange = showDate; showDate();
     btn.disabled = !cpuDecks.length || !decks.length;
     btn.onclick = () => {
       myDeck = decks[Number(sel.value)];

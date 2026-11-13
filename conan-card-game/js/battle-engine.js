@@ -5637,6 +5637,7 @@
     return false;
   }
   function maybeReofferContactFirst(){
+    if (!contactState) return;   // カットインの効果でコンタクト中のキャラが消えて、コンタクトがすでに終わっている場合
     const [first, second] = contactState.order;
     if (!contactState.reofferGiven && contactState.passed[first] && contactState.usedCutIn[second] && !contactState.usedCutIn[first]) {
       contactState.reofferGiven = true;

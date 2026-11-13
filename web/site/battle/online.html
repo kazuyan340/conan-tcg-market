@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>オンライン対戦 - 名探偵コナンTCG</title>
 <!-- このファイルから tools/build-online.js が online.html を作る(盤面のHTMLは battle.html から取り込む) -->
-<link rel="stylesheet" href="css/battle.css?v=mwdkpwo7">
-<link rel="stylesheet" href="css/online.css?v=mwdkpwo7">
-<script src="data/cards-data.js?v=mwdkpwo7"></script>
-<script src="js/image-mode.js?v=mwdkpwo7"></script>
-<script src="data/image-names.js?v=mwdkpwo7"></script>
-<script src="js/card-images.js?v=mwdkpwo7"></script>
-<script src="js/card-art.js?v=mwdkpwo7"></script>
-<script src="js/card-detail.js?v=mwdkpwo7"></script>
-<script src="data/text-fixes.js?v=mwdkpwo7"></script>
-<script src="js/deck-storage.js?v=mwdkpwo7"></script>
-<script src="js/replay-storage.js?v=mwdkpwo7"></script>
-<script src="js/p2p.js?v=mwdkpwo7"></script>
-<script src="js/signaling.js?v=mwdkpwo7"></script>
+<link rel="stylesheet" href="css/battle.css?v=mwdv8829">
+<link rel="stylesheet" href="css/online.css?v=mwdv8829">
+<script src="data/cards-data.js?v=mwdv8829"></script>
+<script src="js/image-mode.js?v=mwdv8829"></script>
+<script src="data/image-names.js?v=mwdv8829"></script>
+<script src="js/card-images.js?v=mwdv8829"></script>
+<script src="js/card-art.js?v=mwdv8829"></script>
+<script src="js/card-detail.js?v=mwdv8829"></script>
+<script src="data/text-fixes.js?v=mwdv8829"></script>
+<script src="js/deck-storage.js?v=mwdv8829"></script>
+<script src="js/replay-storage.js?v=mwdv8829"></script>
+<script src="js/p2p.js?v=mwdv8829"></script>
+<script src="js/signaling.js?v=mwdv8829"></script>
 <style>#replayFileInput, .file-row, #gameOverSaveBtn, #gameOverReplayHint{ display:none !important; }</style></head>
 <body class="online portrait">
 
@@ -318,6 +318,7 @@
   <div class="panel" id="cpuPanel">
     <label for="cpuDeck">🤖 CPUと対戦(一人で遊べます。上の「使うデッキ」で戦います)</label>
     <select id="cpuDeck"></select>
+    <div id="cpuDeckDate" style="font-size:11px; color:#aaa; margin-top:3px;"></div>
     <label for="cpuType" style="margin-top:8px;">AIタイプ</label>
     <select id="cpuType"></select>
     <div class="row"><button class="btn" id="cpuStart">CPUと対戦開始</button></div>
@@ -340,10 +341,10 @@
   </div>
 </div>
 
-<script src="js/battle-engine.js?v=mwdkpwo7"></script>
-<script src="js/cpu-decks.js?v=mwdkpwo7"></script>
-<script src="js/cpu-cards.js?v=mwdkpwo7"></script>
-<script src="js/cpu-player.js?v=mwdkpwo7"></script>
-<script src="js/online-layer.js?v=mwdkpwo7"></script>
+<script src="js/battle-engine.js?v=mwdv8829"></script>
+<script src="js/cpu-decks.js?v=mwdv8829"></script>
+<script src="js/cpu-cards.js?v=mwdv8829"></script>
+<script src="js/cpu-player.js?v=mwdv8829"></script>
+<script src="js/online-layer.js?v=mwdv8829"></script>
 </body>
 </html>
