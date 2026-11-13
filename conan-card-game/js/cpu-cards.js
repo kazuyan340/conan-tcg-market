@@ -45,7 +45,20 @@ Object.assign(window.CPU_CARD_RULES, {
   // 灰原哀(Lv8): 自分ターン中、レベル4の少年探偵団が登場したとき(ターン1)、AP8000以下のキャラをリムーブ
   '1171': { playScore: () => 83, removesFoe: ctx => ctx.willEnterLv4 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
   // 五人囃子(Lv7): リムーブエリアにレベル4の少年探偵団が(名前違いで)そろってから使う
-  '1185': { entersLv4: true, playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
+  //   リクルートする3枚のうち、手札に残す1枚(元太: 相手にスリープのLv8以上がいるとき / 光彦: スリープのLv7以下がいるとき)を決め、残りの2枚を登場させる。
+  //   登場した2枚のレベル4(名前違い)で、手札のカットインの条件(レベル4が2枚以上)を満たして、相手のスリープのキャラを処理できる
+  '1185': { entersLv4: true,
+            choose: (ctx, items) => {
+              const hint = String(ctx.hint || '');
+              if (!/登場させます/.test(hint)) return null;   // 3枚を選ぶ段階は、ふつうに選ぶ
+              const idOf = i => { const d = CARD_BY_ID.get(i.cardId); return d && String(d.card_id); };
+              const foeSleep = match.self.field.filter(f => f.sleeping).map(f => defOfInst(f)).filter(d => d && d.level != null);
+              const held = foeSleep.some(d => d.level >= 8) ? '1176' : foeSleep.some(d => d.level <= 7) ? '1177' : null;
+              const others = items.filter(i => idOf(i) !== held);
+              if (held && items.some(i => idOf(i) === held) && others.length) return [others[0].key];
+              return null;
+            },
+            playScore: c => { const n = cpuDistinct(cpuShonen(c.me).filter(d => d.level === 4)); return n >= 3 ? 79 : n === 2 ? 74 : -1; } },
   // 黒羽快斗(Lv7): 手札を1枚リムーブして、リムーブエリアのLv5以下の青白の高校生(中森青子など)を登場させる
   '1199': { // 現場に探偵(コナン)がいて、リムーブする手札がある。復活させる青子は、リムーブエリアにいるか、コストで手札の青子を捨てて(リムーブエリアに入れて)用意する
             summonsCharger: ctx => ctx.others.length >= 1 && ctx.chars.some(c => cardHasTrait(defOfInst(c), '探偵')) && (cpuRem(ctx.me).some(d => d.card_id === '1200') || ctx.others.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1200')),

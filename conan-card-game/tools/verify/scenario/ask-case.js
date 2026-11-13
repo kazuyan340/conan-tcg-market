@@ -1,6 +1,6 @@
 const partnerOf = col => CARD_DATA.find(c => c.card_type === 'パートナー' && c.color === col && /^P/.test(String(c.card_id))).card_id;
 await scen('質問の盤面: 相手 9active/8sleep/5sleep, 手札 9MR/結成/五人囃子', async () => {
-  setup({ active: 'opponent', partner: partnerOf('青'), case: '1254', oppPartner: partnerOf('白'), oppCase: '1261', self: { field: [{ no: '0547' }, { no: '0022', sleeping: true }, { no: '0631', sleeping: true }], hand: ['0100'], evidence: [false, false, false] }, opp: { file: 8, hand: ['0547', '0264', '1185'], remove: ['1176', '1177', '1175'], field: [], evidence: [false, false] } });
+  setup({ active: 'opponent', partner: partnerOf('青'), case: '1254', oppPartner: partnerOf('白'), oppCase: '1261', self: { field: [{ no: '0547' }, { no: '0022', sleeping: true }, { no: '0631', sleeping: true }], hand: ['0100'], evidence: [false, false, false] }, opp: { file: 8, hand: ['0547', '0264', '1185', '0100'], remove: ['1176', '1177', '1175'], field: [], evidence: [false, false] } });
   window.cpuPlayer.startOnline(window.CPU_PRESET_DECKS[0], 'control');
   const names = {}; for (const sd of ['self', 'opponent']) match[sd].field.forEach(f => { const d = defOfInst(f); names[f.uid] = d.name + 'Lv' + d.level; });
   const t0 = Date.now();
