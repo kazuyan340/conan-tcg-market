@@ -1,0 +1,11 @@
+const partnerOf = col => CARD_DATA.find(c => c.card_type === 'パートナー' && c.color === col && /^P/.test(String(c.card_id))).card_id;
+await scen('相手 8(8000)a 8(7000)a 7(5000)a', async () => {
+  setup({ active: 'opponent', partner: partnerOf('青'), case: '1254', oppPartner: partnerOf('白'), oppCase: '1261', self: { field: [{ no: '1197' }, { no: '0548' }, { no: '0429' }], hand: ['0100'], evidence: [false, false, false, false] }, opp: { file: 8, hand: ['0547', '0261', '1185', '0513'], remove: ['0092', '1175', '1176', '1177'],  field: [], evidence: [false, false, false, false, false, false] } });
+  window.cpuPlayer.startOnline(window.CPU_PRESET_DECKS[0], 'control');
+  const names = {}; for (const sd of ['self', 'opponent']) match[sd].field.forEach(f => { const d = defOfInst(f); names[f.uid] = d.name + 'Lv' + d.level; });
+  const t0 = Date.now();
+  while (Date.now() - t0 < 90000 && match.turn.activeSide === 'opponent') { await sleep(700); if (contactState && contactState.queue && contactState.queue[0] === 'self') contactPass(); if (actionState && actionState.step === 'guard' && actionState.oppSide === 'self') { try { finalizeAction(null); } catch (e) {} } }
+  const nm = u => names[u] || ((CARD_BY_ID.get(uidToCardId(u)) || {}).name) || u;
+  const ev = match.events.filter(e => e.side === 'opponent' && /^play$|actionDeclare|declare|removeFromField|assist|reason|nextHint|caseDecl|char/i.test(e.type)).map(e => e.type + ':' + (e.uid ? nm(e.uid) : '') + (e.actorUid ? nm(e.actorUid) + '→' + nm(e.targetUid) : ''));
+  const cpuS = match.opponent; return { ok: true, note: 'under=' + cpuS.field.map(f => (f.under || []).length).join('/') + ' ' + 'hand=' + cpuS.hand.map(h => (CARD_BY_ID.get(h.cardId)||{}).name).join('/') + ' file=' + cpuS.file.length + ' rm=' + cpuS.remove.map(h => (CARD_BY_ID.get(h.cardId)||{}).name + (CARD_BY_ID.get(h.cardId)||{}).level).join('/') + ' field=' + cpuS.field.map(f => defOfInst(f).name + defOfInst(f).level + (f.sleeping ? 's' : '')).join('/') + ' evs=' + match.events.filter(e => e.side === 'opponent').map(e => e.type).join(',') + ' turn=' + match.turn.turnNumber + ' ' + ev.join(' | ') + ' // foeLeft=' + match.self.field.map(c => names[c.uid] + (c.sleeping ? '(s)' : '')).join(',') };
+});
