@@ -13,3 +13,10 @@ await scen('現場に歩美と元太: 元太のアクションで歩美の変装
   while (Date.now() - t0 < 40000 && match.turn.activeSide === 'opponent') { await sleep(700); if (contactState && contactState.queue && contactState.queue[0] === 'self') contactPass(); if (actionState && actionState.step === 'guard' && actionState.oppSide === 'self') { try { finalizeAction(null); } catch (e) {} } }
   return { ok: !match.events.some(e => e.type === 'disguiseSwap'), note: match.events.filter(e => e.side === 'opponent').map(e => e.type).join(',') };
 });
+await scen('灰原哀Lv8の宣言でLv4にして、歩美の変装(3種類)を使えるようにする', async () => {
+  setup({ active: 'opponent', partner: partnerOf('青'), case: '1254', oppPartner: partnerOf('白'), oppCase: '1261', self: { field: [{ no: '0183', sleeping: true }, { no: '1110', sleeping: true }], hand: ['0100'], evidence: [false, false, false] }, opp: { file: 6, hand: ['1175'], field: ['1171', '0092', '1176'], evidence: [false, false] } });
+  window.cpuPlayer.startOnline(window.CPU_PRESET_DECKS[0], 'control');
+  const t0 = Date.now();
+  while (Date.now() - t0 < 40000 && match.turn.activeSide === 'opponent') { await sleep(700); if (contactState && contactState.queue && contactState.queue[0] === 'self') contactPass(); if (actionState && actionState.step === 'guard' && actionState.oppSide === 'self') { try { finalizeAction(null); } catch (e) {} } }
+  return { ok: match.events.some(e => e.type === 'disguiseSwap') && match.self.field.length === 0, note: 'foeLeft=' + match.self.field.map(c => defOfInst(c).name + defOfInst(c).level).join(',') + ' ' + match.events.filter(e => e.side === 'opponent').map(e => e.type).join(',') };
+});

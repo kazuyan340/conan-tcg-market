@@ -64,7 +64,9 @@ Object.assign(window.CPU_CARD_RULES, {
   // 怪盗キッド(Lv8): 宣言で相手のキャラをスリープさせる(お互いの証拠が合わせて5つ以上のとき)
   '1197': { playScore: () => 80, removesFoe: ctx => ctx.me.evidence.length + ctx.foe.evidence.length >= 5 ? 1 : 0 },
   // 灰原哀(Lv8): 自分ターン中、レベル4の少年探偵団が登場したとき(ターン1)、AP8000以下のキャラをリムーブ
-  '1171': { playScore: () => 83, removesFoe: ctx => ctx.willEnterLv4 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
+  '1171': { playScore: () => 83,
+            // 灰原哀(Lv8)の宣言: ターン終了時までレベル－4。レベル4の少年探偵団(名前違い)として数えられるので、元太・光彦・歩美のカットイン/変装や五人囃子の条件(3種類)を満たしやすくなる
+            declares: [{ line: 'このキャラをレベル－4', when: c => c.me.deckPile.length >= 15 && defOfInst(c.card) && defOfInst(c.card).level >= 8 && c.me.hand.some(h => ['1175', '1176', '1177', '1185'].includes(String((CARD_BY_ID.get(h.cardId) || {}).card_id))) && cpuLv4Names(c.me.field) < 3 }], removesFoe: ctx => ctx.willEnterLv4 ? 1 : 0, choose: (ctx, items) => cpuPickFoeActive(ctx, items) },
   // 五人囃子(Lv7): リムーブエリアにレベル4の少年探偵団が(名前違いで)そろってから使う
   //   リクルートする3枚のうち、手札に残す1枚(元太: 相手にスリープのLv8以上がいるとき / 光彦: スリープのLv7以下がいるとき)を決め、残りの2枚を登場させる。
   //   登場した2枚のレベル4(名前違い)で、手札のカットインの条件(レベル4が2枚以上)を満たして、相手のスリープのキャラを処理できる
