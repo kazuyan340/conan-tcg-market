@@ -551,7 +551,8 @@
     if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok && genTurn['1175b'] !== match.turn.turnNumber) {
       const ad2 = defOfInst(actor), isL4 = !!ad2 && ad2.level === 4 && cardHasTrait(ad2, '少年探偵団') && ad2.card_id !== '1175';
       const names = new Set(mineF.field.filter(f => f.uid !== actor.uid).map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name));
-      if (isL4 && names.size >= 2 && mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1175' && disguiseOkNow(h.cardId))) {
+      names.add('吉田歩美');   // 入れ替わった歩美も数える(現場に歩美がすでにいると、同じ名前なので増えない。アクションするキャラは入れ替わって抜ける)
+      if (isL4 && names.size >= 3 && mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1175' && disguiseOkNow(h.cardId))) {
         const lows = cands.filter(x => x.ap <= 3000 && x.ap <= ap && foe.field.some(f => f.uid !== x.uid && f.sleeping && (defOfInst(f) || {}).level <= 7));
         if (lows.length) { genTurn['1175b'] = match.turn.turnNumber; return lows[lows.length - 1]; }
       }
