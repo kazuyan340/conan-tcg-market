@@ -1032,28 +1032,28 @@
    "site": "駿河屋",
    "raw_key": "A03094",
    "rarity": "C",
-   "price": 550,
+   "price": 500,
    "hint": "",
    "product_name": "萩原千速",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427091&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU427091",
    "listing_count": 1,
    "prices": [
-    550
+    500
    ]
   },
   {
    "site": "駿河屋",
-   "raw_key": "A04016P",
-   "rarity": "CP",
-   "price": 340,
+   "raw_key": "A01010",
+   "rarity": "R",
+   "price": 200,
    "hint": "",
-   "product_name": "遠山和葉",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427098&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427098",
+   "product_name": "毛利小五郎",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956098&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956098",
    "listing_count": 1,
    "prices": [
-    340
+    200
    ]
   },
   {
@@ -1086,58 +1086,44 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A03113",
+   "raw_key": "A02023",
    "rarity": "R",
-   "price": 160,
+   "price": 170,
    "hint": "",
-   "product_name": "シェリー",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427094&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427094",
+   "product_name": "遠山和葉",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
    "listing_count": 1,
    "prices": [
-    160
+    170
    ]
   },
   {
    "site": "駿河屋",
-   "raw_key": "A04049",
+   "raw_key": "A01065",
    "rarity": "R",
-   "price": 160,
+   "price": 180,
    "hint": "",
    "product_name": "沖矢昴",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427106&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427106",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956099&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956099",
    "listing_count": 1,
    "prices": [
-    160
-   ]
-  },
-  {
-   "site": "駿河屋",
-   "raw_key": "A03030",
-   "rarity": "R",
-   "price": 160,
-   "hint": "",
-   "product_name": "伊織無我",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427087&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427087",
-   "listing_count": 1,
-   "prices": [
-    160
+    180
    ]
   },
   {
    "site": "駿河屋",
    "raw_key": "A01081",
    "rarity": "SR",
-   "price": 410,
+   "price": 370,
    "hint": "",
    "product_name": "安室透",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956096&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GN956096",
    "listing_count": 1,
    "prices": [
-    410
+    370
    ]
   }
  ]
