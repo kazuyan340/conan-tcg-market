@@ -18,5 +18,5 @@ await scen('灰原哀Lv8の宣言でLv4にして、歩美の変装(3種類)を�
   window.cpuPlayer.startOnline(window.CPU_PRESET_DECKS[0], 'control');
   const t0 = Date.now();
   while (Date.now() - t0 < 40000 && match.turn.activeSide === 'opponent') { await sleep(700); if (contactState && contactState.queue && contactState.queue[0] === 'self') contactPass(); if (actionState && actionState.step === 'guard' && actionState.oppSide === 'self') { try { finalizeAction(null); } catch (e) {} } }
-  return { ok: match.events.some(e => e.type === 'disguiseSwap') && match.self.field.length === 0, note: 'foeLeft=' + match.self.field.map(c => defOfInst(c).name + defOfInst(c).level).join(',') + ' ' + match.events.filter(e => e.side === 'opponent').map(e => e.type).join(',') };
+  return { ok: match.events.some(e => e.type === 'disguiseSwap') && match.self.field.length === 0, note: JSON.stringify(match.events.filter(e => /actionDeclare|disguiseSwap/.test(e.type)).map(e => [e.type, (CARD_BY_ID.get(uidToCardId(e.actorUid || e.uid || e.oldUid || '')) || {}).name, (CARD_BY_ID.get(uidToCardId(e.targetUid || '')) || {}).name])) + ' foeLeft=' + match.self.field.map(c => defOfInst(c).name + defOfInst(c).level).join(',') + ' ' + match.events.filter(e => e.side === 'opponent').map(e => e.type).join(',') };
 });

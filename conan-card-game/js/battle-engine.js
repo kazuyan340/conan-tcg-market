@@ -43,6 +43,12 @@
   }
   // categoryフィールドはカンマ区切りの特徴一覧("探偵,毛利探偵事務所,少年探偵団"等)
   // カード1枚ごとの特徴・カード名の上書き(1347・2442等)を反映した定義を返す。上書きがなければ通常の定義そのもの
+  // 現場のキャラの、いまのレベル(ターン終了時までのレベル下げ=灰原哀1171の宣言など、を引いたもの)
+  function currentLevelOfInst(inst){
+    const d = defOfInst(inst); if (!d || d.level == null) return d ? d.level : null;
+    const ds = typeof match !== 'undefined' && match && match.turn && match.turn.tempLevelDebuffs;
+    return ds ? Math.max(0, d.level - ds.filter(x => x.uid === inst.uid).reduce((sm, x) => sm + x.amount, 0)) : d.level;
+  }
   function defOfInst(inst){
     const d = CARD_BY_ID.get(inst.cardId);
     if (!d || !inst.uid || typeof match === 'undefined' || !match) return d;
@@ -15287,7 +15293,7 @@
     if ((m = str.match(/^自分の現場に((?:〚(?:カード名)?［[^］]+］〛か?)+)がいる場合$/))) { const names = extractBracketNames(m[1]); return ctx => match[ctx.side].field.some(c => names.some(n => nameIs(defOfInst(c), n))); }
     if ((m = str.match(/^自分の現場にこのキャラ以外の【([^】]+?)】のキャラがいる場合$/))) return ctx => match[ctx.side].field.some(c => c.uid !== ctx.srcUid && cardHasColor(defOfInst(c), m[1]));
     if ((m = str.match(/^自分の現場に【([^】]+?)】のキャラがいる場合$/))) return ctx => match[ctx.side].field.some(c => cardHasColor(defOfInst(c), m[1]));
-    if ((m = str.match(/^自分の現場にレベル(\d+)のキャラがいる場合$/))) return ctx => match[ctx.side].field.some(c => defOfInst(c).level === Number(m[1]));
+    if ((m = str.match(/^自分の現場にレベル(\d+)のキャラがいる場合$/))) return ctx => match[ctx.side].field.some(c => currentLevelOfInst(c) === Number(m[1]));
     if ((m = str.match(/^自分の現場にこのキャラ以外のレベル(\d+)以上の〚特徴［([^］]+)］〛のキャラがいる場合$/))) return ctx => match[ctx.side].field.some(c => c.uid !== ctx.srcUid && defOfInst(c).level >= Number(m[1]) && cardHasTrait(defOfInst(c), m[2]));
     if ((m = str.match(/^相手の現場にキャラが(\d+)枚以上いる場合$/))) return ctx => match[otherSide(ctx.side)].field.length >= Number(m[1]);
     if ((m = str.match(/^自分のリムーブエリアに〚特徴［([^］]+)］〛のキャラが(\d+)枚以上ある場合$/))) return ctx => match[ctx.side].remove.filter(r => { const d = defOfInst(r); return d.card_type === 'キャラ' && cardHasTrait(d, m[1]); }).length >= Number(m[2]);
@@ -15924,7 +15930,7 @@
     let m;
     if ((m = str.match(/^(?:お互いの証拠が)?合わせて(\d+)つ(以上ある|以下の)場合$/))) { const n = Number(m[1]), up = m[2] === '以上ある'; return () => up ? geeTotalEvidence() >= n : geeTotalEvidence() <= n; }
     if ((m = str.match(/^自分の証拠が(\d+)つ以上ある場合$/))) return ctx => match[ctx.side].evidence.length >= Number(m[1]);
-    if ((m = str.match(/^自分の現場にレベル(\d+)のそれぞれカード名の異なる〚特徴［([^］]+)］〛のキャラが(\d+)枚以上いる場合$/))) return ctx => new Set(match[ctx.side].field.filter(c => defOfInst(c).level === Number(m[1]) && cardHasTrait(defOfInst(c), m[2])).map(c => defOfInst(c).name)).size >= Number(m[3]);
+    if ((m = str.match(/^自分の現場にレベル(\d+)のそれぞれカード名の異なる〚特徴［([^］]+)］〛のキャラが(\d+)枚以上いる場合$/))) return ctx => new Set(match[ctx.side].field.filter(c => currentLevelOfInst(c) === Number(m[1]) && cardHasTrait(defOfInst(c), m[2])).map(c => defOfInst(c).name)).size >= Number(m[3]);
     if ((m = str.match(/^自分の現場にいるキャラが(\d+)枚以下の場合$/))) return ctx => match[ctx.side].field.length <= Number(m[1]);
     if ((m = str.match(/^自分の現場に((?:〚(?:カード名)?［[^］]+］〛と?){3,})がいる場合$/))) { const names = extractBracketNames(m[1]); return ctx => names.every(n => match[ctx.side].field.some(c => nameIs(defOfInst(c), n))); }
     if ((m = str.match(/^自分の現場かパートナーエリアに〚カード名［([^］]+)］〛がいる場合$/))) return ctx => match[ctx.side].field.some(c => nameIs(defOfInst(c), m[1])) || (!!match[ctx.side].partner && nameIs(defOfInst(match[ctx.side].partner), m[1]));

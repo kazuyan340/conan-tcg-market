@@ -108,14 +108,16 @@ Object.assign(window.CPU_CARD_RULES, {
   '1200': { lethalCharge: true, playScore: c => c.lethal ? 5 : 50 },
 });
 // ---- コンタクト中に手札から使うカード(アクションで勝てないとき) ----
+// 現場のキャラの定義(ターン終了時までのレベル下げ=灰原哀1171の宣言を、レベルに反映する)
+const cpuLvDef = inst => { const d = defOfInst(inst); if (!d || typeof match === 'undefined' || !match || !match.turn || !match.turn.tempLevelDebuffs) return d; const dec = match.turn.tempLevelDebuffs.filter(x => x.uid === inst.uid).reduce((s, x) => s + x.amount, 0); if (!dec) return d; const o = Object.create(d); Object.defineProperty(o, 'level', { value: Math.max(0, d.level - dec) }); return o; };
 //   contactCutIn(ctx) / contactDisguise(ctx): true なら使う。ctx = { me, foe, actor(自分の攻撃キャラ), tgt(相手のキャラ), myAp, foeAp }
-const cpuLv4Names = (field, excludeUid) => new Set(field.filter(c => c.uid !== excludeUid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
+const cpuLv4Names = (field, excludeUid) => new Set(field.filter(c => c.uid !== excludeUid).map(c => cpuLvDef(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
 const cpuTgtLv = ctx => { const d = defOfInst(ctx.tgt); return d && d.level != null ? d.level : 0; };
 const cpuHoldForContact = c => cpuLv4Names(c.me.field) >= 2 && (c.foeField.some(f => f.sleeping) || ['1176', '1177'].includes(String(c.card.cardId && (CARD_BY_ID.get(c.card.cardId) || {}).card_id)));   // 元太・光彦は、ガードしてきた相手(事件アクション)を倒すのにも使うので、条件がそろっていれば手札に残す
 // 相手の現場に「AP3000以下のスリープ」と、それとは別の「スリープのレベル7以下」がいる: 歩美の変装(AP3000で入れ替わる)で、アクションで1体、変装時の効果でもう1体倒せる
 const cpuAyumiDouble = (foeField, excludeUid) => { const sl = foeField.filter(f => f.sleeping && f.uid !== excludeUid); const low = sl.filter(f => effectiveAp(match, f, 'self') <= 3000); return low.some(a => sl.some(b => b.uid !== a.uid && (defOfInst(b) || {}).level <= 7)); };
 // 現場のレベル4が足りない(2枚未満)とき: 手札のレベル4少年探偵団(元太・光彦以外)で名前違いを足せるなら、それを先に出し、元太・光彦はカットイン用に残す
-const cpuBuildOthers = c => { const have = new Set(c.me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); const out = []; for (const h of c.hand) { const d = CARD_BY_ID.get(h.cardId); if (d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !['1176', '1177'].includes(String(d.card_id)) && !have.has(d.name) && !out.includes(d.name)) out.push(d.name); } return { have: have.size, add: out.length }; };
+const cpuBuildOthers = c => { const have = new Set(c.me.field.map(f => cpuLvDef(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); const out = []; for (const h of c.hand) { const d = CARD_BY_ID.get(h.cardId); if (d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !['1176', '1177'].includes(String(d.card_id)) && !have.has(d.name) && !out.includes(d.name)) out.push(d.name); } return { have: have.size, add: out.length }; };
 const cpuBuildHold = c => { if (cpuLv4Names(c.me.field) >= 2 || !c.foeField.some(f => f.sleeping)) return false; const b = cpuBuildOthers(c); return b.have + b.add >= 2 && b.add >= 1; };
 // カットインで「コンタクト中のキャラ」を選ぶ画面: 相手のキャラ(self-)を選ぶ。自分のキャラは選ばない
 const cpuChooseFoeContact = (ctx, items) => { const foe = items.filter(i => String(i.key).startsWith('self-')); return foe.length ? [foe[0].key] : []; };
@@ -131,7 +133,7 @@ Object.assign(window.CPU_CARD_RULES, {
   '1175': { lethalCharge: true,
             // 変装時の効果で倒す相手: 相手のスリープのレベル7以下のうち、いちばんAPが高いもの(アクションの相手は、入れ替わったあとのアクションで倒すので選ばない)
             choose: (ctx, items) => { const foeIt = items.map(i => ({ i, f: match.self.field.find(f => f.uid === i.key || ('self-' + f.uid) === i.key) })).filter(x => x.f && x.f.sleeping); if (!foeIt.length) return null; const tgtUid = contactState && contactState.defenderUid; const pool = foeIt.filter(x => x.f.uid !== tgtUid); const use = pool.length ? pool : foeIt; use.sort((a, b) => effectiveAp(match, b.f, 'self') - effectiveAp(match, a.f, 'self')); return [use[0].i.key]; }, chargeMinFile: 5, playScore: c => c.lethal ? 5 : cpuAyumiDouble(c.foeField, null) ? -1 : (c.open === 3 && c.foeField.length && c.foeField.every(f => !f.sleeping) && getEffectiveFileCount('opponent') >= 5) ? 60 : cpuHoldForContact(c) ? -1 : cpuBuildHold(c) ? 6 : 4, disguiseBonus: ctx => { if (!ctx.tgt.sleeping || ctx.foeAp > 3000 || ctx.myAp < ctx.foeAp || (CARD_BY_ID.get(ctx.actor.cardId) || {}).card_id === '1175') return false; if (!ctx.foe.field.some(f => f.uid !== ctx.tgt.uid && f.sleeping && (defOfInst(f) || {}).level <= 7)) return false; return new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3; },
-            contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
+            contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => cpuLvDef(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
 // 相手のキャラを選んで除去する効果の選び方: 相手の「アクティブ(ガードできる)」キャラを優先し、そのなかでAPの高いものを選ぶ。自分のキャラは選ばない

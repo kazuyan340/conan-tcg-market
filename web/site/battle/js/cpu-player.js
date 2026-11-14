@@ -308,7 +308,7 @@
     // レベル4の少年探偵団キャラは、五人囃子でリクルートできるので、捨てやすい(リムーブエリアに送ると、五人囃子・結成の材料になる)。カットイン・変装で使う元太・光彦・歩美は、条件がそろっているあいだ残す
     const hd = defOfInst(h);
     if (hd && hd.card_type === 'キャラ' && hd.level === 4 && cardHasTrait(hd, '少年探偵団')) {
-      const keepForContact = r && (r.contactCutIn || r.contactDisguise) && new Set(me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size >= 2;
+      const keepForContact = r && (r.contactCutIn || r.contactDisguise) && new Set(me.field.map(f => cpuLvDef(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size >= 2;
       return keepForContact || (r && r.disguiseBonus && cpuAyumiDouble(foe.field, null)) ? 60 : -5;
     }
     if (!r || !r.playScore || r.contactCutIn || r.contactDisguise) return keepLv(h.cardId) + (r && (r.contactCutIn || r.contactDisguise) ? 60 : 0);
@@ -479,7 +479,7 @@
       keeperUid = keeper ? keeper.uid : null;
     }
     // 手札に円谷光彦Lv4があって、現場にレベル4の名前違いの少年探偵団が2枚以上いるときは、いちばん弱いキャラから動く(光彦のカットインで勝てるので、弱いキャラでアクションしてよい。事件アクションが通れば、なお強い)
-    const koh = mine.hand.some(h => ['1175', '1176', '1177'].includes((CARD_BY_ID.get(h.cardId) || {}).card_id)) && (() => { const n = new Set(mine.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
+    const koh = mine.hand.some(h => ['1175', '1176', '1177'].includes((CARD_BY_ID.get(h.cardId) || {}).card_id)) && (() => { const n = new Set(mine.field.map(f => cpuLvDef(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); return n.size >= 2; })();
     for (const c of (koh ? [...mine.field].sort((a, b) => lvOf(a.cardId) - lvOf(b.cardId)) : mine.field)) {
       if (tried.has(key('field', c.uid))) continue;
       tried.add(key('field', c.uid));
@@ -533,7 +533,7 @@
     const mineF = match.opponent;
     if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok) {
       const ad = defOfInst(actor), actorIsLv4 = !!ad && ad.level === 4 && cardHasTrait(ad, '少年探偵団');
-      const lv4n = excl => new Set(mineF.field.filter(f => f.uid !== excl).map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
+      const lv4n = excl => new Set(mineF.field.filter(f => f.uid !== excl).map(f => cpuLvDef(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
       // [カードID, 相手の対象レベル, 必要な現場のレベル4の枚数, レベル4の少年探偵団のキャラだけに任せる]
       //   元太(カットイン): レベル8以上 / 光彦(カットイン): レベル7以下 / 歩美(変装): レベル7以下(スリープ。歩美自身を除いて2枚以上)
       for (const [cid, inRange, need, lv4Only, excl] of [['1176', lv => lv >= 8, 2, false, null], ['1177', lv => lv <= 7, 2, true, null], ['1175', lv => lv <= 7, 2, true, actor.uid]]) {
@@ -550,7 +550,7 @@
     // 手札に歩美があり、相手に「AP3000以下のスリープ」と別の「スリープのレベル7以下」がいるとき: レベル4(歩美以外)のキャラで、AP3000以下をアクションする(歩美の変装でもう1体倒す)
     if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok && genTurn['1175b'] !== match.turn.turnNumber) {
       const ad2 = defOfInst(actor), isL4 = !!ad2 && ad2.level === 4 && cardHasTrait(ad2, '少年探偵団') && ad2.card_id !== '1175';
-      const names = new Set(mineF.field.filter(f => f.uid !== actor.uid).map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name));
+      const names = new Set(mineF.field.filter(f => f.uid !== actor.uid).map(f => cpuLvDef(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name));
       names.add('吉田歩美');   // 入れ替わった歩美も数える(現場に歩美がすでにいると、同じ名前なので増えない。アクションするキャラは入れ替わって抜ける)
       if (isL4 && names.size >= 3 && mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1175' && disguiseOkNow(h.cardId))) {
         const lows = cands.filter(x => x.ap <= 3000 && x.ap <= ap && foe.field.some(f => f.uid !== x.uid && f.sleeping && (defOfInst(f) || {}).level <= 7));
