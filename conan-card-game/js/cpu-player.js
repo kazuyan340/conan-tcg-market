@@ -309,7 +309,7 @@
     const hd = defOfInst(h);
     if (hd && hd.card_type === 'キャラ' && hd.level === 4 && cardHasTrait(hd, '少年探偵団')) {
       const keepForContact = r && (r.contactCutIn || r.contactDisguise) && new Set(me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size >= 2;
-      return keepForContact ? 60 : -5;
+      return keepForContact || (r && r.disguiseBonus && cpuAyumiDouble(foe.field, null)) ? 60 : -5;
     }
     if (!r || !r.playScore || r.contactCutIn || r.contactDisguise) return keepLv(h.cardId) + (r && (r.contactCutIn || r.contactDisguise) ? 60 : 0);
     // 結成 少年探偵団(突撃)は、相手のスリープのキャラ(APが8000以下)を、出したターンにすぐ倒せる。倒せる相手がいるときは、五人囃子などより残す
