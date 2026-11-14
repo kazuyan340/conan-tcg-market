@@ -74,7 +74,7 @@ Object.assign(window.CPU_CARD_RULES, {
               const idOf = i => { const d = CARD_BY_ID.get(i.cardId); return d && String(d.card_id); };
               if (/3枚まで選びます/.test(hint)) {   // 3枚を選ぶ段階: 手札に残す1枚(元太/光彦)と、起こして登場させる歩美(突撃)が入るように選ぶ。優先度は 元太(スリープのLv8以上がいるとき)→光彦→歩美→ほか
                 const fs = match.self.field.filter(f => f.sleeping).map(f => defOfInst(f)).filter(d => d && d.level != null);
-                const order = fs.some(d => d.level >= 8) ? ['1176', '1175', '1177'] : ['1177', '1175', '1176'];
+                const order = fs.some(d => d.level >= 8) ? ['1176', '1175', '0092', '1177'] : ['1177', '1175', '0092', '1176'];   // コナンは、スリープで登場させたい(次のターンも残れば、推理で証拠が2枚たまる)
                 const rank = i => { const k = order.indexOf(idOf(i)); return k < 0 ? 9 : k; };
                 const best = [...items].sort((a, b) => rank(a) - rank(b))[0];
                 return best ? [best.key] : null;
@@ -84,7 +84,7 @@ Object.assign(window.CPU_CARD_RULES, {
               // 相手にスリープがいなければ(ガードされたときの備えに)光彦、いなければ歩美を残す
               const prefs = foeSleep.some(d => d.level >= 8) ? ['1176'] : foeSleep.some(d => d.level <= 7) ? ['1177'] : ['1177', '1175'];
               const held = prefs.find(p => items.some(i => idOf(i) === p)) || null;
-              const others = items.filter(i => idOf(i) !== held).sort((a, b) => (idOf(b) === '1175' ? 1 : 0) - (idOf(a) === '1175' ? 1 : 0));   // 歩美(FILE5で登場時に突撃)を、起こして登場させる側に: 出したターンにアクションできる
+              const others = items.filter(i => idOf(i) !== held).sort((a, b) => ((idOf(b) === '1175' ? 2 : idOf(b) === '0092' ? 0 : 1) - (idOf(a) === '1175' ? 2 : idOf(a) === '0092' ? 0 : 1)));   // 起こす側は歩美、なければコナン以外。コナンはスリープ側に回す   // 歩美(FILE5で登場時に突撃)を、起こして登場させる側に: 出したターンにアクションできる
               if (held && items.some(i => idOf(i) === held) && others.length) return [others[0].key];
               return null;
             },
