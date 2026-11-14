@@ -199,6 +199,9 @@
   }
   function cpuContactDecide(){
     const ctx = contactCtx();
+    if (ctx && !ctx.used) {   // 勝てるアクションでも、歩美の変装でもう1体倒せるなら使う(rule.disguiseBonus)
+      for (const c of match.opponent.hand) { const rule = ruleOf(c.cardId) || {}; if (rule.disguiseBonus && rule.disguiseBonus(ctx) && canUseDisguise('opponent', c.uid)) { contactUseDisguise('opponent', c.uid); return; } }
+    }
     if (ctx && !ctx.used && ctx.myAp < ctx.foeAp) {   // ガードされたコンタクト(事件アクション)でも、相手のキャラに勝てなければカットインを考える
       for (const c of match.opponent.hand) {
         const rule = ruleOf(c.cardId) || {};
@@ -542,6 +545,15 @@
         if (!mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === cid) || lv4n(excl) < need) continue;
         const pick = cands.filter(x => { const d = defOfInst(foe.field.find(f => f.uid === x.uid)); return d && d.level != null && inRange(d.level); });
         if (pick.length) { genTurn[cid] = match.turn.turnNumber; return pick[pick.length - 1]; }
+      }
+    }
+    // 手札に歩美があり、相手に「AP3000以下のスリープ」と別の「スリープのレベル7以下」がいるとき: レベル4(歩美以外)のキャラで、AP3000以下をアクションする(歩美の変装でもう1体倒す)
+    if (!lethal && !actor.sleeping && canUseAction('opponent', actor.uid).ok && genTurn['1175b'] !== match.turn.turnNumber) {
+      const ad2 = defOfInst(actor), isL4 = !!ad2 && ad2.level === 4 && cardHasTrait(ad2, '少年探偵団') && ad2.card_id !== '1175';
+      const names = new Set(mineF.field.filter(f => f.uid !== actor.uid).map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name));
+      if (isL4 && names.size >= 2 && mineF.hand.some(h => (CARD_BY_ID.get(h.cardId) || {}).card_id === '1175' && disguiseOkNow(h.cardId))) {
+        const lows = cands.filter(x => x.ap <= 3000 && x.ap <= ap && foe.field.some(f => f.uid !== x.uid && f.sleeping && (defOfInst(f) || {}).level <= 7));
+        if (lows.length) { genTurn['1175b'] = match.turn.turnNumber; return lows[lows.length - 1]; }
       }
     }
     const winnable = cands.filter(x => x.ap <= ap);   // APが同じなら、アクションした側が勝つ

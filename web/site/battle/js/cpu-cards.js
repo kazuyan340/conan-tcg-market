@@ -74,7 +74,7 @@ Object.assign(window.CPU_CARD_RULES, {
               const idOf = i => { const d = CARD_BY_ID.get(i.cardId); return d && String(d.card_id); };
               if (/3枚まで選びます/.test(hint)) {   // 3枚を選ぶ段階: 手札に残す1枚(元太/光彦)と、起こして登場させる歩美(突撃)が入るように選ぶ。優先度は 元太(スリープのLv8以上がいるとき)→光彦→歩美→ほか
                 const fs = match.self.field.filter(f => f.sleeping).map(f => defOfInst(f)).filter(d => d && d.level != null);
-                const order = fs.some(d => d.level >= 8) ? ['1176', '1175', '0092', '1177'] : ['1177', '1175', '0092', '1176'];   // コナンは、スリープで登場させたい(次のターンも残れば、推理で証拠が2枚たまる)
+                const order = cpuAyumiDouble(match.self.field, null) ? ['1175', '1176', '1177', '0092'] : fs.some(d => d.level >= 8) ? ['1176', '1175', '0092', '1177'] : ['1177', '1175', '0092', '1176'];   // コナンは、スリープで登場させたい(次のターンも残れば、推理で証拠が2枚たまる)
                 const rank = i => { const k = order.indexOf(idOf(i)); return k < 0 ? 9 : k; };
                 const best = [...items].sort((a, b) => rank(a) - rank(b))[0];
                 return best ? [best.key] : null;
@@ -82,7 +82,7 @@ Object.assign(window.CPU_CARD_RULES, {
               if (!/登場させます/.test(hint)) return null;
               const foeSleep = match.self.field.filter(f => f.sleeping).map(f => defOfInst(f)).filter(d => d && d.level != null);
               // 相手にスリープがいなければ(ガードされたときの備えに)光彦、いなければ歩美を残す
-              const prefs = foeSleep.some(d => d.level >= 8) ? ['1176'] : foeSleep.some(d => d.level <= 7) ? ['1177'] : ['1177', '1175'];
+              const prefs = cpuAyumiDouble(match.self.field, null) ? ['1175'] : foeSleep.some(d => d.level >= 8) ? ['1176'] : foeSleep.some(d => d.level <= 7) ? ['1177'] : ['1177', '1175'];
               const held = prefs.find(p => items.some(i => idOf(i) === p)) || null;
               const others = items.filter(i => idOf(i) !== held).sort((a, b) => ((idOf(b) === '1175' ? 2 : idOf(b) === '0092' ? 0 : 1) - (idOf(a) === '1175' ? 2 : idOf(a) === '0092' ? 0 : 1)));   // 起こす側は歩美、なければコナン以外。コナンはスリープ側に回す   // 歩美(FILE5で登場時に突撃)を、起こして登場させる側に: 出したターンにアクションできる
               if (held && items.some(i => idOf(i) === held) && others.length) return [others[0].key];
@@ -110,6 +110,8 @@ Object.assign(window.CPU_CARD_RULES, {
 const cpuLv4Names = (field, excludeUid) => new Set(field.filter(c => c.uid !== excludeUid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)).size;
 const cpuTgtLv = ctx => { const d = defOfInst(ctx.tgt); return d && d.level != null ? d.level : 0; };
 const cpuHoldForContact = c => cpuLv4Names(c.me.field) >= 2 && (c.foeField.some(f => f.sleeping) || ['1176', '1177'].includes(String(c.card.cardId && (CARD_BY_ID.get(c.card.cardId) || {}).card_id)));   // 元太・光彦は、ガードしてきた相手(事件アクション)を倒すのにも使うので、条件がそろっていれば手札に残す
+// 相手の現場に「AP3000以下のスリープ」と、それとは別の「スリープのレベル7以下」がいる: 歩美の変装(AP3000で入れ替わる)で、アクションで1体、変装時の効果でもう1体倒せる
+const cpuAyumiDouble = (foeField, excludeUid) => { const sl = foeField.filter(f => f.sleeping && f.uid !== excludeUid); const low = sl.filter(f => effectiveAp(match, f, 'self') <= 3000); return low.some(a => sl.some(b => b.uid !== a.uid && (defOfInst(b) || {}).level <= 7)); };
 // 現場のレベル4が足りない(2枚未満)とき: 手札のレベル4少年探偵団(元太・光彦以外)で名前違いを足せるなら、それを先に出し、元太・光彦はカットイン用に残す
 const cpuBuildOthers = c => { const have = new Set(c.me.field.map(f => defOfInst(f)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name)); const out = []; for (const h of c.hand) { const d = CARD_BY_ID.get(h.cardId); if (d && d.card_type === 'キャラ' && d.level === 4 && cardHasTrait(d, '少年探偵団') && !['1176', '1177'].includes(String(d.card_id)) && !have.has(d.name) && !out.includes(d.name)) out.push(d.name); } return { have: have.size, add: out.length }; };
 const cpuBuildHold = c => { if (cpuLv4Names(c.me.field) >= 2 || !c.foeField.some(f => f.sleeping)) return false; const b = cpuBuildOthers(c); return b.have + b.add >= 2 && b.add >= 1; };
@@ -124,7 +126,10 @@ Object.assign(window.CPU_CARD_RULES, {
   // 吉田歩美(Lv4): 変装で攻撃キャラと入れ替わる。入れ替え後に名前違いのレベル4少年探偵団が3枚以上そろえば、レベル7以下のスリープ状態のキャラをリムーブして1枚引く
   // (勝ち筋: 事件にもアクションできる突撃を持つのは、FILE5以上で出た歩美と、中森青子。元太・光彦の突撃は［キャラ］限定なので、事件には行けない)
   // 先攻3ターン目: 相手が全部アクティブで、FILE5以上なら、歩美を出して事件へ突撃する
-  '1175': { lethalCharge: true, chargeMinFile: 5, playScore: c => c.lethal ? 5 : (c.open === 3 && c.foeField.length && c.foeField.every(f => !f.sleeping) && getEffectiveFileCount('opponent') >= 5) ? 60 : cpuHoldForContact(c) ? -1 : cpuBuildHold(c) ? 6 : 4, contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
+  '1175': { lethalCharge: true,
+            // 変装時の効果で倒す相手: 相手のスリープのレベル7以下のうち、いちばんAPが高いもの(アクションの相手は、入れ替わったあとのアクションで倒すので選ばない)
+            choose: (ctx, items) => { const foeIt = items.map(i => ({ i, f: match.self.field.find(f => f.uid === i.key || ('self-' + f.uid) === i.key) })).filter(x => x.f && x.f.sleeping); if (!foeIt.length) return null; const tgtUid = contactState && contactState.defenderUid; const pool = foeIt.filter(x => x.f.uid !== tgtUid); const use = pool.length ? pool : foeIt; use.sort((a, b) => effectiveAp(match, b.f, 'self') - effectiveAp(match, a.f, 'self')); return [use[0].i.key]; }, chargeMinFile: 5, playScore: c => c.lethal ? 5 : (c.open === 3 && c.foeField.length && c.foeField.every(f => !f.sleeping) && getEffectiveFileCount('opponent') >= 5) ? 60 : cpuHoldForContact(c) ? -1 : cpuBuildHold(c) ? 6 : 4, disguiseBonus: ctx => { if (!ctx.tgt.sleeping || ctx.foeAp > 3000 || ctx.myAp < ctx.foeAp || (CARD_BY_ID.get(ctx.actor.cardId) || {}).card_id === '1175') return false; if (!ctx.foe.field.some(f => f.uid !== ctx.tgt.uid && f.sleeping && (defOfInst(f) || {}).level <= 7)) return false; return new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3; },
+            contactDisguise: ctx => ctx.tgt.sleeping && cpuTgtLv(ctx) <= 7 && new Set([...ctx.me.field.filter(c => c.uid !== ctx.actor.uid).map(c => defOfInst(c)).filter(d => d && d.level === 4 && cardHasTrait(d, '少年探偵団')).map(d => d.name), '吉田歩美']).size >= 3 },
 });
 
 // 相手のキャラを選んで除去する効果の選び方: 相手の「アクティブ(ガードできる)」キャラを優先し、そのなかでAPの高いものを選ぶ。自分のキャラは選ばない
