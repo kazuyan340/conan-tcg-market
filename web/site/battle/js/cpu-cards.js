@@ -75,7 +75,7 @@ Object.assign(window.CPU_CARD_RULES, {
               const idOf = i => { const d = CARD_BY_ID.get(i.cardId); return d && String(d.card_id); };
               const foeSleep = match.self.field.filter(f => f.sleeping).map(f => defOfInst(f)).filter(d => d && d.level != null);
               const held = foeSleep.some(d => d.level >= 8) ? '1176' : foeSleep.some(d => d.level <= 7) ? '1177' : null;
-              const others = items.filter(i => idOf(i) !== held);
+              const others = items.filter(i => idOf(i) !== held).sort((a, b) => (idOf(b) === '1175' ? 1 : 0) - (idOf(a) === '1175' ? 1 : 0));   // 歩美(FILE5で登場時に突撃)を、起こして登場させる側に: 出したターンにアクションできる
               if (held && items.some(i => idOf(i) === held) && others.length) return [others[0].key];
               return null;
             },
