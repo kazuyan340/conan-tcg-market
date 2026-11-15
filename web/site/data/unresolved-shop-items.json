@@ -554,27 +554,13 @@
   },
   {
    "site": "フルアヘッド",
-   "raw_key": "A01087",
-   "rarity": null,
-   "price": 80,
-   "hint": "",
-   "product_name": "A01087 風見裕也 C [ID:0075]【キラ仕様】",
-   "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000128983_khqUMql.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012898/conan/page35/recommend/",
-   "listing_count": 1,
-   "prices": [
-    80
-   ]
-  },
-  {
-   "site": "フルアヘッド",
    "raw_key": "A02088",
    "rarity": null,
    "price": 80,
    "hint": "",
    "product_name": "A02088 犯人 C [ID:0249]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129133_kiJIH79.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -588,7 +574,7 @@
    "hint": "",
    "product_name": "A03036 越水七槻 C [ID:0293]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -602,7 +588,7 @@
    "hint": "",
    "product_name": "A04056 アンドレ・キャメル C [ID:0448]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129403_va6euPC.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -616,7 +602,7 @@
    "hint": "",
    "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     2480
@@ -960,6 +946,20 @@
   },
   {
    "site": "竜のしっぽ",
+   "raw_key": "B01001",
+   "rarity": "SEC",
+   "price": 12000,
+   "hint": "",
+   "product_name": "江戸川コナン",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032342f43542d5030312f3234303236333030372e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/52015",
+   "listing_count": 1,
+   "prices": [
+    12000
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
    "raw_key": "ノーマル仕様",
    "rarity": "PR293",
    "price": 400,
@@ -1032,14 +1032,14 @@
    "site": "駿河屋",
    "raw_key": "A03094",
    "rarity": "C",
-   "price": 500,
+   "price": 550,
    "hint": "",
    "product_name": "萩原千速",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427091&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GU427091",
    "listing_count": 1,
    "prices": [
-    500
+    550
    ]
   },
   {
@@ -1086,20 +1086,6 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A02023",
-   "rarity": "R",
-   "price": 170,
-   "hint": "",
-   "product_name": "遠山和葉",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
-   "listing_count": 1,
-   "prices": [
-    170
-   ]
-  },
-  {
-   "site": "駿河屋",
    "raw_key": "A01065",
    "rarity": "R",
    "price": 180,
@@ -1114,16 +1100,30 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "A02023",
+   "rarity": "R",
+   "price": 170,
+   "hint": "",
+   "product_name": "遠山和葉",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
+   "listing_count": 1,
+   "prices": [
+    170
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "A01081",
    "rarity": "SR",
-   "price": 370,
+   "price": 410,
    "hint": "",
    "product_name": "安室透",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956096&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GN956096",
    "listing_count": 1,
    "prices": [
-    370
+    410
    ]
   }
  ]
