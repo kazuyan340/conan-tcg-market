@@ -728,7 +728,7 @@
    "hint": "",
    "product_name": "【パラレル】A01005P 江戸川コナン SRP [ID:0001]",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012903/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012903/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     780
@@ -742,7 +742,7 @@
    "hint": "",
    "product_name": "A02088 犯人 C [ID:0249]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129133_kiJIH79.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012913/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -756,7 +756,7 @@
    "hint": "",
    "product_name": "【パラレル】A02018P 服部平次 SRP [ID:0188]",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012916/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012916/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     980
@@ -770,7 +770,7 @@
    "hint": "",
    "product_name": "A03036 越水七槻 C [ID:0293]【キラ仕様】",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012925/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -784,7 +784,7 @@
    "hint": "",
    "product_name": "A04056 アンドレ・キャメル C [ID:0448]【キラ仕様】",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129403_va6euPC.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012940/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     80
@@ -798,7 +798,7 @@
    "hint": "",
    "product_name": "A04070 高木渉 SR [ID:0456]",
    "image_url": "https://shop12-makeshop.akamaized.net/images/common/nonimg90.gif",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012942/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012942/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     780
@@ -812,7 +812,7 @@
    "hint": "",
    "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
-   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page35/recommend/",
+   "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
     2480
@@ -1185,6 +1185,62 @@
   {
    "site": "竜のしっぽ",
    "raw_key": "ノーマル仕様",
+   "rarity": "PR289",
+   "price": 531,
+   "hint": "",
+   "product_name": "円谷光彦(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353139332e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97772",
+   "listing_count": 1,
+   "prices": [
+    531
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "ノーマル仕様",
+   "rarity": "PR290",
+   "price": 342,
+   "hint": "",
+   "product_name": "沖田総司(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353139342e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97773",
+   "listing_count": 1,
+   "prices": [
+    342
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "ノーマル仕様",
+   "rarity": "PR291",
+   "price": 882,
+   "hint": "",
+   "product_name": "紫紅の爪(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353139352e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97774",
+   "listing_count": 1,
+   "prices": [
+    882
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "ノーマル仕様",
+   "rarity": "PR292",
+   "price": 351,
+   "hint": "",
+   "product_name": "キャンティ(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353139362e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97775",
+   "listing_count": 1,
+   "prices": [
+    351
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "ノーマル仕様",
    "rarity": "PR293",
    "price": 360,
    "hint": "",
@@ -1194,6 +1250,20 @@
    "listing_count": 1,
    "prices": [
     360
+   ]
+  },
+  {
+   "site": "竜のしっぽ",
+   "raw_key": "ノーマル仕様",
+   "rarity": "PR294",
+   "price": 1431,
+   "hint": "",
+   "product_name": "怪盗キッド(PR)",
+   "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353139382e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.ryuunoshippo.com/product/97777",
+   "listing_count": 1,
+   "prices": [
+    1431
    ]
   },
   {
@@ -1366,16 +1436,30 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "A03113",
+   "rarity": "R",
+   "price": 160,
+   "hint": "",
+   "product_name": "シェリー",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427094&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427094",
+   "listing_count": 1,
+   "prices": [
+    160
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "A01081",
    "rarity": "SR",
-   "price": 410,
+   "price": 370,
    "hint": "",
    "product_name": "安室透",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956096&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GN956096",
    "listing_count": 1,
    "prices": [
-    410
+    370
    ]
   }
  ]
