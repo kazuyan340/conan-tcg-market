@@ -1330,6 +1330,20 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "A03094",
+   "rarity": "C",
+   "price": 440,
+   "hint": "",
+   "product_name": "萩原千速",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427091&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GU427091",
+   "listing_count": 1,
+   "prices": [
+    440
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "A02016P",
    "rarity": "CP",
    "price": 550,
@@ -1416,14 +1430,14 @@
    "site": "駿河屋",
    "raw_key": "A01081",
    "rarity": "SR",
-   "price": 410,
+   "price": 330,
    "hint": "",
    "product_name": "安室透",
    "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956096&size=m",
    "product_url": "https://www.suruga-ya.jp/product/detail/GN956096",
    "listing_count": 1,
    "prices": [
-    410
+    330
    ]
   }
  ]
