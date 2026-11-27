@@ -363,6 +363,22 @@
      "rarity": "PR",
      "pack": "サンデーS 2026年9月号付録",
      "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1785395500805491.jpg"
+    },
+    {
+     "id": 3039,
+     "card_num": "PR350",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.16",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1795673663322750.jpg"
+    },
+    {
+     "id": 3045,
+     "card_num": "PR356",
+     "name": "萩原千速",
+     "rarity": "PR",
+     "pack": "プロモーションパックVol.16（キラバージョン）",
+     "image_url": "https://www.takaratomy.co.jp/products/conan-cardgame/storage/card/1795673663376656.jpg"
     }
    ],
    "listings": [
@@ -728,20 +744,6 @@
  "missing": [
   {
    "site": "カードラボ",
-   "raw_key": "B03139SEC2",
-   "rarity": "SEC",
-   "price": 84800,
-   "hint": "",
-   "product_name": "赤井秀一(サイン版)",
-   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f32303234313132335f6632376439332e6a706700323430000074006669745f686569676874.jpg",
-   "product_url": "https://www.c-labo-online.jp/product/290144",
-   "listing_count": 1,
-   "prices": [
-    84800
-   ]
-  },
-  {
-   "site": "カードラボ",
    "raw_key": "B08001SEC1",
    "rarity": "SEC",
    "price": 29800,
@@ -752,6 +754,20 @@
    "listing_count": 1,
    "prices": [
     29800
+   ]
+  },
+  {
+   "site": "カードラボ",
+   "raw_key": "B03139SEC2",
+   "rarity": "SEC",
+   "price": 84800,
+   "hint": "",
+   "product_name": "赤井秀一(サイン版)",
+   "image_url": "https://www.c-labo-online.jp/data/c-labo/_/70726f647563742f32303234313132335f6632376439332e6a706700323430000074006669745f686569676874.jpg",
+   "product_url": "https://www.c-labo-online.jp/product/290144",
+   "listing_count": 1,
+   "prices": [
+    84800
    ]
   },
   {
@@ -870,14 +886,14 @@
    "site": "フルアヘッド",
    "raw_key": "A04030P",
    "rarity": null,
-   "price": 2480,
+   "price": 1480,
    "hint": "",
    "product_name": "【パラレル】A04030P 黒羽快斗 SRP [ID:0428]",
    "image_url": "https://makeshop-multi-images.akamaized.net/fullconan/itemimages/0000000129483_ZmeTrjS.jpg",
    "product_url": "https://www.full-conan.com/shopdetail/000000012948/conan/page34/recommend/",
    "listing_count": 1,
    "prices": [
-    2480
+    1480
    ]
   },
   {
@@ -1206,112 +1222,112 @@
    "site": "竜のしっぽ",
    "raw_key": "レンチキュラー",
    "rarity": "P093",
-   "price": 90,
+   "price": 100,
    "hint": "",
    "product_name": "工藤新一/灰原哀/小さくなった新一(PR)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5031312f3234303236353537342e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/97970",
    "listing_count": 1,
    "prices": [
-    90
+    100
    ]
   },
   {
    "site": "竜のしっぽ",
    "raw_key": "レンチキュラー",
    "rarity": "P094",
-   "price": 90,
+   "price": 100,
    "hint": "",
    "product_name": "怪盗キッド/中森青子/白馬探(PR)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5031312f3234303236353537352d322e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/97971",
    "listing_count": 1,
    "prices": [
-    90
+    100
    ]
   },
   {
    "site": "竜のしっぽ",
    "raw_key": "金箔",
    "rarity": "B09090P2",
-   "price": 1980,
+   "price": 2200,
    "hint": "",
    "product_name": "風の女神(CP)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f323032362f43542d5030392f3234303236353131362e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/94019",
    "listing_count": 1,
    "prices": [
-    1980
+    2200
    ]
   },
   {
    "site": "竜のしっぽ",
    "raw_key": "ノーマル仕様",
    "rarity": "PR293",
-   "price": 360,
+   "price": 400,
    "hint": "",
    "product_name": "キャンティ(PR)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353139372e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/97776",
    "listing_count": 1,
    "prices": [
-    360
+    400
    ]
   },
   {
    "site": "竜のしっぽ",
    "raw_key": "ノーマル仕様",
    "rarity": "PR307",
-   "price": 711,
+   "price": 790,
    "hint": "",
    "product_name": "灰原哀(PR)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353339332e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/97784",
    "listing_count": 1,
    "prices": [
-    711
+    790
    ]
   },
   {
    "site": "竜のしっぽ",
    "raw_key": "ノーマル仕様",
    "rarity": "PR308",
-   "price": 621,
+   "price": 690,
    "hint": "",
    "product_name": "ジョディ・スターリング(PR)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353339342e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/97785",
    "listing_count": 1,
    "prices": [
-    621
+    690
    ]
   },
   {
    "site": "竜のしっぽ",
    "raw_key": "ノーマル仕様",
    "rarity": "PR309",
-   "price": 351,
+   "price": 390,
    "hint": "",
    "product_name": "降谷零(PR)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353339352e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/97786",
    "listing_count": 1,
    "prices": [
-    351
+    390
    ]
   },
   {
    "site": "竜のしっぽ",
    "raw_key": "ノーマル仕様",
    "rarity": "PR310",
-   "price": 621,
+   "price": 690,
    "hint": "",
    "product_name": "ベルモット(PR)",
    "image_url": "https://www.ryuunoshippo.com/data/win-w/_/70726f647563742f44452f6f74686572732f3234303236353339362e6a706700323430000074006669745f686569676874.jpg",
    "product_url": "https://www.ryuunoshippo.com/product/97787",
    "listing_count": 1,
    "prices": [
-    621
+    690
    ]
   },
   {
@@ -1386,6 +1402,20 @@
   },
   {
    "site": "駿河屋",
+   "raw_key": "A01010",
+   "rarity": "R",
+   "price": 200,
+   "hint": "",
+   "product_name": "毛利小五郎",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956098&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956098",
+   "listing_count": 1,
+   "prices": [
+    200
+   ]
+  },
+  {
+   "site": "駿河屋",
    "raw_key": "A05009",
    "rarity": "R",
    "price": 160,
@@ -1414,16 +1444,30 @@
   },
   {
    "site": "駿河屋",
-   "raw_key": "A03113",
+   "raw_key": "A02023",
    "rarity": "R",
-   "price": 160,
+   "price": 170,
    "hint": "",
-   "product_name": "シェリー",
-   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GU427094&size=m",
-   "product_url": "https://www.suruga-ya.jp/product/detail/GU427094",
+   "product_name": "遠山和葉",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956102&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956102",
    "listing_count": 1,
    "prices": [
-    160
+    170
+   ]
+  },
+  {
+   "site": "駿河屋",
+   "raw_key": "A01065",
+   "rarity": "R",
+   "price": 180,
+   "hint": "",
+   "product_name": "沖矢昴",
+   "image_url": "https://www.suruga-ya.jp/database/photo.php?shinaban=GN956099&size=m",
+   "product_url": "https://www.suruga-ya.jp/product/detail/GN956099",
+   "listing_count": 1,
+   "prices": [
+    180
    ]
   },
   {
